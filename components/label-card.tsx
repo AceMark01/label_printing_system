@@ -86,7 +86,7 @@ export function LabelCard({ label, languages }: LabelCardProps) {
     <div className="relative bg-white rounded-lg sm:rounded-xl overflow-hidden border-2 border-blue-200 shadow-lg hover:shadow-2xl transition-all print:shadow-none print:rounded-none print:border-2 print:border-blue-300 print:break-inside-avoid min-h-[300px]">
       {/* Top Brand Bar with ACE Logo */}
       <div className="h-10 sm:h-12 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-900 flex items-center justify-between px-3 print:h-14">
-        <div className="relative w-7 h-7 sm:w-8 sm:h-8">
+        <div className="relative w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-lg p-1 shadow-inner border border-blue-200/50">
           <Image
             src="/logo1.png"
             alt="Logo"

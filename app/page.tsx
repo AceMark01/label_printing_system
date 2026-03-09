@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useMemo, useEffect } from 'react';
+import Image from 'next/image';
 import { translations, languageNames } from '@/lib/mock-data';
 import { fetchTicTakData } from '@/lib/google-sheets';
 import { FilterPanel } from '@/components/filter-panel';
@@ -24,6 +25,7 @@ export default function Home() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
@@ -140,37 +142,124 @@ export default function Home() {
 
   const handlePrint = () => {
     if (printRef.current) {
-      const printWindow = window.open('', '', 'width=800,height=600');
+      const printWindow = window.open('', '', 'width=1200,height=800');
       if (printWindow) {
-        printWindow.document.write(printRef.current.innerHTML);
+        const content = printRef.current.innerHTML;
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Print Labels</title>
+              <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+              <style>
+                @page { size: A4 portrait; margin: 0; }
+                body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
+                .print-container { width: 210mm; min-height: 297mm; margin: 0 auto; background: white; }
+                @media print {
+                  .no-print { display: none; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="print-container">${content}</div>
+            </body>
+          </html>
+        `);
         printWindow.document.close();
-        setTimeout(() => {
-          printWindow.print();
-        }, 250);
+
+        // Wait for images to load
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+          }, 500);
+        };
       }
     }
   };
 
   const handleExportPdf = async () => {
     if (selectedLabelDetails.length === 0) return;
+    setIsExportingPdf(true);
 
     try {
-      const html2pdf = (await import('html2pdf.js' as any)).default;
+      const { default: jsPDF } = await import('jspdf');
+      const { default: html2canvas } = await import('html2canvas');
 
       if (printRef.current) {
+        // Ensure the element is visible and has correct dimensions
         const element = printRef.current;
-        const opt = {
-          margin: 0,
-          filename: 'labels.pdf',
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        };
-        html2pdf().set(opt).from(element).save();
+
+        // Capture the canvas with optimized settings
+        const canvas = await html2canvas(element, {
+          scale: 3, // Higher resolution for printing
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff', // Force white background
+          logging: false,
+          onclone: (clonedDoc) => {
+            // Aggressively clean up styles to avoid "lab" or "oklch" parsing errors
+            const styles = clonedDoc.getElementsByTagName('style');
+            for (let i = 0; i < styles.length; i++) {
+              let css = styles[i].innerHTML;
+              // Replace any modern color functions with a safe fallback
+              css = css.replace(/oklch\([^)]+\)/g, '#3b82f6');
+              css = css.replace(/lab\([^)]+\)/g, '#3b82f6');
+              styles[i].innerHTML = css;
+            }
+
+            // Remove all link tags (external stylesheets) that might contain modern colors
+            const links = clonedDoc.getElementsByTagName('link');
+            for (let i = links.length - 1; i >= 0; i--) {
+              if (links[i].rel === 'stylesheet') {
+                links[i].remove();
+              }
+            }
+
+            const clonedElement = clonedDoc.querySelector('[data-print-container]');
+            if (clonedElement) {
+              (clonedElement as HTMLElement).style.transform = 'none';
+              (clonedElement as HTMLElement).style.position = 'static';
+              (clonedElement as HTMLElement).style.margin = '0';
+              (clonedElement as HTMLElement).style.padding = '0';
+            }
+          }
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true
+        });
+
+        const pageWidth = 210;
+        const pageHeight = 297;
+        const imgWidth = pageWidth;
+        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        // Add first page
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+
+        // Add subsequent pages if content overflows A4
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+          heightLeft -= pageHeight;
+        }
+
+        pdf.save(`labels-${new Date().toISOString().split('T')[0]}.pdf`);
       }
-    } catch (error) {
-      console.error('Error exporting PDF:', error);
-      alert('Error exporting PDF');
+    } catch (error: any) {
+      console.error('Detailed PDF Export Error:', error);
+      alert('Error exporting PDF: ' + (error.message || 'Unknown error'));
+    } finally {
+      setIsExportingPdf(false);
     }
   };
 
@@ -199,8 +288,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-3 group cursor-default">
-              <div className="p-2.5 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform animate-float">
-                <Box className="w-6 h-6 text-white" />
+              <div className="relative w-10 h-10 sm:w-12 sm:h-12 p-2 bg-white rounded-xl shadow-xl shadow-blue-600/20 border-2 border-blue-50 group-hover:scale-110 transition-transform animate-float overflow-hidden">
+                <Image
+                  src="/logo1.png"
+                  alt="Logo"
+                  fill
+                  className="object-contain p-0.5"
+                  priority
+                />
               </div>
               <div>
                 <h1 className="text-xl sm:text-3xl font-black tracking-tight text-gradient">
@@ -443,17 +538,28 @@ export default function Home() {
                 <div className="flex flex-col sm:flex-row gap-6">
                   <Button
                     onClick={handlePrint}
-                    className="flex-1 bg-gradient-to-br from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-black py-8 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all text-lg group"
+                    disabled={isExportingPdf}
+                    className="flex-1 bg-gradient-to-br from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-black py-8 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all text-lg group disabled:opacity-50 disabled:scale-100"
                   >
                     <Printer className="w-6 h-6 mr-3 group-hover:rotate-12 transition-transform" />
                     Print Labels
                   </Button>
                   <Button
                     onClick={handleExportPdf}
-                    className="flex-1 bg-gradient-to-br from-indigo-500 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800 text-white font-black py-8 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all text-lg group"
+                    disabled={isExportingPdf}
+                    className="flex-1 bg-gradient-to-br from-indigo-500 to-indigo-700 hover:from-indigo-600 hover:to-indigo-800 text-white font-black py-8 rounded-2xl shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all text-lg group disabled:opacity-50 disabled:scale-100"
                   >
-                    <Download className="w-6 h-6 mr-3 group-hover:translate-y-1 transition-transform" />
-                    Generate PDF
+                    {isExportingPdf ? (
+                      <>
+                        <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                        Generating PDF...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-6 h-6 mr-3 group-hover:translate-y-1 transition-transform" />
+                        Generate PDF
+                      </>
+                    )}
                   </Button>
                 </div>
 
@@ -464,7 +570,7 @@ export default function Home() {
                   </CardHeader>
                   <CardContent className="pt-8">
                     <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 overflow-auto max-h-[600px] no-scrollbar">
-                      <div ref={printRef} className="bg-white shadow-2xl mx-auto origin-top transition-transform">
+                      <div ref={printRef} data-print-container className="bg-white shadow-2xl mx-auto origin-top transition-transform">
                         <A5PrintLayout labels={selectedLabelDetails} languages={Array.from(labelLanguages)} />
                       </div>
                     </div>

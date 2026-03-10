@@ -10,65 +10,73 @@ interface A5PrintLayoutProps {
 
 export function A5PrintLayout({ labels, languages }: A5PrintLayoutProps) {
   return (
-    <div className="w-full bg-white p-4">
-      {/* A4 Page Container - Will hold 4 A5 labels (2x2 grid) */}
-      <div className="space-y-4">
-        {Array.from({ length: Math.ceil(labels.length / 4) }).map((_, pageIdx) => (
+    <div className="w-full bg-slate-100 p-2 sm:p-8 flex flex-col items-center gap-8 print:bg-white print:p-0">
+      {/* Each label gets its own A4 page with 2 copies (Top & Bottom) */}
+      {labels.map((label) => (
+        <div
+          key={label.id}
+          data-pdf-page
+          className="bg-white shadow-none relative print:shadow-none print:border-0 overflow-hidden"
+          style={{
+            width: '210mm',
+            height: '297mm',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '10mm 15mm',
+            boxSizing: 'border-box',
+            pageBreakAfter: 'always',
+            pageBreakInside: 'avoid',
+            margin: '0 auto',
+            position: 'relative'
+          }}
+        >
+          {/* Top Label Folder/Container */}
           <div
-            key={pageIdx}
-            className="bg-white border-2 border-gray-300"
-            style={{
-              width: '210mm',
-              height: '297mm',
-              margin: '0 auto',
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gridTemplateRows: '1fr 1fr',
-              gap: '4mm',
-              padding: '10mm',
-              pageBreakAfter: 'always',
-              pageBreakInside: 'avoid'
-            }}
+            className="w-full relative flex flex-col items-center justify-center overflow-hidden"
+            style={{ height: '125mm', boxSizing: 'border-box' }}
           >
-            {labels.slice(pageIdx * 4, (pageIdx + 1) * 4).map((label) => (
-              <div
-                key={label.id}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-                className="print:break-inside-avoid"
-              >
-                <div style={{ width: '100%', height: '100%' }} className="scale-75 origin-top-left">
-                  <LabelCard label={label} languages={languages} />
-                </div>
-              </div>
-            ))}
+            <div className="w-full h-full border border-gray-100 rounded-lg overflow-hidden shadow-sm print:shadow-none print:border-2 print:border-black">
+              <LabelCard label={label} languages={languages} />
+            </div>
           </div>
-        ))}
-      </div>
+
+          {/* Separation Line Only */}
+          <div className="flex-1 w-full flex items-center justify-center relative min-h-[20mm]">
+            <div className="w-full border-b border-dashed border-gray-300 print:border-gray-400"></div>
+          </div>
+
+          {/* Bottom Label Folder/Container */}
+          <div
+            className="w-full relative flex flex-col items-center justify-center overflow-hidden"
+            style={{ height: '125mm', boxSizing: 'border-box' }}
+          >
+            <div className="w-full h-full border border-gray-100 rounded-lg overflow-hidden shadow-sm print:shadow-none print:border-2 print:border-black">
+              <LabelCard label={label} languages={languages} />
+            </div>
+          </div>
+        </div>
+      ))}
 
       {/* Print Styles */}
       <style>{`
         @media print {
-          * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+          * { 
+            -webkit-print-color-adjust: exact !important; 
+            color-adjust: exact !important; 
+            box-sizing: border-box !important;
           }
-          
-          body {
-            margin: 0;
-            padding: 0;
+          html, body { 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            width: 210mm !important;
+            height: 297mm !important;
+            overflow: visible !important;
           }
-          
-          @page {
-            size: A4;
-            margin: 0;
+          @page { 
+            size: A4 portrait; 
+            margin: 0 !important; 
           }
+          .bg-slate-100 { background: white !important; padding: 0 !important; }
         }
       `}</style>
     </div>

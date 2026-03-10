@@ -11,18 +11,77 @@ interface LabelCardProps {
 }
 
 const labelTranslations: Record<Language, Record<string, string>> = {
-  en: { party: 'PARTY', item: 'ITEM', qty: 'QTY' },
-  hi: { party: 'पार्टी', item: 'आइटम', qty: 'मात्रा' },
-  ta: { party: 'பார்ட்டி', item: 'ஐட்டம்', qty: 'அளவு' },
-  te: { party: 'పార్టీ', item: 'ఐటమ్', qty: 'పరిమాణం' },
-  mr: { party: 'पार्टी', item: 'आयटम', qty: 'प्रमाण' },
-  gu: { party: 'પાર્ટી', item: 'આઈટમ', qty: 'જથ્થો' },
-  kn: { party: 'ಪಾರ್ಟಿ', item: 'ಐಟಂ', qty: 'ಪ್ರಮಾಣ' },
-  od: { party: 'ପାର୍ଟି', item: 'ଆଇଟମ', qty: 'ପରିମାଣ' },
+  en: {
+    party: 'Party Name',
+    item: 'Product',
+    qty: 'Quantity',
+    city: 'City'
+  },
+
+  hi: {
+    party: 'पार्टी नेम',
+    item: 'प्रोडक्ट',
+    qty: 'क्वांटिटी',
+    bundles: 'बंडल',
+    city: 'सिटी'
+  },
+
+  ta: {
+    party: 'பார்ட்டி நேம்',
+    item: 'ப்ராடக்ட்',
+    qty: 'குவாண்டிட்டி',
+    bundles: 'பண்டல்கள்',
+    city: 'சிட்டி'
+  },
+
+  te: {
+    party: 'పార్టీ నేమ్',
+    item: 'ప్రొడక్ట్',
+    qty: 'క్వాంటిటీ',
+    bundles: 'బండిల్స్',
+    city: 'సిటీ'
+  },
+
+  mr: {
+    party: 'पार्टी नेम',
+    item: 'प्रॉडक्ट',
+    qty: 'क्वांटिटी',
+    bundles: 'बंडल',
+    city: 'सिटी'
+  },
+
+  gu: {
+    party: 'પાર્ટી નેમ',
+    item: 'પ્રોડક્ટ',
+    qty: 'ક્વોન્ટિટી',
+    bundles: 'બંડલ',
+    city: 'સિટી'
+  },
+
+  kn: {
+    party: 'ಪಾರ್ಟಿ ನೇಮ್',
+    item: 'ಪ್ರೊಡಕ್ಟ್',
+    qty: 'ಕ್ವಾಂಟಿಟಿ',
+    bundles: 'ಬಂಡಲ್',
+    city: 'ಸಿಟಿ'
+  },
+
+  od: {
+    party: 'ପାର୍ଟି ନେମ',
+    item: 'ପ୍ରୋଡକ୍ଟ',
+    qty: 'କ୍ୱାଣ୍ଟିଟି',
+    bundles: 'ବଣ୍ଡଲ୍',
+    city: 'ସିଟି'
+  }
 };
 
+
 export function LabelCard({ label, languages }: LabelCardProps) {
-  const sortedLanguages = Array.from(languages).sort();
+  const sortedLanguages = Array.from(languages).sort((a, b) => {
+    if (a === 'hi') return -1;
+    if (b === 'hi') return 1;
+    return a.localeCompare(b);
+  });
   const [translations, setTranslations] = useState<Record<string, Record<string, string>>>({});
   const [isTranslating, setIsTranslating] = useState(false);
 
@@ -52,9 +111,17 @@ export function LabelCard({ label, languages }: LabelCardProps) {
             });
             const itemData = await itemRes.json();
 
+            // Translate City
+            const cityRes = await fetch('/api/translate', {
+              method: 'POST',
+              body: JSON.stringify({ text: label.city, target: lang }),
+            });
+            const cityData = await cityRes.json();
+
             newTranslations[lang] = {
               party: partyData.translatedText || label.party,
               item: itemData.translatedText || label.item,
+              city: cityData.translatedText || label.city,
             };
             changed = true;
           } catch (e) {
@@ -72,6 +139,14 @@ export function LabelCard({ label, languages }: LabelCardProps) {
     fetchTranslations();
   }, [sortedLanguages.length, label.id]);
 
+  const getFontSize = (text: string, baseSize: string, limit: number = 20) => {
+    if (!text) return baseSize;
+    if (text.length > limit * 2.5) return 'text-[10px] sm:text-sm';
+    if (text.length > limit * 1.8) return 'text-sm sm:text-lg';
+    if (text.length > limit) return 'text-lg sm:text-2xl';
+    return baseSize;
+  };
+
   const getPartyName = (lang: Language): string => {
     if (lang === 'en') return label.party;
     return translations[lang]?.party || (label.partyNames?.[lang]) || label.party;
@@ -82,96 +157,91 @@ export function LabelCard({ label, languages }: LabelCardProps) {
     return translations[lang]?.item || (label.itemNames?.[lang]) || label.item;
   };
 
+  const getCityName = (lang: Language): string => {
+    if (lang === 'en') return label.city;
+    return translations[lang]?.city || label.city;
+  };
+
   return (
-    <div className="relative bg-white rounded-lg sm:rounded-xl overflow-hidden border-2 border-blue-200 shadow-lg hover:shadow-2xl transition-all print:shadow-none print:rounded-none print:border-2 print:border-blue-300 print:break-inside-avoid min-h-[300px]">
-      {/* Top Brand Bar with ACE Logo */}
-      <div className="h-10 sm:h-12 bg-gradient-to-r from-blue-900 via-blue-700 to-blue-900 flex items-center justify-between px-3 print:h-14">
-        <div className="relative w-8 h-8 sm:w-9 sm:h-9 bg-white rounded-lg p-1 shadow-inner border border-blue-200/50">
-          <Image
-            src="/logo1.png"
-            alt="Logo"
-            fill
-            className="object-contain print:block"
-            priority
-          />
-        </div>
-        <div className="text-right">
-          <p className="text-[10px] font-bold text-blue-100 uppercase tracking-tighter print:text-2xs leading-none">Order No.</p>
-          <p className="text-xs sm:text-sm font-black text-white print:text-sm leading-tight">
-            {label.originalData?.SOrderNo || label.originalData?.OrderNo || label.id}
-          </p>
+    <div className="relative bg-white overflow-hidden border border-gray-400 print:border-2 print:border-black w-full h-full flex flex-col font-sans">
+      {/* Top Header - Large Logo (Compacted) */}
+      <div className="h-12 sm:h-16 bg-gray-100 border-b border-gray-300 flex items-center px-4 print:h-18 print:bg-white print:border-b-2 print:border-black relative z-10">
+        <div className="flex items-center">
+          <div className="relative w-28 h-8 sm:w-36 sm:h-10 print:w-44 print:h-14">
+            <Image src="/ace.png" alt="Logo" fill className="object-contain object-left" priority />
+          </div>
         </div>
       </div>
 
-      <div className="p-3 sm:p-4 print:p-4">
-        {/* Location Badge */}
-        <div className="flex justify-between items-center mb-2 sm:mb-3 print:mb-2">
-          <p className="text-sm font-bold text-blue-900">{label.city}</p>
-          {isTranslating && <Loader2 className="w-3 h-3 text-blue-400 animate-spin" />}
-        </div>
-
-        {/* Content - Multiple Languages */}
-        <div className="space-y-4 print:space-y-4">
+      {/* Main Body - Balanced to fill space without overflow */}
+      <div className="flex-1 flex flex-col p-3 sm:p-5 justify-center bg-white relative z-10">
+        <div className="space-y-4 print:space-y-6">
           {sortedLanguages.map((lang, idx) => {
             const t = labelTranslations[lang];
             const isLast = idx === sortedLanguages.length - 1;
+            const partyName = getPartyName(lang);
+            const itemName = getItemName(lang);
 
             return (
-              <div key={lang} className={!isLast ? 'pb-3 border-b border-blue-50' : ''}>
-                {/* Headers & Values */}
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-[9px] font-bold text-blue-500 uppercase tracking-wider leading-none mb-1">
-                      {t.party}
-                    </p>
-                    <p className="text-xs sm:text-sm font-bold text-gray-900 leading-tight">
-                      {getPartyName(lang)}
-                    </p>
+              <div key={lang} className={`${!isLast ? 'pb-4 border-b border-dashed border-gray-100 print:border-black' : ''} space-y-1`}>
+                {/* Party Name */}
+                <p className="leading-tight break-words">
+                  <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wider">{t.party}: </span>
+                  <span className={`font-black text-black ${getFontSize(partyName, 'text-xl sm:text-4xl', 20)}`}>
+                    {partyName}
+                  </span>
+                </p>
+
+                {/* Product/Item */}
+                <p className="leading-tight break-words">
+                  <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wider">{t.item}: </span>
+                  <span className={`font-bold text-gray-900 ${getFontSize(itemName, 'text-lg sm:text-2xl', 30)}`}>
+                    {itemName}
+                  </span>
+                </p>
+
+                {/* Qty & Bundles Row - Structured */}
+                <div className="flex items-center gap-6 pt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest">{t.qty}: </span>
+                    <span className="text-3xl sm:text-6xl font-black text-black tabular-nums">
+                      {label.quantity}
+                    </span>
                   </div>
 
-                  <div>
-                    <p className="text-[9px] font-bold text-blue-500 uppercase tracking-wider leading-none mb-1">
-                      {t.item}
-                    </p>
-                    <p className="text-xs sm:text-sm font-semibold text-blue-800 leading-tight">
-                      {getItemName(lang)}
-                    </p>
-                  </div>
-
-                  {/* Quantity */}
-                  <div className="flex justify-between items-center pt-1">
-                    <div>
-                      <p className="text-[9px] font-bold text-blue-500 uppercase tracking-wider leading-none">
-                        {t.qty}
-                      </p>
-                      <p className="text-xl font-black text-blue-900">
-                        {label.quantity}
-                      </p>
+                  {label.bdlQty && (
+                    <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
+                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest">{t.bundles || 'Bundles'}: </span>
+                      <span className="text-xl sm:text-2xl font-black text-gray-800 tabular-nums">
+                        {label.bdlQty}
+                      </span>
                     </div>
+                  )}
 
-                    {/* Bdl Qty if available */}
-                    {label.bdlQty && lang === 'en' && (
-                      <div className="text-right">
-                        <p className="text-[9px] font-bold text-green-600 uppercase tracking-wider leading-none">Bdl Qty</p>
-                        <p className="text-base font-black text-green-700">{label.bdlQty}</p>
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
+                    <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest">{t.city}: </span>
+                    <span className="text-xs sm:text-sm font-black text-gray-800 uppercase">
+                      {getCityName(lang)}
+                    </span>
                   </div>
                 </div>
               </div>
             );
           })}
         </div>
+      </div>
 
-
-        {/* Footer */}
-        <div className="mt-3 sm:mt-4 pt-2 border-t border-blue-50 flex justify-between items-center text-[9px] print:mt-3 print:pt-2">
-          <p className="text-gray-400 font-bold tracking-tighter print:text-2xs uppercase">
+      {/* Footer Bar - Slim */}
+      <div className="h-8 bg-gray-50 border-t border-gray-200 flex items-center justify-between px-4 text-gray-400">
+        <div className="flex items-baseline gap-1">
+          <span className="text-[7px] font-black uppercase tracking-widest">DATE:</span>
+          <span className="text-[10px] font-bold tabular-nums">
             {new Date(label.date || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-          </p>
-          <div className="text-right">
-            <p className="text-blue-700 font-black tracking-widest print:text-2xs">ACE</p>
-          </div>
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-0.5 bg-gray-200" />
+          <p className="text-[10px] font-black tracking-[0.3em] italic uppercase">Ace</p>
         </div>
       </div>
     </div>

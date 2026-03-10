@@ -10,6 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Search, X } from 'lucide-react';
 import { translations } from '@/lib/mock-data';
 import type { Label as LabelType, Language } from '@/lib/types';
 
@@ -18,10 +20,12 @@ interface FilterPanelProps {
   selectedCity: string | null;
   selectedParty: string | null;
   selectedItem: string | null;
+  searchQuery: string;
   language: Language;
   onCityChange: (city: string | null) => void;
   onPartyChange: (party: string | null) => void;
   onItemChange: (item: string | null) => void;
+  onSearchQueryChange: (query: string) => void;
   onClearFilters: () => void;
 }
 
@@ -30,10 +34,12 @@ export function FilterPanel({
   selectedCity,
   selectedParty,
   selectedItem,
+  searchQuery,
   language,
   onCityChange,
   onPartyChange,
   onItemChange,
+  onSearchQueryChange,
   onClearFilters,
 }: FilterPanelProps) {
   const safeLabels = labels || [];
@@ -72,11 +78,36 @@ export function FilterPanel({
     [safeLabels, selectedCity, selectedParty]
   );
 
-  const hasActiveFilters = selectedCity || selectedParty || selectedItem;
+  const hasActiveFilters = selectedCity || selectedParty || selectedItem || searchQuery;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-5">
+        {/* Search Bar */}
+        <div className="space-y-2.5">
+          <Label htmlFor="search-input" className="text-[10px] font-bold text-blue-600 uppercase tracking-widest ml-1">
+            Search Party / Item
+          </Label>
+          <div className="relative group">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+            <Input
+              id="search-input"
+              placeholder="Type to search..."
+              value={searchQuery}
+              onChange={(e) => onSearchQueryChange(e.target.value)}
+              className="pl-10 pr-10 bg-blue-50/50 border-blue-100 focus:ring-blue-500 rounded-xl h-11 font-medium transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => onSearchQueryChange('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-blue-100 rounded-full transition-colors text-gray-400 hover:text-blue-600"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
         <div className="space-y-2.5">
           <Label htmlFor="city-select" className="text-[10px] font-bold text-blue-600 uppercase tracking-widest ml-1">
             {t.filterByCity}

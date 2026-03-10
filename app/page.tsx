@@ -7,13 +7,15 @@ import { fetchTicTakData } from '@/lib/google-sheets';
 import { FilterPanel } from '@/components/filter-panel';
 import { DataTable } from '@/components/data-table';
 import { LabelCard } from '@/components/label-card';
+import { PreviewLabelCard } from '@/components/preview-label-card';
 import { A5PrintLayout } from '@/components/a5-print-layout';
 import { PrintLayout } from '@/components/print-layout';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Printer, LayoutGrid, FileText, Box, Loader2 } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
+import { Download, Printer, LayoutGrid, FileText, Box, Loader2, Filter, SlidersHorizontal, Settings2 } from 'lucide-react';
 import type { Language } from '@/lib/types';
 import { useCallback } from 'react';
 
@@ -26,16 +28,19 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingSinglePdf, setIsExportingSinglePdf] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [selectedParty, setSelectedParty] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
-  const [labelLanguages, setLabelLanguages] = useState<Set<Language>>(new Set(['en', 'hi']));
+  const [labelLanguages, setLabelLanguages] = useState<Set<Language>>(new Set(['hi']));
   const [activeTab, setActiveTab] = useState<'select' | 'preview' | 'print'>('select');
 
   const printRef = useRef<HTMLDivElement>(null);
+  const singlePrintRef = useRef<HTMLDivElement>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
 
   // Initial load
@@ -109,12 +114,22 @@ export default function Home() {
   // Filter labels based on selected filters (searches across all loaded labels)
   const filteredLabels = useMemo(() => {
     return labels.filter((label) => {
+      // Dropdown filters
       if (selectedCity && label.city !== selectedCity) return false;
       if (selectedParty && label.party !== selectedParty) return false;
       if (selectedItem && label.item !== selectedItem) return false;
+
+      // Search bar filter (Party or Item)
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const partyMatch = label.party?.toLowerCase().includes(query);
+        const itemMatch = label.item?.toLowerCase().includes(query);
+        if (!partyMatch && !itemMatch) return false;
+      }
+
       return true;
     });
-  }, [labels, selectedCity, selectedParty, selectedItem]);
+  }, [labels, selectedCity, selectedParty, selectedItem, searchQuery]);
 
   // Get selected label details
   const selectedLabelDetails = useMemo(() => {
@@ -125,17 +140,22 @@ export default function Home() {
     setSelectedCity(null);
     setSelectedParty(null);
     setSelectedItem(null);
+    setSearchQuery('');
   };
 
   const toggleLanguage = (lang: Language) => {
     const newLanguages = new Set(labelLanguages);
     if (newLanguages.has(lang)) {
-      newLanguages.delete(lang);
+      if (newLanguages.size > 1) {
+        newLanguages.delete(lang);
+        setLabelLanguages(newLanguages);
+      }
     } else {
+      if (newLanguages.size >= 2) {
+        alert("You can only select up to 2 languages per template.");
+        return;
+      }
       newLanguages.add(lang);
-    }
-    // Ensure at least one language is selected
-    if (newLanguages.size > 0) {
       setLabelLanguages(newLanguages);
     }
   };
@@ -185,81 +205,142 @@ export default function Home() {
       const { default: jsPDF } = await import('jspdf');
       const { default: html2canvas } = await import('html2canvas');
 
-      if (printRef.current) {
-        // Ensure the element is visible and has correct dimensions
-        const element = printRef.current;
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
 
-        // Capture the canvas with optimized settings
-        const canvas = await html2canvas(element, {
-          scale: 3, // Higher resolution for printing
+      // Find all A4 pages rendered in the preview
+      const pages = document.querySelectorAll('[data-pdf-page]');
+
+      if (pages.length === 0) {
+        throw new Error('No pages found to export. Please ensure labels are selected and visible in preview.');
+      }
+
+      for (let i = 0; i < pages.length; i++) {
+        const pageElement = pages[i] as HTMLElement;
+
+        const canvas = await html2canvas(pageElement, {
+          scale: 2.5, // High resolution
           useCORS: true,
           allowTaint: true,
-          backgroundColor: '#ffffff', // Force white background
+          backgroundColor: '#ffffff',
           logging: false,
+          windowWidth: 794, // 210mm at 96 DPI
+          windowHeight: 1123, // 297mm at 96 DPI
           onclone: (clonedDoc) => {
-            // Aggressively clean up styles to avoid "lab" or "oklch" parsing errors
+            // Minimal cleanup for modern color functions only
             const styles = clonedDoc.getElementsByTagName('style');
-            for (let i = 0; i < styles.length; i++) {
-              let css = styles[i].innerHTML;
-              // Replace any modern color functions with a safe fallback
+            for (let j = 0; j < styles.length; j++) {
+              let css = styles[j].innerHTML;
               css = css.replace(/oklch\([^)]+\)/g, '#3b82f6');
               css = css.replace(/lab\([^)]+\)/g, '#3b82f6');
-              styles[i].innerHTML = css;
-            }
-
-            // Remove all link tags (external stylesheets) that might contain modern colors
-            const links = clonedDoc.getElementsByTagName('link');
-            for (let i = links.length - 1; i >= 0; i--) {
-              if (links[i].rel === 'stylesheet') {
-                links[i].remove();
-              }
-            }
-
-            const clonedElement = clonedDoc.querySelector('[data-print-container]');
-            if (clonedElement) {
-              (clonedElement as HTMLElement).style.transform = 'none';
-              (clonedElement as HTMLElement).style.position = 'static';
-              (clonedElement as HTMLElement).style.margin = '0';
-              (clonedElement as HTMLElement).style.padding = '0';
+              styles[j].innerHTML = css;
             }
           }
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-          compress: true
-        });
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
 
-        const pageWidth = 210;
-        const pageHeight = 297;
-        const imgWidth = pageWidth;
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        // Add first page
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-        heightLeft -= pageHeight;
-
-        // Add subsequent pages if content overflows A4
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
+        if (i > 0) {
           pdf.addPage();
-          pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-          heightLeft -= pageHeight;
         }
 
-        pdf.save(`labels-${new Date().toISOString().split('T')[0]}.pdf`);
+        // Add the captured image as the full A4 page
+        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
       }
+
+      pdf.save(`Ace-Labels-${new Date().toLocaleDateString('en-IN').replace(/\//g, '-')}.pdf`);
     } catch (error: any) {
-      console.error('Detailed PDF Export Error:', error);
-      alert('Error exporting PDF: ' + (error.message || 'Unknown error'));
+      console.error('PDF Export Error:', error);
+      alert('Error exporting PDF: ' + (error.message || 'Please try again.'));
     } finally {
       setIsExportingPdf(false);
+    }
+  };
+  const handleExportPdfSingle = async (label: any) => {
+    setIsExportingSinglePdf(label.id);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: html2canvas } = await import('html2canvas');
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+        compress: true
+      });
+
+      // We'll use a hidden container to render exactly one A4 page for this label
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'fixed';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      document.body.appendChild(tempContainer);
+
+      // We need to render A5PrintLayout with just this one label
+      // Since we can't easily render React to DOM here without a portal or mounting, 
+      // we'll rely on the fact that we can target the existing preview if we want, 
+      // but the preview is SCALED. 
+      // Instead, we'll use the 'print' tab's container but filter it.
+      // Actually, let's just use the hidden container approach with a dedicated ref.
+
+      const singlePage = singlePrintRef.current;
+      if (!singlePage) return;
+
+      const canvas = await html2canvas(singlePage, {
+        scale: 2.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        windowWidth: 794,
+        windowHeight: 1123,
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 1.0);
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297, undefined, 'SLOW');
+      pdf.save(`Ace-Label-${label.party}-${label.id}.pdf`);
+    } catch (error: any) {
+      console.error('Single PDF Export Error:', error);
+      alert('Error: ' + error.message);
+    } finally {
+      setIsExportingSinglePdf(null);
+    }
+  };
+
+  const handlePrintSingle = (label: any) => {
+    const singlePage = singlePrintRef.current;
+    if (!singlePage) return;
+
+    const printWindow = window.open('', '', 'width=1200,height=800');
+    if (printWindow) {
+      const content = singlePage.innerHTML;
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print Label - ${label.party}</title>
+            <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+            <style>
+              @page { size: A4 portrait; margin: 0; }
+              body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; }
+              .print-container { width: 210mm; min-height: 297mm; margin: 0 auto; background: white; }
+            </style>
+          </head>
+          <body>
+            <div class="print-container">${content}</div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print();
+          printWindow.close();
+        }, 500);
+      };
     }
   };
 
@@ -287,8 +368,8 @@ export default function Home() {
       <header className="sticky top-0 z-50 border-b border-blue-100 bg-white/95 backdrop-blur-md shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 group cursor-default">
-              <div className="relative w-10 h-10 sm:w-12 sm:h-12 p-2 bg-white rounded-xl shadow-xl shadow-blue-600/20 border-2 border-blue-50 group-hover:scale-110 transition-transform animate-float overflow-hidden">
+            <div className="flex items-center gap-2 sm:gap-3 group cursor-default">
+              <div className="relative w-9 h-9 sm:w-12 sm:h-12 p-1.5 bg-white rounded-lg sm:rounded-xl shadow-lg shadow-blue-600/10 border border-blue-50 group-hover:scale-105 transition-transform overflow-hidden">
                 <Image
                   src="/logo1.png"
                   alt="Logo"
@@ -297,24 +378,24 @@ export default function Home() {
                   priority
                 />
               </div>
-              <div>
-                <h1 className="text-xl sm:text-3xl font-black tracking-tight text-gradient">
-                  Label Printing System
+              <div className="flex flex-col">
+                <h1 className="text-lg sm:text-3xl font-black tracking-tight text-gradient leading-none mb-0.5 sm:mb-1">
+                  Label Printing
                 </h1>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                  ACE Professional Warehouse
+                <p className="text-[8px] sm:text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                  <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-green-500 animate-pulse" />
+                  Professional
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="hidden sm:flex flex-col items-end mr-4">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Current Session</span>
+              <div className="hidden sm:flex flex-col items-end mr-2">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Session</span>
                 <span className="text-xs font-bold text-blue-900">{new Date().toLocaleDateString('en-IN')}</span>
               </div>
-              <div className="glass px-4 py-2 rounded-xl flex items-center gap-2 border-blue-100">
-                <span className="flex h-2 w-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                <span className="text-sm font-black text-blue-900">{selectedLabels.size} Labels</span>
+              <div className="glass px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl flex items-center gap-2 border-blue-100 shadow-sm">
+                <span className="flex h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
+                <span className="text-xs sm:text-sm font-black text-blue-900 leading-none">{selectedLabels.size} <span className="hidden sm:inline">Labels</span></span>
               </div>
             </div>
           </div>
@@ -323,39 +404,39 @@ export default function Home() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-          <TabsList className="grid w-full grid-cols-3 max-w-2xl mx-auto mb-10 bg-blue-50 p-1 rounded-xl border border-blue-100 shadow-sm">
+          <TabsList className="sticky top-[68px] z-40 grid w-full grid-cols-3 max-w-2xl mx-auto mb-6 sm:mb-10 bg-white/70 backdrop-blur-lg p-1 rounded-xl border border-blue-100 shadow-md">
             <TabsTrigger
               value="select"
-              className="flex items-center justify-center gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 rounded-lg font-bold py-2.5 text-xs sm:text-sm"
+              className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 rounded-lg font-bold py-2 sm:py-2.5 text-[10px] sm:text-sm"
             >
-              <Box className="w-4 h-4" />
-              Select Orders
+              <Box className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="leading-none">Orders</span>
             </TabsTrigger>
             <TabsTrigger
               value="preview"
-              className="flex items-center justify-center gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 rounded-lg font-bold py-2.5 text-xs sm:text-sm"
+              className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 rounded-lg font-bold py-2 sm:py-2.5 text-[10px] sm:text-sm"
             >
-              <LayoutGrid className="w-4 h-4" />
-              Preview Labels
+              <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="leading-none">Preview</span>
             </TabsTrigger>
             <TabsTrigger
               value="print"
-              className="flex items-center justify-center gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 rounded-lg font-bold py-2.5 text-xs sm:text-sm"
+              className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 data-[state=active]:bg-white data-[state=active]:text-blue-700 data-[state=active]:shadow-sm transition-all duration-200 rounded-lg font-bold py-2 sm:py-2.5 text-[10px] sm:text-sm"
             >
-              <Printer className="w-4 h-4" />
-              Print Setup
+              <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="leading-none">Print</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Tab 1: Select Orders */}
           <TabsContent value="select" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-              {/* Filters Sidebar */}
-              <div className="lg:col-span-1">
+            <div className="flex flex-col lg:grid lg:grid-cols-4 gap-6">
+              {/* Desktop Filters Sidebar */}
+              <div className="hidden lg:block lg:col-span-1">
                 <Card className="sticky top-32 premium-card">
-                  <CardHeader className="bg-gradient-to-br from-blue-600 to-blue-800 text-white rounded-t-2xl">
-                    <CardTitle className="flex items-center gap-2 text-lg font-black tracking-tight">
-                      <FileText className="w-5 h-5 text-blue-200" />
+                  <CardHeader className="bg-gradient-to-br from-blue-600 to-blue-800 text-white rounded-t-2xl px-5 py-4">
+                    <CardTitle className="flex items-center gap-2 text-md font-black tracking-tight">
+                      <SlidersHorizontal className="w-4 h-4 text-blue-200" />
                       Quick Filters
                     </CardTitle>
                   </CardHeader>
@@ -365,18 +446,82 @@ export default function Home() {
                       selectedCity={selectedCity}
                       selectedParty={selectedParty}
                       selectedItem={selectedItem}
+                      searchQuery={searchQuery}
                       language="en"
                       onCityChange={setSelectedCity}
                       onPartyChange={setSelectedParty}
                       onItemChange={setSelectedItem}
+                      onSearchQueryChange={setSearchQuery}
                       onClearFilters={handleClearFilters}
                     />
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Data Table */}
-              <div className="lg:col-span-3 pb-20">
+              {/* Data Table Area */}
+              <div className="lg:col-span-3 space-y-4">
+                {/* Mobile Filter Row */}
+                <div className="lg:hidden flex items-center justify-between gap-3 mb-2">
+                  <div className="flex-1">
+                    <h2 className="text-lg font-black text-blue-900 tracking-tight flex items-center gap-2">
+                      <Box className="w-5 h-5 text-blue-600" />
+                      Orders List
+                    </h2>
+                  </div>
+
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" className="rounded-xl border-blue-200 flex items-center gap-2 font-bold text-blue-700 bg-white shadow-sm">
+                        <Filter className="w-4 h-4" />
+                        Filters
+                        {(selectedCity || selectedParty || selectedItem) && (
+                          <span className="w-2 h-2 rounded-full bg-orange-500" />
+                        )}
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent side="bottom" className="rounded-t-[2rem] h-[60vh] px-6 py-8">
+                      <SheetHeader className="mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
+                            <SlidersHorizontal className="w-5 h-5 text-white" />
+                          </div>
+                          <div>
+                            <SheetTitle className="text-xl font-black text-blue-900">Search Filters</SheetTitle>
+                            <SheetDescription className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                              Refine your order selection
+                            </SheetDescription>
+                          </div>
+                        </div>
+                      </SheetHeader>
+                      <div className="mt-4">
+                        <FilterPanel
+                          labels={labels}
+                          selectedCity={selectedCity}
+                          selectedParty={selectedParty}
+                          selectedItem={selectedItem}
+                          searchQuery={searchQuery}
+                          language="en"
+                          onCityChange={setSelectedCity}
+                          onPartyChange={setSelectedParty}
+                          onItemChange={setSelectedItem}
+                          onSearchQueryChange={setSearchQuery}
+                          onClearFilters={handleClearFilters}
+                        />
+                        <div className="mt-8">
+                          <Button
+                            className="w-full h-12 rounded-xl bg-blue-600 font-bold"
+                            onClick={() => {
+                              // Standard behavior is just closing, which SheetTrigger handles if wrapped correctly or if we use manual control
+                              // but here we just want a "Show Results" feel
+                            }}
+                          >
+                            Apply Filters & Close
+                          </Button>
+                        </div>
+                      </div>
+                    </SheetContent>
+                  </Sheet>
+                </div>
                 <Card className="premium-card">
                   <CardHeader className="bg-gradient-to-br from-blue-50 to-white border-b border-blue-100 rounded-t-2xl">
                     <CardTitle className="text-blue-900 flex items-center justify-between">
@@ -508,13 +653,59 @@ export default function Home() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-8 px-4 sm:px-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center">
                     {selectedLabelDetails.map((label) => (
-                      <LabelCard
+                      <div
                         key={label.id}
-                        label={label}
-                        languages={Array.from(labelLanguages)}
-                      />
+                        className="group relative bg-white shadow-xl border border-gray-200 overflow-hidden origin-top transition-all hover:shadow-2xl hover:-translate-y-1"
+                        style={{
+                          width: '100%',
+                          maxWidth: '420px',
+                          aspectRatio: '210 / 148.5', // Nicer preview proportions
+                          height: 'auto'
+                        }}
+                      >
+                        <PreviewLabelCard
+                          label={label}
+                          languages={Array.from(labelLanguages)}
+                        />
+
+                        {/* Single Action Overlay */}
+                        <div className="absolute inset-0 bg-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 pointer-events-none">
+                          <div className="flex gap-2 pointer-events-auto scale-90 sm:scale-100">
+                            <Button
+                              size="sm"
+                              onClick={() => handlePrintSingle(label)}
+                              className="bg-white text-blue-600 hover:bg-blue-50 border border-blue-200 shadow-lg font-bold"
+                            >
+                              <Printer className="w-4 h-4 mr-2" />
+                              Print
+                            </Button>
+                            <Button
+                              size="sm"
+                              disabled={isExportingSinglePdf === label.id}
+                              onClick={() => handleExportPdfSingle(label)}
+                              className="bg-blue-600 text-white hover:bg-blue-700 shadow-lg font-bold"
+                            >
+                              {isExportingSinglePdf === label.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <>
+                                  <Download className="w-4 h-4 mr-2" />
+                                  PDF
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Reference for capturing single label (Hidden) */}
+                        <div className="hidden">
+                          <div ref={singlePrintRef}>
+                            <A5PrintLayout labels={[label]} languages={Array.from(labelLanguages)} />
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </CardContent>
@@ -569,15 +760,41 @@ export default function Home() {
                     <CardTitle className="text-blue-900 font-black tracking-tight">Paper Setup (A5 Size Labels)</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-8">
-                    <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100 overflow-auto max-h-[600px] no-scrollbar">
-                      <div ref={printRef} data-print-container className="bg-white shadow-2xl mx-auto origin-top transition-transform">
-                        <A5PrintLayout labels={selectedLabelDetails} languages={Array.from(labelLanguages)} />
+                    <div className="bg-slate-50 p-2 sm:p-8 rounded-2xl border border-slate-100 overflow-hidden min-h-[400px] flex justify-center">
+                      <div
+                        className="origin-top transition-all duration-500 ease-in-out preview-scaler"
+                        style={{
+                          width: '210mm',
+                        }}
+                      >
+                        <div ref={printRef} data-print-container className="bg-white shadow-2xl">
+                          <A5PrintLayout labels={selectedLabelDetails} languages={Array.from(labelLanguages)} />
+                        </div>
                       </div>
+
+                      <style jsx>{`
+                        .preview-scaler {
+                          transform: scale(0.32);
+                          margin-bottom: calc(297mm * (0.32 - 1));
+                        }
+                        @media (min-width: 480px) {
+                          .preview-scaler {
+                            transform: scale(0.4);
+                            margin-bottom: calc(297mm * (0.4 - 1));
+                          }
+                        }
+                        @media (min-width: 640px) {
+                          .preview-scaler {
+                            transform: scale(0.5);
+                            margin-bottom: calc(297mm * (0.5 - 1));
+                          }
+                        }
+                      `}</style>
                     </div>
                     <div className="mt-8 p-5 glass border-blue-100 rounded-2xl">
                       <p className="text-sm text-blue-900 font-medium leading-relaxed">
                         <span className="font-black text-blue-700 mr-2 uppercase tracking-widest text-xs">Pro Tip:</span>
-                        This layout displays <strong>4 labels per A4 page</strong>. For perfect results, ensure your printer is set to "Portrait" orientation and "A4" paper size in the system print dialog.
+                        This layout displays <strong>2 labels per A4 page (Top & Bottom)</strong>. Perfect for cutting from the middle to get two identical A5 labels.
                       </p>
                     </div>
                   </CardContent>

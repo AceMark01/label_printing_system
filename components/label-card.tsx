@@ -13,12 +13,12 @@ interface LabelCardProps {
 const labelTranslations: Record<Language, Record<string, string>> = {
   en: { party: 'PARTY', item: 'ITEM', qty: 'QTY' },
   hi: { party: 'पार्टी', item: 'आइटम', qty: 'मात्रा' },
-  ta: { party: 'கட்சி', item: 'பொருள்', qty: 'அளவு' },
-  te: { party: 'పార్టీ', item: 'వస్తువు', qty: 'పరిమాణం' },
-  mr: { party: 'पार्टी', item: 'वस्तू', qty: 'प्रमाण' },
-  gu: { party: 'પક્ષ', item: 'વસ્તુ', qty: 'જથ્થો' },
-  kn: { party: 'ಪಕ್ಷ', item: 'ವಸ್ತು', qty: 'ಪ್ರಮಾಣ' },
-  od: { party: 'ପାର୍ଟି', item: 'ଜିନିଷ', qty: 'ପରିମାଣ' },
+  ta: { party: 'பார்ட்டி', item: 'ஐட்டம்', qty: 'அளவு' },
+  te: { party: 'పార్టీ', item: 'ఐటమ్', qty: 'పరిమాణం' },
+  mr: { party: 'पार्टी', item: 'आयटम', qty: 'प्रमाण' },
+  gu: { party: 'પાર્ટી', item: 'આઈટમ', qty: 'જથ્થો' },
+  kn: { party: 'ಪಾರ್ಟಿ', item: 'ಐಟಂ', qty: 'ಪ್ರಮಾಣ' },
+  od: { party: 'ପାର୍ଟି', item: 'ଆଇଟମ', qty: 'ପରିମାଣ' },
 };
 
 export function LabelCard({ label, languages }: LabelCardProps) {
@@ -163,13 +163,6 @@ export function LabelCard({ label, languages }: LabelCardProps) {
           })}
         </div>
 
-        {/* Remark - Single appearance at bottom */}
-        {label.remark && (
-          <div className="mt-3 bg-orange-50 rounded-lg p-2 border border-orange-100">
-            <p className="text-[9px] font-bold text-orange-600 uppercase tracking-wider leading-none mb-1">Remark</p>
-            <p className="text-[11px] font-bold text-gray-800">{label.remark}</p>
-          </div>
-        )}
 
         {/* Footer */}
         <div className="mt-3 sm:mt-4 pt-2 border-t border-blue-50 flex justify-between items-center text-[9px] print:mt-3 print:pt-2">

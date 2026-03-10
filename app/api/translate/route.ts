@@ -12,8 +12,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ translatedText: text });
         }
 
+        // Map application language codes to Google Translate supported codes if different
+        let apiTarget = target;
+        if (target === 'od') apiTarget = 'or';
+
         // Google Translate free API (gtx client)
-        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${target}&dt=t&q=${encodeURIComponent(text)}`;
+        const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${apiTarget}&dt=t&q=${encodeURIComponent(text)}`;
 
         const response = await fetch(url);
         if (!response.ok) {

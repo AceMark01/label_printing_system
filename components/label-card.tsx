@@ -19,7 +19,7 @@ const labelTranslations: Record<Language, Record<string, string>> = {
   },
 
   hi: {
-    party: 'पार्टी नेम',
+    party: 'पार्टी नाम',
     item: 'प्रोडक्ट',
     qty: 'क्वांटिटी',
     bundles: 'बंडल',
@@ -183,7 +183,7 @@ export function LabelCard({ label, languages }: LabelCardProps) {
             const itemName = getItemName(lang);
 
             return (
-              <div key={lang} className={`${!isLast ? 'pb-4 border-b border-dashed border-gray-100 print:border-black' : ''} space-y-1`}>
+              <div key={lang} lang={lang} className={`${!isLast ? 'pb-4 border-b border-dashed border-gray-100 print:border-black' : ''} space-y-1`}>
                 {/* Party Name */}
                 <p className="leading-tight break-words">
                   <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wider">{t.party}: </span>

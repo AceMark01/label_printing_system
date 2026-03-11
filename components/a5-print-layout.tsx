@@ -57,28 +57,6 @@ export function A5PrintLayout({ labels, languages }: A5PrintLayoutProps) {
         </div>
       ))}
 
-      {/* Print Styles */}
-      <style>{`
-        @media print {
-          * { 
-            -webkit-print-color-adjust: exact !important; 
-            color-adjust: exact !important; 
-            box-sizing: border-box !important;
-          }
-          html, body { 
-            margin: 0 !important; 
-            padding: 0 !important; 
-            width: 210mm !important;
-            height: 297mm !important;
-            overflow: visible !important;
-          }
-          @page { 
-            size: A4 portrait; 
-            margin: 0 !important; 
-          }
-          .bg-slate-100 { background: white !important; padding: 0 !important; }
-        }
-      `}</style>
     </div>
   );
 }

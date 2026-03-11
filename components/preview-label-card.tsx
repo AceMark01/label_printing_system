@@ -17,9 +17,9 @@ const labelTranslations: Record<Language, Record<string, string>> = {
         city: 'City'
     },
     hi: {
-        party: 'पार्टी नेम',
+        party: 'पार्टी नाम',
         item: 'प्रोडक्ट',
-        qty: 'क्வாंटीटी',
+        qty: 'क्वांटिटी',
         bundles: 'बंडल',
         city: 'सिटी'
     },

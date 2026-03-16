@@ -62,11 +62,6 @@ export async function POST(request: Request) {
         // Map languages to Google Transliteration Input Tool codes
         const itcMap: Record<string, string> = {
             hi: 'hi-t-i0-und',
-            ta: 'ta-t-i0-und',
-            te: 'te-t-i0-und',
-            mr: 'mr-t-i0-und',
-            gu: 'gu-t-i0-und',
-            kn: 'kn-t-i0-und',
             od: 'or-t-i0-und',
             or: 'or-t-i0-und'
         };

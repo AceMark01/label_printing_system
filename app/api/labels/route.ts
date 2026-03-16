@@ -45,38 +45,51 @@ export async function GET(request: NextRequest) {
         // Ensure rawData is an array
         const allData = Array.isArray(rawData) ? rawData : (rawData?.DataRec || rawData?.data || []);
 
+        // Helper to get value from item with flexible key lookup
+        const getValue = (obj: any, targetKey: string) => {
+            if (obj[targetKey] !== undefined) return obj[targetKey];
+            // Case-insensitive lookup
+            const lowerTarget = targetKey.toLowerCase();
+            const foundKey = Object.keys(obj).find(k => k.toLowerCase() === lowerTarget);
+            if (foundKey) return obj[foundKey];
+            // Lookup with/without spaces
+            const noSpaceTarget = lowerTarget.replace(/\s+/g, '');
+            const foundNoSpaceKey = Object.keys(obj).find(k => k.toLowerCase().replace(/\s+/g, '') === noSpaceTarget);
+            return foundNoSpaceKey ? obj[foundNoSpaceKey] : undefined;
+        };
+
         // Map the data to the expected Label format prioritizing user requested fields
-        const mappedData = allData.map((item: any, index: number) => ({
-            id: item.OrderNo || item.SOrderNo || item['S Order No'] || `row-${index}`,
-            city: item.City || '',
-            party: item.AccountName || item.Party || item['Account Name'] || '',
-            item: item.ProductName || item.Item || item['Product Name'] || '',
-            quantity: parseInt(item.DispatchQty || item.Qty || item['Dispatch Qty']) || 0,
-            remark: item.Remark || '',
-            bdlQty: item.DispatchBdlQty || item['Dispatch Bdl Qty'] || '',
-            date: new Date().toISOString().split('T')[0],
-            // Pre-translated names from sheet
-            partyNames: {
-                hi: item['Party in hindi'] || item.PartyInHindi || '',
-                od: item['Party in oriya'] || item.PartyInOriya || '',
-            },
-            itemNames: {
-                hi: item['Item in hindi'] || item.ItemInHindi || '',
-                od: item['Item in oriya'] || item.ItemInOriya || '',
-            },
-            // Keep original fields plus the specific requested ones
-            originalData: {
-                ...item, // Include all raw fields
-                ProductName: item.ProductName,
-                AccountName: item.AccountName,
-                Remark: item.Remark,
-                DispatchQty: item.DispatchQty,
-                DispatchBdlQty: item.DispatchBdlQty,
-                SOrderNo: item.SOrderNo,
-                OrderNo: item.OrderNo,
-                City: item.City
-            }
-        }));
+        const mappedData = allData.map((item: any, index: number) => {
+            const orderNo = getValue(item, 'SOrderNo') || getValue(item, 'OrderNo') || 'no-order';
+            return {
+                // Combine OrderNo with index to ensure uniqueness across all rows
+                id: `${orderNo}-${index}`,
+                city: getValue(item, 'City') || '',
+                party: getValue(item, 'AccountName') || '',
+                item: getValue(item, 'ProductName') || '',
+                quantity: parseInt(getValue(item, 'DispatchQty')) || 0,
+                remark: getValue(item, 'Remark') || '',
+                bdlQty: getValue(item, 'DispatchBdlQty') || '',
+                date: new Date().toISOString().split('T')[0],
+                // Pre-translated names from sheet
+                partyNames: {
+                    hi: getValue(item, 'Party in hindi') || '',
+                    od: getValue(item, 'Party in oriya') || '',
+                },
+                itemNames: {
+                    hi: getValue(item, 'Item in hindi') || '',
+                    od: getValue(item, 'Item in oriya') || '',
+                },
+                cityNames: {
+                    hi: getValue(item, 'City in Hindi') || '',
+                    od: getValue(item, 'City in oriya') || '',
+                },
+                // Keep original fields
+                originalData: {
+                    ...item
+                }
+        };
+        });
 
         const total = mappedData.length;
         const paginatedData = mappedData.slice(offset, offset + limit);

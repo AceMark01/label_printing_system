@@ -19,7 +19,7 @@ import { Download, Printer, LayoutGrid, FileText, Box, Loader2, Filter, SlidersH
 import type { Language } from '@/lib/types';
 import { useCallback } from 'react';
 
-const allLanguages: Language[] = ['en', 'hi', 'ta', 'te', 'mr', 'gu', 'kn', 'od'];
+const allLanguages: Language[] = ['en', 'hi', 'od'];
 
 // Trusted Types Bypass for Print Preview and html2canvas/jspdf compatibility
 if (typeof window !== 'undefined' && (window as any).trustedTypes && (window as any).trustedTypes.createPolicy) {
@@ -867,7 +867,7 @@ export default function Home() {
                 <CardHeader className="bg-gradient-to-br from-blue-600 to-blue-800 text-white rounded-t-2xl">
                   <CardTitle className="font-black tracking-tight flex items-center gap-3">
                     <span className="p-2 glass-dark rounded-lg">🌐</span>
-                    Translation Settings
+                    Language Settings
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-6">

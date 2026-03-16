@@ -17,7 +17,7 @@ export interface Label {
   originalData?: Record<string, any>;
 }
 
-export type Language = 'en' | 'hi' | 'ta' | 'te' | 'mr' | 'gu' | 'kn' | 'od';
+export type Language = 'en' | 'hi' | 'od';
 export type LanguageKey = Language;
 
 export interface LabelTranslations {

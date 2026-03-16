@@ -47,7 +47,7 @@ export function DataTable({
           <Checkbox
             checked={selectedIds.size > 0 && selectedIds.size === safeLabels.length}
             onCheckedChange={handleSelectAll}
-            className="w-5 h-5"
+            className="w-5 h-5 border-blue-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
           />
           <span className="text-sm font-bold text-blue-900">Select All ({safeLabels.length})</span>
         </label>
@@ -102,7 +102,7 @@ export function DataTable({
                 <Checkbox
                   checked={selectedIds.has(label.id)}
                   onCheckedChange={() => handleToggleRow(label.id)}
-                  className="w-6 h-6 border-2 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 mt-1"
+                  className="w-6 h-6 border-blue-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 mt-1 shadow-sm"
                 />
               </div>
             </div>
@@ -121,7 +121,7 @@ export function DataTable({
                     checked={selectedIds.size > 0 && selectedIds.size === safeLabels.length}
                     onCheckedChange={handleSelectAll}
                     aria-label="Select all"
-                    className="border-blue-200 data-[state=checked]:bg-white data-[state=checked]:text-blue-600"
+                    className="border-white/50 bg-white/10 data-[state=checked]:bg-white data-[state=checked]:text-blue-600 shadow-inner"
                   />
                 </th>
                 <th className="px-3 sm:px-4 py-4 text-left font-black text-white text-[10px] sm:text-xs uppercase tracking-[0.2em]">
@@ -164,6 +164,7 @@ export function DataTable({
                         checked={selectedIds.has(label.id)}
                         onCheckedChange={() => handleToggleRow(label.id)}
                         aria-label={`Select ${label.city}`}
+                        className="border-blue-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 shadow-sm"
                       />
                     </td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-500">

@@ -9,6 +9,7 @@ export interface Label {
   partyNames?: LabelNames;
   item: string;
   itemNames?: LabelNames;
+  cityNames?: LabelNames;
   quantity: number;
   remark?: string;
   bdlQty?: string | number;

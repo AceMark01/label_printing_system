@@ -53,7 +53,14 @@ export default function Home() {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
-  const [labelLanguages, setLabelLanguages] = useState<Set<Language>>(new Set(['hi']));
+  const [labelLanguages, setLabelLanguages] = useState<Set<Language>>(new Set(['hi', 'od']));
+  const [fieldVisibility, setFieldVisibility] = useState<Record<Language, { product: boolean, quantity: boolean }>>(
+    allLanguages.reduce((acc, lang) => ({
+      ...acc,
+      [lang]: { product: true, quantity: true }
+    }), {} as Record<Language, { product: boolean, quantity: boolean }>)
+  );
+  const [bundleOverrides, setBundleOverrides] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<'select' | 'preview' | 'print'>('select');
 
   const printRef = useRef<HTMLDivElement>(null);
@@ -150,8 +157,13 @@ export default function Home() {
 
   // Get selected label details
   const selectedLabelDetails = useMemo(() => {
-    return filteredLabels.filter((label) => selectedLabels.has(label.id));
-  }, [filteredLabels, selectedLabels]);
+    return filteredLabels
+      .filter((label) => selectedLabels.has(label.id))
+      .map(label => ({
+        ...label,
+        bdlQty: bundleOverrides[label.id] !== undefined ? bundleOverrides[label.id] : label.bdlQty
+      }));
+  }, [filteredLabels, selectedLabels, bundleOverrides]);
 
   const handleClearFilters = () => {
     setSelectedCity(null);
@@ -175,6 +187,23 @@ export default function Home() {
       newLanguages.add(lang);
       setLabelLanguages(newLanguages);
     }
+  };
+
+  const toggleFieldVisibility = (lang: Language, field: 'product' | 'quantity') => {
+    setFieldVisibility(prev => ({
+      ...prev,
+      [lang]: {
+        ...prev[lang],
+        [field]: !prev[lang][field]
+      }
+    }));
+  };
+  
+  const handleUpdateBundle = (labelId: string, value: string) => {
+    setBundleOverrides(prev => ({
+      ...prev,
+      [labelId]: value
+    }));
   };
 
   const handlePrint = () => {
@@ -277,32 +306,46 @@ export default function Home() {
               .p-5 { padding: 1.25rem !important; }
               .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
               .pt-2 { padding-top: 0.5rem !important; }
+              .pt-4 { padding-top: 1rem !important; }
+              .pt-5 { padding-top: 1.25rem !important; }
+              .pb-2 { padding-bottom: 0.5rem !important; }
+              .pb-3 { padding-bottom: 0.75rem !important; }
               .pb-4 { padding-bottom: 1rem !important; }
+              .mb-1 { margin-bottom: 0.25rem !important; }
+              .mb-2 { margin-bottom: 0.5rem !important; }
               .pl-4 { padding-left: 1rem !important; }
+              .pl-8 { padding-left: 2rem !important; }
               .gap-1 { gap: 0.25rem !important; }
               .gap-2 { gap: 0.5rem !important; }
               .gap-3 { gap: 0.75rem !important; }
+              .gap-4 { gap: 1rem !important; }
               .gap-6 { gap: 1.5rem !important; }
+              .gap-10 { gap: 2.5rem !important; }
               .space-y-1 > * + * { margin-top: 0.25rem !important; }
+              .space-y-2 > * + * { margin-top: 0.5rem !important; }
               .space-y-4 > * + * { margin-top: 1rem !important; }
               .space-y-6 > * + * { margin-top: 1.5rem !important; }
               
               /* Typography Utilities */
               .text-black { color: #000000 !important; }
+              .text-white { color: #ffffff !important; }
               .text-gray-900 { color: #111827 !important; }
               .text-gray-800 { color: #1f2937 !important; }
               .text-gray-700 { color: #374151 !important; }
               .text-gray-600 { color: #4b5563 !important; }
               .text-gray-500 { color: #6b7280 !important; }
-              .text-gray-400 { color: #9ca3af !important; }
+              .text-gray-400, .text-grey-400 { color: #9ca3af !important; }
               .font-bold { font-weight: 700 !important; }
               .font-black { font-weight: 900 !important; }
               .uppercase { text-transform: uppercase !important; }
               .italic { font-style: italic !important; }
+              .tracking-tight { letter-spacing: -0.025em !important; }
               .tracking-wider { letter-spacing: 0.05em !important; }
               .tracking-widest { letter-spacing: 0.1em !important; }
               .tabular-nums { font-variant-numeric: tabular-nums !important; }
               .leading-tight { line-height: 1.25 !important; }
+              .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap !important; }
+              .break-words { overflow-wrap: break-word !important; }
               
               .text-\[7px\] { font-size: 7px !important; }
               .text-\[10px\] { font-size: 10px !important; }
@@ -454,32 +497,46 @@ export default function Home() {
             .p-5 { padding: 1.25rem !important; }
             .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
             .pt-2 { padding-top: 0.5rem !important; }
+            .pt-4 { padding-top: 1rem !important; }
+            .pt-5 { padding-top: 1.25rem !important; }
+            .pb-2 { padding-bottom: 0.5rem !important; }
+            .pb-3 { padding-bottom: 0.75rem !important; }
             .pb-4 { padding-bottom: 1rem !important; }
+            .mb-1 { margin-bottom: 0.25rem !important; }
+            .mb-2 { margin-bottom: 0.5rem !important; }
             .pl-4 { padding-left: 1rem !important; }
+            .pl-8 { padding-left: 2rem !important; }
             .gap-1 { gap: 0.25rem !important; }
             .gap-2 { gap: 0.5rem !important; }
             .gap-3 { gap: 0.75rem !important; }
+            .gap-4 { gap: 1rem !important; }
             .gap-6 { gap: 1.5rem !important; }
+            .gap-10 { gap: 2.5rem !important; }
             .space-y-1 > * + * { margin-top: 0.25rem !important; }
+            .space-y-2 > * + * { margin-top: 0.5rem !important; }
             .space-y-4 > * + * { margin-top: 1rem !important; }
             .space-y-6 > * + * { margin-top: 1.5rem !important; }
             
             /* Typography Utilities */
             .text-black { color: #000000 !important; }
+            .text-white { color: #ffffff !important; }
             .text-gray-900 { color: #111827 !important; }
             .text-gray-800 { color: #1f2937 !important; }
             .text-gray-700 { color: #374151 !important; }
             .text-gray-600 { color: #4b5563 !important; }
             .text-gray-500 { color: #6b7280 !important; }
-            .text-gray-400 { color: #9ca3af !important; }
+            .text-gray-400, .text-grey-400 { color: #9ca3af !important; }
             .font-bold { font-weight: 700 !important; }
             .font-black { font-weight: 900 !important; }
             .uppercase { text-transform: uppercase !important; }
             .italic { font-style: italic !important; }
+            .tracking-tight { letter-spacing: -0.025em !important; }
             .tracking-wider { letter-spacing: 0.05em !important; }
             .tracking-widest { letter-spacing: 0.1em !important; }
             .tabular-nums { font-variant-numeric: tabular-nums !important; }
             .leading-tight { line-height: 1.25 !important; }
+            .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap !important; }
+            .break-words { overflow-wrap: break-word !important; }
             
             .text-\[7px\] { font-size: 7px !important; }
             .text-\[10px\] { font-size: 10px !important; }
@@ -835,20 +892,19 @@ export default function Home() {
 
               {/* Label Preview */}
               {selectedLabelDetails.length > 0 ? (
-                <Card className="premium-card">
-                  <CardHeader className="bg-gradient-to-br from-blue-50 to-white border-b border-blue-100 rounded-t-2xl">
-                    <CardTitle className="text-blue-900 flex items-center justify-between">
+                <div className="flex flex-col lg:flex-row gap-8">
+                  <div className="flex-1 space-y-4">
+                    <header className="flex items-center justify-between px-2">
                       <div className="flex items-center gap-3">
                         <div className="w-1.5 h-6 bg-blue-600 rounded-full" />
-                        <span className="font-black tracking-tight">Live Preview</span>
+                        <span className="text-lg font-black tracking-tight text-blue-900">Live Preview</span>
                         <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold">
                           {selectedLabelDetails.length} Labels
                         </span>
                       </div>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-8 px-4 sm:px-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 justify-items-center">
+                    </header>
+
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                       {selectedLabelDetails.map((label) => (
                         <div
                           key={label.id}
@@ -856,13 +912,16 @@ export default function Home() {
                           style={{
                             width: '100%',
                             maxWidth: '420px',
-                            aspectRatio: '210 / 148.5', // Nicer preview proportions
+                            aspectRatio: '210 / 148.5',
                             height: 'auto'
                           }}
                         >
                           <PreviewLabelCard
                             label={label}
                             languages={Array.from(labelLanguages)}
+                            fieldVisibility={fieldVisibility}
+                            onToggleField={toggleFieldVisibility}
+                            onUpdateBundle={handleUpdateBundle}
                           />
 
                           {/* Single Action Overlay */}
@@ -897,14 +956,18 @@ export default function Home() {
                           {/* Reference for capturing single label (Hidden) */}
                           <div className="hidden">
                             <div ref={singlePrintRef}>
-                              <A5PrintLayout labels={[label]} languages={Array.from(labelLanguages)} />
+                              <A5PrintLayout
+                                labels={[label]}
+                                languages={Array.from(labelLanguages)}
+                                fieldVisibility={fieldVisibility}
+                              />
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ) : (
                 <Card className="border-dashed border-2 border-gray-300 shadow-lg">
                   <CardContent className="pt-12 pb-12 text-center">
@@ -963,7 +1026,11 @@ export default function Home() {
                           }}
                         >
                           <div ref={printRef} data-print-container className="bg-white shadow-2xl">
-                            <A5PrintLayout labels={selectedLabelDetails} languages={Array.from(labelLanguages)} />
+                            <A5PrintLayout
+                              labels={selectedLabelDetails}
+                              languages={Array.from(labelLanguages)}
+                              fieldVisibility={fieldVisibility}
+                            />
                           </div>
                         </div>
                       </div>
@@ -1003,9 +1070,17 @@ export default function Home() {
     */}
       <div className="hidden print:block absolute top-0 left-0 w-full bg-white z-[9999]">
         {printingLabel ? (
-          <A5PrintLayout labels={[printingLabel]} languages={Array.from(labelLanguages)} />
+          <A5PrintLayout
+            labels={[printingLabel]}
+            languages={Array.from(labelLanguages)}
+            fieldVisibility={fieldVisibility}
+          />
         ) : (
-          <A5PrintLayout labels={selectedLabelDetails} languages={Array.from(labelLanguages)} />
+          <A5PrintLayout
+            labels={selectedLabelDetails}
+            languages={Array.from(labelLanguages)}
+            fieldVisibility={fieldVisibility}
+          />
         )}
       </div>
     </div>

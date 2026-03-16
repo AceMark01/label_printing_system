@@ -7,6 +7,9 @@ import type { Label, Language } from '@/lib/types';
 interface PreviewLabelCardProps {
     label: Label;
     languages: Language[];
+    fieldVisibility?: Record<Language, { product: boolean, quantity: boolean }>;
+    onToggleField?: (lang: Language, field: 'product' | 'quantity') => void;
+    onUpdateBundle?: (labelId: string, value: string) => void;
 }
 
 const labelTranslations: Record<Language, Record<string, string>> = {
@@ -67,7 +70,7 @@ const labelTranslations: Record<Language, Record<string, string>> = {
     }
 };
 
-export function PreviewLabelCard({ label, languages }: PreviewLabelCardProps) {
+export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleField, onUpdateBundle }: PreviewLabelCardProps) {
     const sortedLanguages = Array.from(languages).sort((a, b) => {
         if (a === 'hi') return -1;
         if (b === 'hi') return 1;
@@ -85,6 +88,10 @@ export function PreviewLabelCard({ label, languages }: PreviewLabelCardProps) {
             let changed = false;
 
             for (const lang of nonEnLangs) {
+                // Skip if we already have sheet data for this language
+                const hasSheetData = label.partyNames?.[lang] && label.itemNames?.[lang];
+                if (hasSheetData) continue;
+
                 if (!newTranslations[lang]) {
                     try {
                         const [partyRes, itemRes, cityRes] = await Promise.all([
@@ -120,65 +127,101 @@ export function PreviewLabelCard({ label, languages }: PreviewLabelCardProps) {
     const getFontSize = (text: string, baseSize: string, limit: number = 20) => {
         if (!text) return baseSize;
         const isMulti = sortedLanguages.length > 1;
-        if (text.length > limit * 2.5) return isMulti ? 'text-[8px] sm:text-[10px]' : 'text-[10px] sm:text-xs';
-        if (text.length > limit * 1.8) return isMulti ? 'text-[10px] sm:text-xs' : 'text-sm sm:text-lg';
-        if (text.length > limit) return isMulti ? 'text-xs sm:text-base' : 'text-lg sm:text-2xl';
+        // Adjusted thresholds and sizes for better space utilization
+        if (text.length > limit * 2.5) return isMulti ? 'text-[8px] sm:text-[10px]' : 'text-[12px] sm:text-sm';
+        if (text.length > limit * 1.8) return isMulti ? 'text-[10px] sm:text-xs' : 'text-base sm:text-xl';
+        if (text.length > limit) return isMulti ? 'text-xs sm:text-base' : 'text-xl sm:text-3xl';
         return baseSize;
     };
 
-    const getPartyName = (lang: Language) => lang === 'en' ? label.party : translations[lang]?.party || label.party;
-    const getItemName = (lang: Language) => lang === 'en' ? label.item : translations[lang]?.item || label.item;
-    const getCityName = (lang: Language) => lang === 'en' ? label.city : translations[lang]?.city || label.city;
+    const getPartyName = (lang: Language) => lang === 'en' ? label.party : (label.partyNames?.[lang] || translations[lang]?.party || label.party);
+    const getItemName = (lang: Language) => lang === 'en' ? label.item : (label.itemNames?.[lang] || translations[lang]?.item || label.item);
+    const getCityName = (lang: Language) => lang === 'en' ? label.city : (label.cityNames?.[lang] || translations[lang]?.city || label.city);
 
     const isMulti = sortedLanguages.length > 1;
 
     return (
         <div className="relative bg-white w-full h-full flex flex-col font-sans border border-gray-200 shadow-sm rounded-lg overflow-hidden">
-            {/* Premium Header - More compact if multi */}
-            <div className={`${isMulti ? 'h-10 sm:h-12' : 'h-14 sm:h-16'} bg-gradient-to-r from-gray-50 to-white border-b flex items-center px-4 transition-all`}>
-                <div className={`relative ${isMulti ? 'w-24 h-6 sm:w-28 sm:h-8' : 'w-32 h-10'}`}>
-                    <Image src="/ace.png" alt="Logo" fill className="object-contain object-left" priority />
-                </div>
-            </div>
 
-            {/* Content Area - Aggressively compacted for multi-language */}
-            <div className={`flex-1 ${isMulti ? 'p-2 sm:p-3' : 'p-4 sm:p-8'} flex flex-col justify-center bg-white overflow-hidden`}>
-                <div className={`w-full ${isMulti ? 'space-y-1 sm:space-y-2' : 'space-y-6 sm:space-y-10'}`}>
+            {/* Content Area - Balanced for better space utilization */}
+            <div className={`flex-1 ${isMulti ? 'p-1.5 sm:p-3' : 'p-3 sm:p-5'} flex flex-col justify-center bg-white overflow-hidden`}>
+                <div className={`w-full ${isMulti ? 'space-y-1 sm:space-y-2' : 'space-y-4 sm:space-y-6'}`}>
                     {sortedLanguages.map((lang, idx) => {
                         const t = labelTranslations[lang];
                         const isLast = idx === sortedLanguages.length - 1;
                         const partyName = getPartyName(lang);
                         const itemName = getItemName(lang);
 
-                        return (
-                            <div key={lang} className={`${!isLast && isMulti ? 'pb-1 sm:pb-2 border-b border-dashed border-gray-100' : !isLast ? 'pb-6 border-b border-dashed' : ''} space-y-0`}>
-                                <p className="leading-tight truncate sm:whitespace-normal">
-                                    <span className={`${isMulti ? 'text-[8px] sm:text-[10px]' : 'text-xs'} font-bold text-gray-500 uppercase tracking-widest`}>{t.party}: </span>
-                                    <span className={`font-black text-gray-900 ${getFontSize(partyName, isMulti ? 'text-sm sm:text-xl' : 'text-4xl', 20)}`}>
-                                        {partyName}
-                                    </span>
-                                </p>
-                                <p className="leading-tight truncate sm:whitespace-normal">
-                                    <span className={`${isMulti ? 'text-[8px] sm:text-[10px]' : 'text-xs'} font-bold text-gray-500 uppercase tracking-widest`}>{t.item}: </span>
-                                    <span className={`font-bold text-gray-800 ${getFontSize(itemName, isMulti ? 'text-xs sm:text-base' : 'text-2xl', 30)}`}>
-                                        {itemName}
-                                    </span>
-                                </p>
+                        const isTamil = lang === 'ta';
+                        const isHindi = lang === 'hi';
 
-                                <div className={`flex items-center gap-4 ${isMulti ? 'pt-0.5' : 'pt-2'}`}>
-                                    <div className="flex items-center gap-1 sm:gap-2">
-                                        <span className={`${isMulti ? 'text-[8px] sm:text-[10px]' : 'text-xs'} font-bold text-gray-400 uppercase tracking-widest`}>{t.qty}: </span>
-                                        <span className={`${isMulti ? 'text-lg sm:text-2xl' : 'text-3xl sm:text-6xl'} font-black text-black`}>{label.quantity}</span>
+                        return (
+                            <div key={lang} className={`${!isLast && isMulti ? (isTamil ? 'pb-1.5 sm:pb-2' : isHindi ? 'pb-2 sm:pb-3' : 'pb-1 sm:pb-2') + ' border-b border-dashed border-gray-100' : !isLast ? 'pb-8 border-b border-dashed' : ''} space-y-1`}>
+                                <div className="space-y-1">
+                                    {/* Party Name - Always visible */}
+                                    <p className="leading-tight truncate sm:whitespace-normal">
+                                        <span className={`${isMulti ? (isTamil ? 'text-[10px] sm:text-xs' : isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-sm sm:text-base'} font-bold text-gray-400 uppercase tracking-widest`}>{t.party}: </span>
+                                        <span className={`font-black text-gray-900 ${getFontSize(partyName, isMulti ? (isTamil ? 'text-sm sm:text-base' : isHindi ? 'text-lg sm:text-2xl' : 'text-base sm:text-xl') : 'text-3xl sm:text-4xl', 20)}`}>
+                                            {partyName}
+                                        </span>
+                                    </p>
+
+                                    {/* Product/Item */}
+                                    <div className="flex items-start gap-2">
+                                        {onToggleField && (
+                                            <input
+                                                type="checkbox"
+                                                checked={fieldVisibility?.[lang]?.product !== false}
+                                                onChange={() => onToggleField(lang, 'product')}
+                                                className="mt-1 w-4 h-4 cursor-pointer"
+                                            />
+                                        )}
+                                        {fieldVisibility?.[lang]?.product !== false && (
+                                            <p className="leading-tight truncate sm:whitespace-normal mb-1 sm:mb-2 text-grey-400">
+                                                <span className={`${isMulti ? (isTamil ? 'text-[10px] sm:text-xs' : isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-lg'} font-bold text-gray-400 uppercase tracking-widest`}>{t.item}: </span>
+                                                <span className={`font-bold ${getFontSize(itemName, isMulti ? (isTamil ? 'text-[10px] sm:text-base' : isHindi ? 'text-sm sm:text-xl' : 'text-xs sm:text-lg') : 'text-xl sm:text-2xl', 30)}`}>
+                                                    {itemName}
+                                                </span>
+                                            </p>
+                                        )}
                                     </div>
-                                    {label.bdlQty && (
-                                        <div className="flex items-center gap-1 sm:gap-2 pl-2 sm:pl-4 border-l">
-                                            <span className={`${isMulti ? 'text-[8px] sm:text-[10px]' : 'text-xs'} font-bold text-gray-400 uppercase tracking-widest`}>{t.bundles}: </span>
-                                            <span className={`${isMulti ? 'text-base sm:text-lg' : 'text-xl sm:text-3xl'} font-black text-gray-700`}>{label.bdlQty}</span>
+                                </div>
+
+                                <div className={`flex items-center ${isMulti ? 'gap-1 pt-0' : 'gap-4 pt-4'}`}>
+                                    <div className="flex items-center gap-2">
+                                        {onToggleField && (
+                                            <input
+                                                type="checkbox"
+                                                checked={fieldVisibility?.[lang]?.quantity !== false}
+                                                onChange={() => onToggleField(lang, 'quantity')}
+                                                className="w-4 h-4 cursor-pointer"
+                                            />
+                                        )}
+                                        {fieldVisibility?.[lang]?.quantity !== false && (
+                                            <div className="flex items-center gap-2 text-grey-400">
+                                                <span className={`${isMulti ? (isTamil ? 'text-[10px] sm:text-xs' : isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-lg'} font-bold text-gray-400 uppercase tracking-widest`}>{t.qty}: </span>
+                                                <span className={`${isMulti ? (isTamil ? 'text-base sm:text-lg' : isHindi ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl') : 'text-3xl sm:text-4xl'} font-black`}>{label.quantity}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                    {label.bdlQty !== undefined && (
+                                        <div className={`flex items-center gap-2 ${isMulti ? 'pl-2' : 'pl-4'} border-l border-gray-100`}>
+                                            <span className={`${isMulti ? (isTamil ? 'text-[10px] sm:text-xs' : isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-sm sm:text-base'} font-bold text-gray-400 uppercase tracking-widest`}>{t.bundles}: </span>
+                                            {onUpdateBundle ? (
+                                                <input
+                                                    type="number"
+                                                    value={label.bdlQty}
+                                                    onChange={(e) => onUpdateBundle(label.id, e.target.value)}
+                                                    className={`${isMulti ? (isTamil ? 'text-base sm:text-lg' : isHindi ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl') : 'text-3xl sm:text-4xl'} font-black text-gray-700 ${isMulti ? 'w-12' : 'w-24'} bg-transparent border-b-2 border-blue-200 focus:border-blue-500 outline-none hover:bg-blue-50/50 transition-colors p-0 text-center`}
+                                                />
+                                            ) : (
+                                                <span className={`${isMulti ? (isTamil ? 'text-base sm:text-lg' : isHindi ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl') : 'text-3xl sm:text-4xl'} font-black text-gray-700`}>{label.bdlQty}</span>
+                                            )}
                                         </div>
                                     )}
-                                    <div className="flex items-center gap-1 sm:gap-2 pl-2 sm:pl-4 border-l">
-                                        <span className={`${isMulti ? 'text-[8px] sm:text-[10px]' : 'text-xs'} font-bold text-gray-400 uppercase tracking-widest`}>{t.city}: </span>
-                                        <span className={`${isMulti ? 'text-[9px] sm:text-[11px]' : 'text-sm sm:text-lg'} font-black text-gray-800 uppercase`}>{getCityName(lang)}</span>
+                                    <div className={`flex items-center gap-2 ${isMulti ? 'pl-2' : 'pl-4'} border-l`}>
+                                        <span className={`${isMulti ? (isTamil ? 'text-[10px] sm:text-xs' : isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-sm sm:text-base'} font-bold text-gray-400 uppercase tracking-widest`}>{t.city}: </span>
+                                        <span className={`${isMulti ? (isTamil ? 'text-sm sm:text-base' : isHindi ? 'text-base sm:text-lg' : 'text-base sm:text-lg') : 'text-xl sm:text-2xl'} font-black text-gray-800 uppercase`}>{getCityName(lang)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -187,12 +230,18 @@ export function PreviewLabelCard({ label, languages }: PreviewLabelCardProps) {
                 </div>
             </div>
 
-            {/* Minimal Footer */}
-            <div className={`${isMulti ? 'h-6 sm:h-8' : 'h-8 sm:h-10'} bg-gray-50 border-t flex items-center justify-between px-4 sm:px-6`}>
-                <span className={`${isMulti ? 'text-[7px] sm:text-[8px]' : 'text-[9px]'} font-bold text-gray-400 uppercase tracking-widest`}>
-                    DATE: {new Date(label.date || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </span>
-                <span className={`${isMulti ? 'text-[7px] sm:text-[8px]' : 'text-[9px]'} font-black italic text-gray-300 tracking-widest uppercase`}>Ace Premium</span>
+            {/* Footer Bar - Slim */}
+            <div className="h-8 bg-gray-50 border-t border-gray-200 flex items-center justify-between px-4 text-gray-400">
+                <div className="flex items-baseline gap-1">
+                    <span className="text-[7px] font-black uppercase tracking-widest">DATE:</span>
+                    <span className="text-[10px] font-bold tabular-nums">
+                        {new Date(label.date || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </span>
+                </div>
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-0.5 bg-gray-200" />
+                    <p className="text-[10px] font-black tracking-[0.3em] italic uppercase">Ace</p>
+                </div>
             </div>
         </div>
     );

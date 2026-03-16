@@ -8,6 +8,7 @@ import { Loader2 } from 'lucide-react';
 interface LabelCardProps {
   label: Label;
   languages: Language[];
+  fieldVisibility?: Record<Language, { product: boolean, quantity: boolean }>;
 }
 
 const labelTranslations: Record<Language, Record<string, string>> = {
@@ -76,7 +77,7 @@ const labelTranslations: Record<Language, Record<string, string>> = {
 };
 
 
-export function LabelCard({ label, languages }: LabelCardProps) {
+export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps) {
   const sortedLanguages = Array.from(languages).sort((a, b) => {
     if (a === 'hi') return -1;
     if (b === 'hi') return 1;
@@ -95,6 +96,10 @@ export function LabelCard({ label, languages }: LabelCardProps) {
       let changed = false;
 
       for (const lang of nonEnLangs) {
+        // Skip if we already have sheet data for this language
+        const hasSheetData = label.partyNames?.[lang] && label.itemNames?.[lang];
+        if (hasSheetData) continue;
+
         if (!newTranslations[lang]) {
           try {
             // Translate Party
@@ -141,86 +146,92 @@ export function LabelCard({ label, languages }: LabelCardProps) {
 
   const getFontSize = (text: string, baseSize: string, limit: number = 20) => {
     if (!text) return baseSize;
-    if (text.length > limit * 2.5) return 'text-[10px] sm:text-sm';
-    if (text.length > limit * 1.8) return 'text-sm sm:text-lg';
-    if (text.length > limit) return 'text-lg sm:text-2xl';
+    // Refined scaling for better space utilization in print
+    if (text.length > limit * 2.5) return 'text-xs sm:text-base print:text-base';
+    if (text.length > limit * 1.8) return 'text-base sm:text-2xl print:text-2xl';
+    if (text.length > limit) return 'text-2xl sm:text-4xl print:text-4xl';
     return baseSize;
   };
 
   const getPartyName = (lang: Language): string => {
     if (lang === 'en') return label.party;
-    return translations[lang]?.party || (label.partyNames?.[lang]) || label.party;
+    return (label.partyNames?.[lang]) || translations[lang]?.party || label.party;
   };
 
   const getItemName = (lang: Language): string => {
     if (lang === 'en') return label.item;
-    return translations[lang]?.item || (label.itemNames?.[lang]) || label.item;
+    return (label.itemNames?.[lang]) || translations[lang]?.item || label.item;
   };
 
   const getCityName = (lang: Language): string => {
     if (lang === 'en') return label.city;
-    return translations[lang]?.city || label.city;
+    return (label.cityNames?.[lang]) || translations[lang]?.city || label.city;
   };
 
   return (
     <div className="relative bg-white overflow-hidden border border-gray-400 print:border-2 print:border-black w-full h-full flex flex-col font-sans">
-      {/* Top Header - Large Logo (Compacted) */}
-      <div className="h-12 sm:h-16 bg-gray-100 border-b border-gray-300 flex items-center px-4 print:h-18 print:bg-white print:border-b-2 print:border-black relative z-10">
-        <div className="flex items-center">
-          <div className="relative w-28 h-8 sm:w-36 sm:h-10 print:w-44 print:h-14">
-            <Image src="/ace.png" alt="Logo" fill className="object-contain object-left" priority />
-          </div>
-        </div>
-      </div>
 
-      {/* Main Body - Balanced to fill space without overflow */}
-      <div className="flex-1 flex flex-col p-3 sm:p-5 justify-center bg-white relative z-10">
-        <div className="space-y-4 print:space-y-6">
+      {/* Main Body - Centered to match Live Preview feel (but start higher in print to utilize space) */}
+      <div className="flex-1 flex flex-col p-4 sm:p-6 print:p-1 justify-center print:justify-start print:pt-6 bg-white relative z-10 overflow-hidden">
+        <div className="w-full space-y-6 print:space-y-4">
           {sortedLanguages.map((lang, idx) => {
             const t = labelTranslations[lang];
             const isLast = idx === sortedLanguages.length - 1;
             const partyName = getPartyName(lang);
             const itemName = getItemName(lang);
 
-            return (
-              <div key={lang} lang={lang} className={`${!isLast ? 'pb-4 border-b border-dashed border-gray-100 print:border-black' : ''} space-y-1`}>
-                {/* Party Name */}
-                <p className="leading-tight break-words">
-                  <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wider">{t.party}: </span>
-                  <span className={`font-black text-black ${getFontSize(partyName, 'text-xl sm:text-4xl', 20)}`}>
-                    {partyName}
-                  </span>
-                </p>
+            const isTamil = lang === 'ta';
+            const isHindi = lang === 'hi';
 
-                {/* Product/Item */}
-                <p className="leading-tight break-words">
-                  <span className="text-[10px] sm:text-xs font-bold text-gray-600 uppercase tracking-wider">{t.item}: </span>
-                  <span className={`font-bold text-gray-900 ${getFontSize(itemName, 'text-lg sm:text-2xl', 30)}`}>
-                    {itemName}
-                  </span>
-                </p>
+            return (
+              <div key={lang} lang={lang} className={`${!isLast ? (isTamil ? 'pb-3 mb-2' : isHindi ? 'pb-5 mb-4' : 'pb-4 mb-3') + ' border-b border-dashed border-gray-200 print:border-black' : ''} space-y-2 sm:space-y-3`}>
+                <div className="space-y-1">
+                  {/* Party Name - Always visible or potentially toggleable? Prompt said Product and Quantity */}
+                  <p className="leading-tight break-words">
+                    <span className={`font-bold text-gray-400 uppercase tracking-widest ${isTamil ? 'text-xs sm:text-sm print:text-sm' : isHindi ? 'text-base sm:text-lg print:text-base' : 'text-sm sm:text-base print:text-sm'}`}>{t.party}: </span>
+                    <span className={`font-black text-black ${getFontSize(partyName, isTamil ? 'text-2xl sm:text-4xl print:text-3xl' : isHindi ? 'text-5xl sm:text-7xl print:text-5xl' : 'text-4xl sm:text-6xl print:text-4xl', 20)}`}>
+                      {partyName}
+                    </span>
+                  </p>
+
+                  {/* Product/Item */}
+                  <div className="flex items-start gap-2">
+                    {(fieldVisibility?.[lang]?.product !== false) && (
+                      <p className="leading-tight break-words">
+                        <span className={`font-bold text-gray-400 uppercase tracking-widest ${isTamil ? 'text-xs sm:text-sm print:text-sm' : isHindi ? 'text-base sm:text-lg print:text-base' : 'text-sm sm:text-base print:text-sm'}`}>{t.item}: </span>
+                        <span className={`font-bold text-gray-900 ${getFontSize(itemName, isTamil ? 'text-xl sm:text-2xl print:text-2xl' : isHindi ? 'text-3xl sm:text-5xl print:text-4xl' : 'text-2xl sm:text-4xl print:text-3xl', 30)}`}>
+                          {itemName}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                </div>
 
                 {/* Qty & Bundles Row - Structured */}
-                <div className="flex items-center gap-6 pt-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest">{t.qty}: </span>
-                    <span className="text-3xl sm:text-6xl font-black text-black tabular-nums">
-                      {label.quantity}
-                    </span>
+                <div className="flex items-center gap-4 pt-3 print:pt-2">
+                  <div className="flex items-center gap-3">
+                    {fieldVisibility?.[lang]?.quantity !== false && (
+                      <>
+                        <span className={`font-bold text-gray-400 uppercase tracking-widest ${isTamil ? 'text-xs sm:text-sm print:text-sm' : isHindi ? 'text-base sm:text-lg print:text-base' : 'text-sm sm:text-base print:text-sm'}`}>{t.qty}: </span>
+                        <span className={`font-black text-black tabular-nums ${isTamil ? 'text-2xl sm:text-4xl print:text-2xl' : isHindi ? 'text-5xl sm:text-6xl print:text-4xl' : 'text-4xl sm:text-5xl print:text-3xl'}`}>
+                          {label.quantity}
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   {label.bdlQty && (
-                    <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
-                      <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest">{t.bundles || 'Bundles'}: </span>
-                      <span className="text-xl sm:text-2xl font-black text-gray-800 tabular-nums">
+                    <div className="flex items-center gap-3 pl-3 border-l border-gray-200 print:border-black">
+                      <span className={`font-bold text-gray-400 uppercase tracking-widest ${isTamil ? 'text-xs sm:text-sm print:text-sm' : isHindi ? 'text-base sm:text-lg print:text-base' : 'text-sm sm:text-base print:text-sm'}`}>{t.bundles || 'Bundles'}: </span>
+                      <span className={`font-black text-gray-800 tabular-nums ${isTamil ? 'text-2xl sm:text-4xl print:text-2xl' : isHindi ? 'text-5xl sm:text-6xl print:text-4xl' : 'text-4xl sm:text-5xl print:text-3xl'}`}>
                         {label.bdlQty}
                       </span>
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 pl-4 border-l border-gray-200">
-                    <span className="text-[10px] sm:text-xs font-bold text-gray-500 uppercase tracking-widest">{t.city}: </span>
-                    <span className="text-xs sm:text-sm font-black text-gray-800 uppercase">
+                  <div className="flex items-center gap-3 pl-3 border-l border-gray-200 print:border-black">
+                    <span className={`font-bold text-gray-400 uppercase tracking-widest ${isTamil ? 'text-xs sm:text-sm print:text-sm' : isHindi ? 'text-base sm:text-lg print:text-base' : 'text-sm sm:text-base print:text-sm'}`}>{t.city}: </span>
+                    <span className={`font-black text-gray-800 uppercase tracking-tight ${isTamil ? 'text-xl sm:text-2xl print:text-lg' : isHindi ? 'text-2xl sm:text-4xl print:text-2xl' : 'text-xl sm:text-3xl print:text-xl'}`}>
                       {getCityName(lang)}
                     </span>
                   </div>
@@ -232,7 +243,7 @@ export function LabelCard({ label, languages }: LabelCardProps) {
       </div>
 
       {/* Footer Bar - Slim */}
-      <div className="h-8 bg-gray-50 border-t border-gray-200 flex items-center justify-between px-4 text-gray-400">
+      <div className="h-8 bg-gray-50 border-t border-gray-200 flex items-center justify-between px-4 text-gray-400 print:text-black">
         <div className="flex items-baseline gap-1">
           <span className="text-[7px] font-black uppercase tracking-widest">DATE:</span>
           <span className="text-[10px] font-bold tabular-nums">

@@ -55,6 +55,15 @@ export async function GET(request: NextRequest) {
             remark: item.Remark || '',
             bdlQty: item.DispatchBdlQty || item['Dispatch Bdl Qty'] || '',
             date: new Date().toISOString().split('T')[0],
+            // Pre-translated names from sheet
+            partyNames: {
+                hi: item['Party in hindi'] || item.PartyInHindi || '',
+                od: item['Party in oriya'] || item.PartyInOriya || '',
+            },
+            itemNames: {
+                hi: item['Item in hindi'] || item.ItemInHindi || '',
+                od: item['Item in oriya'] || item.ItemInOriya || '',
+            },
             // Keep original fields plus the specific requested ones
             originalData: {
                 ...item, // Include all raw fields

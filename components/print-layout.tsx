@@ -7,10 +7,11 @@ import type { Label, Language } from '@/lib/types';
 interface PrintLayoutProps {
   labels: Label[];
   languages: Language[];
+  fieldVisibility?: Record<Language, { product: boolean, quantity: boolean }>;
 }
 
 export const PrintLayout = forwardRef<HTMLDivElement, PrintLayoutProps>(
-  ({ labels, languages }, ref) => {
+  ({ labels, languages, fieldVisibility }, ref) => {
     return (
       <div ref={ref} className="bg-white">
         {/* Print styles */}
@@ -37,7 +38,11 @@ export const PrintLayout = forwardRef<HTMLDivElement, PrintLayoutProps>(
                 .slice(pageIdx * 4, (pageIdx + 1) * 4)
                 .map((label) => (
                   <div key={label.id} className="flex items-center justify-center">
-                    <LabelCard label={label} languages={languages} />
+                    <LabelCard
+                      label={label}
+                      languages={languages}
+                      fieldVisibility={fieldVisibility}
+                    />
                   </div>
                 ))}
             </div>

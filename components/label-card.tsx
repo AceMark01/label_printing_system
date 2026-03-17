@@ -1,4 +1,4 @@
-'use client';
+m 'use client';
 
 import Image from 'next/image';
 import type { Label, Language } from '@/lib/types';

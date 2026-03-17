@@ -6,7 +6,7 @@ import type { Label, Language } from '@/lib/types';
 interface LabelCardProps {
   label: Label;
   languages: Language[];
-  fieldVisibility?: Record<Language, { product: boolean, quantity: boolean }>;
+  fieldVisibility?: Partial<Record<Language, { product: boolean, quantity: boolean }>>;
 }
 
 const labelTranslations: Record<Language, Record<string, string>> = {
@@ -64,24 +64,27 @@ export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps)
             const partyName = getPartyName(lang);
             const itemName = getItemName(lang);
             const isHindi = lang === 'hi';
+            const isProductVisible = fieldVisibility?.[lang]?.product !== false;
+            const isQuantityVisible = fieldVisibility?.[lang]?.quantity !== false;
+            const isReduced = !isProductVisible && !isQuantityVisible;
 
             return (
               <div 
                 key={lang} 
-                className={`${!isLast && isMulti ? 'pb-10 border-b border-dashed border-gray-200 print:pb-12 print:mb-12' : !isLast ? 'pb-16 border-b border-dashed border-gray-200' : ''} space-y-5`}
+                className={`${!isLast && isMulti ? 'pb-10 border-b border-dashed border-gray-200 print:pb-12 print:mb-12' : !isLast ? 'pb-16 border-b border-dashed border-gray-200' : ''} ${isReduced ? 'space-y-12' : 'space-y-5'}`}
               >
                 {/* Party Name Row */}
-                <div className="space-y-3">
+                <div className={isReduced ? 'space-y-6' : 'space-y-3'}>
                   <p className="leading-tight">
-                    <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[22px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.party}: </span>
-                    <span className={`font-black text-gray-900 ${getFontSize(partyName, isMulti ? (isHindi ? 'text-[34px]' : 'text-[30px]') : 'text-[52px]', 20)}`}>
+                    <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-[24px]' : 'text-[18px]') : (isReduced ? 'text-[20px]' : 'text-[14px]')) : (isReduced ? 'text-[32px]' : 'text-[22px]')} font-bold text-gray-400 uppercase tracking-widest`}>{t.party}: </span>
+                    <span className={`font-black text-gray-900 ${getFontSize(partyName, isMulti ? (isHindi ? (isReduced ? 'text-[48px]' : 'text-[34px]') : (isReduced ? 'text-[44px]' : 'text-[30px]')) : (isReduced ? 'text-[72px]' : 'text-[52px]'), 20)}`}>
                       {partyName}
                     </span>
                   </p>
                 </div>
 
                 {/* Product Name Row */}
-                {fieldVisibility?.[lang]?.product !== false && (
+                {isProductVisible && (
                   <div className="flex items-center gap-4">
                     <p className="leading-tight">
                       <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.item}: </span>
@@ -93,8 +96,8 @@ export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps)
                 )}
 
                 {/* Quantity & City Row */}
-                <div className={`flex items-center ${isMulti ? 'gap-8 pt-2' : 'gap-16 pt-8'}`}>
-                  {fieldVisibility?.[lang]?.quantity !== false && (
+                <div className={`flex items-center ${isMulti ? (isReduced ? 'gap-12 pt-6' : 'gap-8 pt-2') : (isReduced ? 'gap-24 pt-16' : 'gap-16 pt-8')}`}>
+                  {isQuantityVisible && (
                     <div className="flex items-center gap-4">
                       <div className="flex items-center gap-3">
                         <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.qty}: </span>
@@ -104,18 +107,18 @@ export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps)
                   )}
 
                   {label.bdlQty !== undefined && (
-                    <div className={`flex items-center gap-4 ${isMulti ? 'pl-6' : 'pl-12'} border-l border-gray-100`}>
-                      <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[22px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.bundles}: </span>
+                    <div className={`flex items-center gap-4 ${isMulti ? 'pl-6' : 'pl-12'} ${isQuantityVisible ? 'border-l border-gray-100' : ''}`}>
+                      <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-[24px]' : 'text-[18px]') : (isReduced ? 'text-[20px]' : 'text-[14px]')) : (isReduced ? 'text-[32px]' : 'text-[22px]')} font-bold text-gray-400 uppercase tracking-widest`}>{t.bundles}: </span>
                       <div className="relative">
-                        <span className={`${isMulti ? 'text-[38px]' : 'text-[62px]'} font-black text-gray-700 leading-none whitespace-nowrap`}>{label.bdlQty}</span>
+                        <span className={`${isMulti ? (isReduced ? 'text-[48px]' : 'text-[38px]') : (isReduced ? 'text-[72px]' : 'text-[62px]')} font-black text-gray-700 leading-none whitespace-nowrap`}>{label.bdlQty}</span>
                         <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-blue-200 print:bg-black" />
                       </div>
                     </div>
                   )}
 
-                  <div className={`flex items-center gap-4 ${isMulti ? 'pl-6' : 'pl-12'} border-l border-gray-100`}>
-                    <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[22px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.city}: </span>
-                    <span className={`${isMulti ? 'text-[28px]' : 'text-[44px]'} font-black text-gray-800 uppercase whitespace-nowrap`}>{getCityName(lang)}</span>
+                  <div className={`flex items-center gap-4 ${isMulti ? 'pl-6' : 'pl-12'} ${(isQuantityVisible || label.bdlQty !== undefined) ? 'border-l border-gray-100' : ''}`}>
+                    <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-[24px]' : 'text-[18px]') : (isReduced ? 'text-[20px]' : 'text-[14px]')) : (isReduced ? 'text-[32px]' : 'text-[22px]')} font-bold text-gray-400 uppercase tracking-widest`}>{t.city}: </span>
+                    <span className={`${isMulti ? (isReduced ? 'text-[40px]' : 'text-[28px]') : (isReduced ? 'text-[60px]' : 'text-[44px]')} font-black text-gray-800 uppercase whitespace-nowrap`}>{getCityName(lang)}</span>
                   </div>
                 </div>
               </div>

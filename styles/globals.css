@@ -124,3 +124,29 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @media print {
+    @page {
+      margin: 0;
+      size: auto;
+    }
+    
+    html, body {
+      height: auto !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+    }
+    
+    .no-print {
+      display: none !important;
+    }
+    
+    /* Ensure no extra margins from standard layout */
+    main {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+  }
+}

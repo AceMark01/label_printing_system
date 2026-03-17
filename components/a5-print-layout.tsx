@@ -6,14 +6,14 @@ import { LabelCard } from './label-card';
 interface A5PrintLayoutProps {
   labels: Label[];
   languages: Language[];
-  fieldVisibility?: Record<Language, { product: boolean, quantity: boolean }>;
+  fieldVisibility?: Record<string, Partial<Record<Language, { product: boolean, quantity: boolean }>>>;
 }
 
 export function A5PrintLayout({ labels, languages, fieldVisibility }: A5PrintLayoutProps) {
   return (
     <div className="w-full bg-slate-100 p-2 sm:p-8 flex flex-col items-center gap-8 print:bg-white print:p-0">
       {/* Each label gets its own A4 page with 2 copies (Top & Bottom) */}
-      {labels.map((label) => (
+      {labels.map((label, idx) => (
         <div
           key={label.id}
           data-pdf-page
@@ -25,7 +25,7 @@ export function A5PrintLayout({ labels, languages, fieldVisibility }: A5PrintLay
             flexDirection: 'column',
             padding: '5mm 8mm',
             boxSizing: 'border-box',
-            pageBreakAfter: 'always',
+            pageBreakAfter: idx === labels.length - 1 ? 'auto' : 'always',
             pageBreakInside: 'avoid',
             margin: '0 auto',
             position: 'relative'
@@ -40,7 +40,7 @@ export function A5PrintLayout({ labels, languages, fieldVisibility }: A5PrintLay
               <LabelCard 
                 label={label} 
                 languages={languages} 
-                fieldVisibility={fieldVisibility}
+                fieldVisibility={fieldVisibility?.[label.id]}
               />
             </div>
           </div>
@@ -60,7 +60,7 @@ export function A5PrintLayout({ labels, languages, fieldVisibility }: A5PrintLay
               <LabelCard 
                 label={label} 
                 languages={languages} 
-                fieldVisibility={fieldVisibility}
+                fieldVisibility={fieldVisibility?.[label.id]}
               />
             </div>
           </div>

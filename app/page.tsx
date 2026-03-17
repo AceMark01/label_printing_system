@@ -54,12 +54,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
   const [labelLanguages, setLabelLanguages] = useState<Set<Language>>(new Set(['hi', 'od']));
-  const [fieldVisibility, setFieldVisibility] = useState<Record<Language, { product: boolean, quantity: boolean }>>(
-    allLanguages.reduce((acc, lang) => ({
-      ...acc,
-      [lang]: { product: true, quantity: true }
-    }), {} as Record<Language, { product: boolean, quantity: boolean }>)
-  );
+  const [fieldVisibility, setFieldVisibility] = useState<Record<string, Record<Language, { product: boolean, quantity: boolean }>>>({});
   const [bundleOverrides, setBundleOverrides] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<'select' | 'preview' | 'print'>('select');
 
@@ -189,14 +184,39 @@ export default function Home() {
     }
   };
 
-  const toggleFieldVisibility = (lang: Language, field: 'product' | 'quantity') => {
-    setFieldVisibility(prev => ({
-      ...prev,
-      [lang]: {
-        ...prev[lang],
-        [field]: !prev[lang][field]
+  const toggleFieldVisibility = (labelId: string, lang: Language, field: 'product' | 'quantity') => {
+    setFieldVisibility(prev => {
+      const newState = { ...prev };
+      
+      // Initialize if not exists
+      if (!newState[labelId]) {
+        newState[labelId] = allLanguages.reduce((acc, l) => ({
+          ...acc,
+          [l]: { product: true, quantity: true }
+        }), {} as Record<Language, { product: boolean, quantity: boolean }>);
       }
-    }));
+
+      const currentVal = newState[labelId][lang][field];
+      const newVal = !currentVal;
+      
+      newState[labelId] = {
+        ...newState[labelId],
+        [lang]: {
+          ...newState[labelId][lang],
+          [field]: newVal
+        }
+      };
+
+      // Auto uncheck quantity if product is unchecked
+      if (field === 'product' && newVal === false) {
+        newState[labelId][lang] = {
+          ...newState[labelId][lang],
+          quantity: false
+        };
+      }
+      
+      return newState;
+    });
   };
   
   const handleUpdateBundle = (labelId: string, value: string) => {
@@ -991,8 +1011,8 @@ export default function Home() {
                           <PreviewLabelCard
                             label={label}
                             languages={Array.from(labelLanguages)}
-                            fieldVisibility={fieldVisibility}
-                            onToggleField={toggleFieldVisibility}
+                            fieldVisibility={fieldVisibility[label.id]}
+                            onToggleField={(lang, field) => toggleFieldVisibility(label.id, lang, field)}
                             onUpdateBundle={handleUpdateBundle}
                           />
 

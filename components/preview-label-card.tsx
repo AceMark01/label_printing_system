@@ -7,7 +7,7 @@ import type { Label, Language } from '@/lib/types';
 interface PreviewLabelCardProps {
     label: Label;
     languages: Language[];
-    fieldVisibility?: Record<Language, { product: boolean, quantity: boolean }>;
+    fieldVisibility?: Partial<Record<Language, { product: boolean, quantity: boolean }>>;
     onToggleField?: (lang: Language, field: 'product' | 'quantity') => void;
     onUpdateBundle?: (labelId: string, value: string) => void;
 }
@@ -69,13 +69,16 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
                         const partyName = getPartyName(lang);
                         const itemName = getItemName(lang);
                         const isHindi = lang === 'hi';
+                        const isProductVisible = fieldVisibility?.[lang]?.product !== false;
+                        const isQuantityVisible = fieldVisibility?.[lang]?.quantity !== false;
+                        const isReduced = !isProductVisible && !isQuantityVisible;
 
                         return (
-                            <div key={lang} className={`${!isLast && isMulti ? (isHindi ? 'pb-2 sm:pb-3' : 'pb-1 sm:pb-2') + ' border-b border-dashed border-gray-100' : !isLast ? 'pb-8 border-b border-dashed' : ''} space-y-1`}>
-                                <div className="space-y-1">
+                            <div key={lang} className={`${!isLast && isMulti ? (isHindi ? 'pb-2 sm:pb-3' : 'pb-1 sm:pb-2') + ' border-b border-dashed border-gray-100' : !isLast ? 'pb-8 border-b border-dashed' : ''} ${isReduced ? 'space-y-3 sm:space-y-4' : 'space-y-1'}`}>
+                                <div className={isReduced ? 'space-y-4' : 'space-y-1'}>
                                     <p className="leading-tight truncate sm:whitespace-normal">
-                                        <span className={`${isMulti ? (isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-sm sm:text-base'} font-bold text-gray-400 uppercase tracking-widest`}>{t.party}: </span>
-                                        <span className={`font-black text-gray-900 ${getFontSize(partyName, isMulti ? (isHindi ? 'text-lg sm:text-2xl' : 'text-base sm:text-xl') : 'text-3xl sm:text-4xl', 20)}`}>
+                                        <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-base sm:text-lg' : 'text-sm sm:text-base') : (isReduced ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-xs')) : 'text-sm sm:text-base'} font-bold text-gray-400 uppercase tracking-widest`}>{t.party}: </span>
+                                        <span className={`font-black text-gray-900 ${getFontSize(partyName, isMulti ? (isHindi ? (isReduced ? 'text-xl sm:text-3xl' : 'text-lg sm:text-2xl') : (isReduced ? 'text-lg sm:text-2xl' : 'text-base sm:text-xl')) : (isReduced ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl'), 20)}`}>
                                             {partyName}
                                         </span>
                                     </p>
@@ -83,12 +86,12 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
                                         {onToggleField && (
                                             <input
                                                 type="checkbox"
-                                                checked={fieldVisibility?.[lang]?.product !== false}
+                                                checked={isProductVisible}
                                                 onChange={() => onToggleField(lang, 'product')}
                                                 className="mt-1 w-4 h-4 cursor-pointer"
                                             />
                                         )}
-                                        {fieldVisibility?.[lang]?.product !== false && (
+                                        {isProductVisible && (
                                             <p className="leading-tight truncate sm:whitespace-normal mb-1 sm:mb-2 text-grey-400">
                                                 <span className={`${isMulti ? (isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-lg'} font-bold text-gray-400 uppercase tracking-widest`}>{t.item}: </span>
                                                 <span className={`font-bold ${getFontSize(itemName, isMulti ? (isHindi ? 'text-sm sm:text-xl' : 'text-xs sm:text-lg') : 'text-xl sm:text-2xl', 30)}`}>
@@ -98,41 +101,43 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
                                         )}
                                     </div>
                                 </div>
-                                <div className={`flex items-center ${isMulti ? 'gap-1 pt-0' : 'gap-4 pt-4'}`}>
+                                <div className={`flex items-center ${isMulti ? (isReduced ? 'gap-4 pt-2' : 'gap-1 pt-0') : (isReduced ? 'gap-8 pt-6' : 'gap-4 pt-4')}`}>
+                                {isProductVisible && (
                                     <div className="flex items-center gap-2">
                                         {onToggleField && (
                                             <input
                                                 type="checkbox"
-                                                checked={fieldVisibility?.[lang]?.quantity !== false}
+                                                checked={isQuantityVisible}
                                                 onChange={() => onToggleField(lang, 'quantity')}
                                                 className="w-4 h-4 cursor-pointer"
                                             />
                                         )}
-                                        {fieldVisibility?.[lang]?.quantity !== false && (
+                                        {isQuantityVisible && (
                                             <div className="flex items-center gap-2 text-grey-400">
                                                 <span className={`${isMulti ? (isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-lg'} font-bold text-gray-400 uppercase tracking-widest`}>{t.qty}: </span>
                                                 <span className={`${isMulti ? (isHindi ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl') : 'text-3xl sm:text-4xl'} font-black`}>{label.quantity}</span>
                                             </div>
                                         )}
                                     </div>
+                                )}
                                     {label.bdlQty !== undefined && (
-                                        <div className={`flex items-center gap-2 ${isMulti ? 'pl-2' : 'pl-4'} border-l border-gray-100`}>
-                                            <span className={`${isMulti ? (isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-sm sm:text-base'} font-bold text-gray-400 uppercase tracking-widest`}>{t.bundles}: </span>
+                                        <div className={`flex items-center gap-2 ${isMulti ? 'pl-2' : 'pl-4'} ${isQuantityVisible ? 'border-l border-gray-100' : ''}`}>
+                                            <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-base sm:text-lg' : 'text-sm sm:text-base') : (isReduced ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-xs')) : (isReduced ? 'text-lg' : 'text-sm sm:text-base')} font-bold text-gray-400 uppercase tracking-widest`}>{t.bundles}: </span>
                                             {onUpdateBundle ? (
                                                 <input
                                                     type="number"
                                                     value={label.bdlQty}
                                                     onChange={(e) => onUpdateBundle(label.id, e.target.value)}
-                                                    className={`${isMulti ? (isHindi ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl') : 'text-3xl sm:text-4xl'} font-black text-gray-700 ${isMulti ? 'w-12' : 'w-24'} bg-transparent border-b-2 border-blue-200 focus:border-blue-500 outline-none hover:bg-blue-50/50 transition-colors p-0 text-center`}
+                                                    className={`${isMulti ? (isHindi ? (isReduced ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl') : (isReduced ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl')) : (isReduced ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl')} font-black text-gray-700 ${isMulti ? 'w-12' : 'w-24'} bg-transparent border-b-2 border-blue-200 focus:border-blue-500 outline-none hover:bg-blue-50/50 transition-colors p-0 text-center`}
                                                 />
                                             ) : (
-                                                <span className={`${isMulti ? (isHindi ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl') : 'text-3xl sm:text-4xl'} font-black text-gray-700`}>{label.bdlQty}</span>
+                                                <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl') : (isReduced ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl')) : (isReduced ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl')} font-black text-gray-700`}>{label.bdlQty}</span>
                                             )}
                                         </div>
                                     )}
-                                    <div className={`flex items-center gap-2 ${isMulti ? 'pl-2' : 'pl-4'} border-l`}>
-                                        <span className={`${isMulti ? (isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-sm sm:text-base'} font-bold text-gray-400 uppercase tracking-widest`}>{t.city}: </span>
-                                        <span className={`${isMulti ? (isHindi ? 'text-base sm:text-lg' : 'text-base sm:text-lg') : 'text-xl sm:text-2xl'} font-black text-gray-800 uppercase`}>{getCityName(lang)}</span>
+                                    <div className={`flex items-center gap-2 ${isMulti ? 'pl-2' : 'pl-4'} ${(isQuantityVisible || label.bdlQty !== undefined) ? 'border-l' : ''}`}>
+                                        <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-base sm:text-lg' : 'text-sm sm:text-base') : (isReduced ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-xs')) : (isReduced ? 'text-lg' : 'text-sm sm:text-base')} font-bold text-gray-400 uppercase tracking-widest`}>{t.city}: </span>
+                                        <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-lg sm:text-xl' : 'text-base sm:text-lg') : (isReduced ? 'text-lg sm:text-xl' : 'text-base sm:text-lg')) : (isReduced ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl')} font-black text-gray-800 uppercase`}>{getCityName(lang)}</span>
                                     </div>
                                 </div>
                             </div>

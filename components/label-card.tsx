@@ -83,11 +83,6 @@ export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps)
                 {/* Product Name Row */}
                 {fieldVisibility?.[lang]?.product !== false && (
                   <div className="flex items-center gap-4">
-                    <div className="w-6 h-6 flex-shrink-0 border-2 border-blue-600 rounded bg-blue-600 flex items-center justify-center">
-                      <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="4">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    </div>
                     <p className="leading-tight">
                       <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.item}: </span>
                       <span className={`font-bold text-gray-800 ${getFontSize(itemName, isMulti ? (isHindi ? 'text-[26px]' : 'text-[22px]') : 'text-[34px]', 30)}`}>
@@ -101,11 +96,6 @@ export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps)
                 <div className={`flex items-center ${isMulti ? 'gap-8 pt-2' : 'gap-16 pt-8'}`}>
                   {fieldVisibility?.[lang]?.quantity !== false && (
                     <div className="flex items-center gap-4">
-                      <div className="w-6 h-6 flex-shrink-0 border-2 border-blue-600 rounded bg-blue-600 flex items-center justify-center">
-                        <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="4">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
                       <div className="flex items-center gap-3">
                         <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.qty}: </span>
                         <span className={`${isMulti ? 'text-[38px]' : 'text-[62px]'} font-black text-black leading-none whitespace-nowrap`}>{label.quantity}</span>

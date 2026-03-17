@@ -39,103 +39,93 @@ export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps)
     return a.localeCompare(b);
   });
 
+  const isMulti = sortedLanguages.length > 1;
+
   const getFontSize = (text: string, baseSize: string, limit: number = 20) => {
     if (!text) return baseSize;
-    if (text.length > limit * 2.5) return 'text-xs sm:text-base print:text-base';
-    if (text.length > limit * 1.8) return 'text-base sm:text-2xl print:text-2xl';
-    if (text.length > limit) return 'text-2xl sm:text-4xl print:text-4xl';
+    // Base sizes optimized for A4-halved (A5) print area - Made even larger for better space management
+    if (text.length > limit * 2.5) return isMulti ? 'text-[18px] print:text-[18px]' : 'text-[22px] print:text-[22px]';
+    if (text.length > limit * 1.8) return isMulti ? 'text-[22px] print:text-[22px]' : 'text-[28px] print:text-[28px]';
+    if (text.length > limit) return isMulti ? 'text-[28px] print:text-[28px]' : 'text-[38px] print:text-[38px]';
     return baseSize;
   };
 
-  const getPartyName = (lang: Language): string => {
-    if (lang === 'en') return label.party;
-    return (label.partyNames?.[lang]) || label.party;
-  };
-
-  const getItemName = (lang: Language): string => {
-    if (lang === 'en') return label.item;
-    return (label.itemNames?.[lang]) || label.item;
-  };
-
-  const getCityName = (lang: Language): string => {
-    if (lang === 'en') return label.city;
-    return (label.cityNames?.[lang]) || label.city;
-  };
+  const getPartyName = (lang: Language) => lang === 'en' ? label.party : (label.partyNames?.[lang] || label.party);
+  const getItemName = (lang: Language) => lang === 'en' ? label.item : (label.itemNames?.[lang] || label.item);
+  const getCityName = (lang: Language) => lang === 'en' ? label.city : (label.cityNames?.[lang] || label.city);
 
   return (
-    <div className="relative bg-white border-[2px] border-black w-full h-full flex flex-col font-sans print:border-[3px] print:shadow-none">
-      {/* Main Body */}
-      <div className="flex-1 flex flex-col p-6 sm:p-8 print:p-5 justify-start bg-white relative overflow-hidden">
-        <div className="w-full space-y-6 print:space-y-4">
+    <div className="relative bg-white w-full h-full flex flex-col font-sans border border-gray-200 shadow-none overflow-hidden print:border-black print:border-2">
+      <div className={`flex-1 ${isMulti ? 'p-10' : 'p-16'} flex flex-col justify-center bg-white overflow-hidden`}>
+        <div className={`w-full ${isMulti ? 'space-y-12' : 'space-y-24'}`}>
           {sortedLanguages.map((lang, idx) => {
             const t = labelTranslations[lang];
             const isLast = idx === sortedLanguages.length - 1;
             const partyName = getPartyName(lang);
             const itemName = getItemName(lang);
-            const cityName = getCityName(lang);
             const isHindi = lang === 'hi';
-            const isOdia = lang === 'od';
 
             return (
               <div 
                 key={lang} 
-                lang={lang} 
-                className={`${!isLast ? 'pb-6 mb-4 border-b-2 border-dashed border-gray-200 print:pb-4 print:mb-2' : ''} space-y-4 print:space-y-2`}
+                className={`${!isLast && isMulti ? 'pb-10 border-b border-dashed border-gray-200 print:pb-12 print:mb-12' : !isLast ? 'pb-16 border-b border-dashed border-gray-200' : ''} space-y-5`}
               >
-                {/* Party Row */}
-                <div className="flex items-start gap-4">
-                  <span className={`font-black uppercase tracking-wider text-gray-400 whitespace-nowrap pt-2 ${isHindi || isOdia ? 'text-[10px] print:text-[8px]' : 'text-[8px] print:text-[6px]'} min-w-[70px] print:min-w-[50px]`}>
-                    {t.party}:
-                  </span>
-                  <h2 className={`font-black text-black leading-[1.1] break-words uppercase flex-1 ${getFontSize(partyName, 'text-4xl sm:text-6xl print:text-4xl', 15)}`}>
-                    {partyName}
-                  </h2>
+                {/* Party Name Row */}
+                <div className="space-y-3">
+                  <p className="leading-tight">
+                    <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[22px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.party}: </span>
+                    <span className={`font-black text-gray-900 ${getFontSize(partyName, isMulti ? (isHindi ? 'text-[34px]' : 'text-[30px]') : 'text-[52px]', 20)}`}>
+                      {partyName}
+                    </span>
+                  </p>
                 </div>
 
-                {/* Product Row */}
-                {(fieldVisibility?.[lang]?.product !== false) && (
-                  <div className="flex items-start gap-4">
-                    <span className={`font-black uppercase tracking-wider text-gray-400 whitespace-nowrap pt-1 ${isHindi || isOdia ? 'text-[10px] print:text-[8px]' : 'text-[8px] print:text-[6px]'} min-w-[70px] print:min-w-[50px]`}>
-                      {t.item}:
-                    </span>
-                    <h3 className={`font-extrabold text-gray-800 leading-tight break-words flex-1 ${getFontSize(itemName, 'text-2xl sm:text-4xl print:text-2xl', 25)}`}>
-                      {itemName}
-                    </h3>
+                {/* Product Name Row */}
+                {fieldVisibility?.[lang]?.product !== false && (
+                  <div className="flex items-center gap-4">
+                    <div className="w-6 h-6 flex-shrink-0 border-2 border-blue-600 rounded bg-blue-600 flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="4">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                    <p className="leading-tight">
+                      <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.item}: </span>
+                      <span className={`font-bold text-gray-800 ${getFontSize(itemName, isMulti ? (isHindi ? 'text-[26px]' : 'text-[22px]') : 'text-[34px]', 30)}`}>
+                        {itemName}
+                      </span>
+                    </p>
                   </div>
                 )}
 
-                {/* Details Row (Qty, Bdl, City) */}
-                <div className="flex items-end gap-6 print:gap-4 pt-2">
-                  {/* Quantity */}
-                  <div className="flex flex-col">
-                    <span className={`font-black uppercase tracking-wider text-gray-400 ${isHindi || isOdia ? 'text-[10px] print:text-[8px]' : 'text-[8px] print:text-[6px]'}`}>
-                      {t.qty}
-                    </span>
-                    <span className="font-black text-black text-4xl sm:text-6xl print:text-3xl tabular-nums leading-none">
-                      {label.quantity}
-                    </span>
-                  </div>
-
-                  {/* Bundles */}
-                  {label.bdlQty && (
-                    <div className="flex flex-col border-l-2 border-black pl-6 print:pl-4">
-                      <span className={`font-black uppercase tracking-wider text-gray-400 ${isHindi || isOdia ? 'text-[10px] print:text-[8px]' : 'text-[8px] print:text-[6px]'}`}>
-                        {t.bundles || 'Bundles'}
-                      </span>
-                      <span className="font-black text-gray-900 text-3xl sm:text-5xl print:text-2xl tabular-nums leading-none">
-                        {label.bdlQty}
-                      </span>
+                {/* Quantity & City Row */}
+                <div className={`flex items-center ${isMulti ? 'gap-8 pt-2' : 'gap-16 pt-8'}`}>
+                  {fieldVisibility?.[lang]?.quantity !== false && (
+                    <div className="flex items-center gap-4">
+                      <div className="w-6 h-6 flex-shrink-0 border-2 border-blue-600 rounded bg-blue-600 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="4">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.qty}: </span>
+                        <span className={`${isMulti ? 'text-[38px]' : 'text-[62px]'} font-black text-black leading-none whitespace-nowrap`}>{label.quantity}</span>
+                      </div>
                     </div>
                   )}
 
-                  {/* City */}
-                  <div className="flex flex-col border-l-2 border-black pl-6 print:pl-4">
-                    <span className={`font-black uppercase tracking-wider text-gray-400 ${isHindi || isOdia ? 'text-[10px] print:text-[8px]' : 'text-[8px] print:text-[6px]'}`}>
-                      {t.city}
-                    </span>
-                    <span className="font-black text-black text-3xl sm:text-6xl print:text-4xl uppercase tracking-tighter leading-none whitespace-nowrap">
-                      {cityName}
-                    </span>
+                  {label.bdlQty !== undefined && (
+                    <div className={`flex items-center gap-4 ${isMulti ? 'pl-6' : 'pl-12'} border-l border-gray-100`}>
+                      <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[22px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.bundles}: </span>
+                      <div className="relative">
+                        <span className={`${isMulti ? 'text-[38px]' : 'text-[62px]'} font-black text-gray-700 leading-none whitespace-nowrap`}>{label.bdlQty}</span>
+                        <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-blue-200 print:bg-black" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className={`flex items-center gap-4 ${isMulti ? 'pl-6' : 'pl-12'} border-l border-gray-100`}>
+                    <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[22px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.city}: </span>
+                    <span className={`${isMulti ? 'text-[28px]' : 'text-[44px]'} font-black text-gray-800 uppercase whitespace-nowrap`}>{getCityName(lang)}</span>
                   </div>
                 </div>
               </div>
@@ -145,16 +135,16 @@ export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps)
       </div>
 
       {/* Footer */}
-      <div className="h-10 bg-white border-t border-gray-100 flex items-center justify-between px-6 print:h-8 print:px-4">
-        <div className="flex items-center gap-2">
-          <span className="text-[8px] font-black text-gray-400 uppercase tracking-widest">DATE:</span>
-          <span className="text-[10px] font-bold tabular-nums text-gray-600">
+      <div className="h-12 bg-gray-50 border-t border-gray-100 flex items-center justify-between px-8 text-gray-400 print:bg-white">
+        <div className="flex items-baseline gap-3">
+          <span className="text-[12px] font-black uppercase tracking-widest">DATE:</span>
+          <span className="text-[14px] font-bold tabular-nums">
             {new Date(label.date || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
           </span>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-[1px] bg-gray-100" />
-          <div className="relative w-12 h-6 print:w-10 print:h-5">
+        <div className="flex items-center gap-6">
+          <div className="w-24 h-0.5 bg-gray-200" />
+          <div className="relative w-16 h-8">
             <Image 
               src="/ace.png" 
               alt="Ace Logo" 
@@ -166,5 +156,7 @@ export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps)
         </div>
       </div>
     </div>
+
   );
 }
+

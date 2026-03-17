@@ -304,27 +304,45 @@ export default function Home() {
               /* Spacing Utilities */
               .p-3 { padding: 0.75rem !important; }
               .p-5 { padding: 1.25rem !important; }
+              .p-10 { padding: 2.5rem !important; }
+              .p-16 { padding: 4rem !important; }
               .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+              .px-8 { padding-left: 2rem !important; padding-right: 2rem !important; }
               .pt-2 { padding-top: 0.5rem !important; }
               .pt-4 { padding-top: 1rem !important; }
               .pt-5 { padding-top: 1.25rem !important; }
+              .pt-8 { padding-top: 2rem !important; }
               .pb-2 { padding-bottom: 0.5rem !important; }
               .pb-3 { padding-bottom: 0.75rem !important; }
               .pb-4 { padding-bottom: 1rem !important; }
+              .pb-10 { padding-bottom: 2.5rem !important; }
+              .pb-12 { padding-bottom: 3rem !important; }
+              .pb-16 { padding-bottom: 4rem !important; }
               .mb-1 { margin-bottom: 0.25rem !important; }
               .mb-2 { margin-bottom: 0.5rem !important; }
+              .mb-12 { margin-bottom: 3rem !important; }
               .pl-4 { padding-left: 1rem !important; }
+              .pl-6 { padding-left: 1.5rem !important; }
               .pl-8 { padding-left: 2rem !important; }
+              .pl-12 { padding-left: 3rem !important; }
               .gap-1 { gap: 0.25rem !important; }
               .gap-2 { gap: 0.5rem !important; }
               .gap-3 { gap: 0.75rem !important; }
               .gap-4 { gap: 1rem !important; }
               .gap-6 { gap: 1.5rem !important; }
+              .gap-8 { gap: 2rem !important; }
               .gap-10 { gap: 2.5rem !important; }
+              .gap-16 { gap: 4rem !important; }
               .space-y-1 > * + * { margin-top: 0.25rem !important; }
               .space-y-2 > * + * { margin-top: 0.5rem !important; }
+              .space-y-3 > * + * { margin-top: 0.75rem !important; }
               .space-y-4 > * + * { margin-top: 1rem !important; }
+              .space-y-5 > * + * { margin-top: 1.25rem !important; }
               .space-y-6 > * + * { margin-top: 1.5rem !important; }
+              .space-y-8 > * + * { margin-top: 2rem !important; }
+              .space-y-12 > * + * { margin-top: 3rem !important; }
+              .space-y-24 > * + * { margin-top: 6.25rem !important; }
+              .w-24 { width: 6rem !important; }
               
               /* Typography Utilities */
               .text-black { color: #000000 !important; }
@@ -349,6 +367,18 @@ export default function Home() {
               
               .text-\[7px\] { font-size: 7px !important; }
               .text-\[10px\] { font-size: 10px !important; }
+              .text-\[12px\] { font-size: 12px !important; }
+              .text-\[14px\] { font-size: 14px !important; }
+              .text-\[16px\] { font-size: 16px !important; }
+              .text-\[18px\] { font-size: 18px !important; }
+              .text-\[20px\] { font-size: 20px !important; }
+              .text-\[22px\] { font-size: 22px !important; }
+              .text-\[24px\] { font-size: 24px !important; }
+              .text-\[28px\] { font-size: 28px !important; }
+              .text-\[32px\] { font-size: 32px !important; }
+              .text-\[36px\] { font-size: 36px !important; }
+              .text-\[42px\] { font-size: 42px !important; }
+              .text-\[48px\] { font-size: 48px !important; }
               .text-xs { font-size: 0.75rem !important; }
               .text-sm { font-size: 0.875rem !important; }
               .text-lg { font-size: 1.125rem !important; }
@@ -360,9 +390,13 @@ export default function Home() {
               
               /* Background & Border Utilities */
               .bg-white { background-color: #ffffff !important; }
+              .bg-blue-600 { background-color: #2563eb !important; }
               .bg-gray-50 { background-color: #f9fafb !important; }
               .bg-gray-100 { background-color: #f3f4f6 !important; }
+              .bg-gray-200 { background-color: #e5e7eb !important; }
               .border { border: 1px solid #d1d5db !important; }
+              .border-2 { border-width: 2px !important; }
+              .border-blue-600 { border-color: #2563eb !important; }
               .border-t { border-top: 1px solid #d1d5db !important; }
               .border-b { border-bottom: 1px solid #d1d5db !important; }
               .border-l { border-left: 1px solid #d1d5db !important; }
@@ -373,6 +407,8 @@ export default function Home() {
               .border-gray-400 { border-color: #9ca3af !important; }
               .border-black { border-color: #000000 !important; }
               .rounded-lg { border-radius: 0.5rem !important; }
+              .rounded { border-radius: 0.25rem !important; }
+              .bg-blue-200 { background-color: #bfdbfe !important; }
               
               /* Indian Scripts Font Support */
               [lang="hi"] { font-family: 'Noto Sans Devanagari', sans-serif !important; }
@@ -495,27 +531,45 @@ export default function Home() {
             /* Spacing Utilities */
             .p-3 { padding: 0.75rem !important; }
             .p-5 { padding: 1.25rem !important; }
+            .p-10 { padding: 2.5rem !important; }
+            .p-16 { padding: 4rem !important; }
             .px-4 { padding-left: 1rem !important; padding-right: 1rem !important; }
+            .px-8 { padding-left: 2rem !important; padding-right: 2rem !important; }
             .pt-2 { padding-top: 0.5rem !important; }
             .pt-4 { padding-top: 1rem !important; }
             .pt-5 { padding-top: 1.25rem !important; }
+            .pt-8 { padding-top: 2rem !important; }
             .pb-2 { padding-bottom: 0.5rem !important; }
             .pb-3 { padding-bottom: 0.75rem !important; }
             .pb-4 { padding-bottom: 1rem !important; }
+            .pb-10 { padding-bottom: 2.5rem !important; }
+            .pb-12 { padding-bottom: 3rem !important; }
+            .pb-16 { padding-bottom: 4rem !important; }
             .mb-1 { margin-bottom: 0.25rem !important; }
             .mb-2 { margin-bottom: 0.5rem !important; }
+            .mb-12 { margin-bottom: 3rem !important; }
             .pl-4 { padding-left: 1rem !important; }
+            .pl-6 { padding-left: 1.5rem !important; }
             .pl-8 { padding-left: 2rem !important; }
+            .pl-12 { padding-left: 3rem !important; }
             .gap-1 { gap: 0.25rem !important; }
             .gap-2 { gap: 0.5rem !important; }
             .gap-3 { gap: 0.75rem !important; }
             .gap-4 { gap: 1rem !important; }
             .gap-6 { gap: 1.5rem !important; }
+            .gap-8 { gap: 2rem !important; }
             .gap-10 { gap: 2.5rem !important; }
+            .gap-16 { gap: 4rem !important; }
             .space-y-1 > * + * { margin-top: 0.25rem !important; }
             .space-y-2 > * + * { margin-top: 0.5rem !important; }
+            .space-y-3 > * + * { margin-top: 0.75rem !important; }
             .space-y-4 > * + * { margin-top: 1rem !important; }
+            .space-y-5 > * + * { margin-top: 1.25rem !important; }
             .space-y-6 > * + * { margin-top: 1.5rem !important; }
+            .space-y-8 > * + * { margin-top: 2rem !important; }
+            .space-y-12 > * + * { margin-top: 3rem !important; }
+            .space-y-24 > * + * { margin-top: 6.25rem !important; }
+            .w-24 { width: 6rem !important; }
             
             /* Typography Utilities */
             .text-black { color: #000000 !important; }
@@ -540,6 +594,18 @@ export default function Home() {
             
             .text-\[7px\] { font-size: 7px !important; }
             .text-\[10px\] { font-size: 10px !important; }
+            .text-\[12px\] { font-size: 12px !important; }
+            .text-\[14px\] { font-size: 14px !important; }
+            .text-\[16px\] { font-size: 16px !important; }
+            .text-\[18px\] { font-size: 18px !important; }
+            .text-\[20px\] { font-size: 20px !important; }
+            .text-\[22px\] { font-size: 22px !important; }
+            .text-\[24px\] { font-size: 24px !important; }
+            .text-\[28px\] { font-size: 28px !important; }
+            .text-\[32px\] { font-size: 32px !important; }
+            .text-\[36px\] { font-size: 36px !important; }
+            .text-\[42px\] { font-size: 42px !important; }
+            .text-\[48px\] { font-size: 48px !important; }
             .text-xs { font-size: 0.75rem !important; }
             .text-sm { font-size: 0.875rem !important; }
             .text-lg { font-size: 1.125rem !important; }
@@ -551,9 +617,13 @@ export default function Home() {
             
             /* Background & Border Utilities */
             .bg-white { background-color: #ffffff !important; }
+            .bg-blue-600 { background-color: #2563eb !important; }
             .bg-gray-50 { background-color: #f9fafb !important; }
             .bg-gray-100 { background-color: #f3f4f6 !important; }
+            .bg-gray-200 { background-color: #e5e7eb !important; }
             .border { border: 1px solid #d1d5db !important; }
+            .border-2 { border-width: 2px !important; }
+            .border-blue-600 { border-color: #2563eb !important; }
             .border-t { border-top: 1px solid #d1d5db !important; }
             .border-b { border-bottom: 1px solid #d1d5db !important; }
             .border-l { border-left: 1px solid #d1d5db !important; }
@@ -564,6 +634,8 @@ export default function Home() {
             .border-gray-400 { border-color: #9ca3af !important; }
             .border-black { border-color: #000000 !important; }
             .rounded-lg { border-radius: 0.5rem !important; }
+            .rounded { border-radius: 0.25rem !important; }
+            .bg-blue-200 { background-color: #bfdbfe !important; }
             
             /* Indian Scripts Font Support */
             [lang="hi"] { font-family: 'Noto Sans Devanagari', sans-serif !important; }

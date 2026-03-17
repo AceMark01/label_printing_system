@@ -34,9 +34,9 @@ export function A5PrintLayout({ labels, languages, fieldVisibility }: A5PrintLay
           {/* Top Label Folder/Container */}
           <div
             className="w-full relative flex flex-col items-center justify-center overflow-hidden"
-            style={{ height: '138mm', boxSizing: 'border-box' }}
+            style={{ height: '140mm', boxSizing: 'border-box' }}
           >
-            <div className="w-full h-full border border-gray-100 rounded-lg overflow-hidden shadow-sm print:shadow-none print:border-2 print:border-black">
+            <div className="w-full h-full rounded-lg overflow-hidden shadow-sm print:shadow-none">
               <LabelCard 
                 label={label} 
                 languages={languages} 
@@ -47,15 +47,16 @@ export function A5PrintLayout({ labels, languages, fieldVisibility }: A5PrintLay
 
           {/* Separation Line Only */}
           <div className="flex-1 w-full flex items-center justify-center relative min-h-[5mm]">
-            <div className="w-full border-b border-dashed border-gray-300 print:border-gray-400"></div>
+            <div className="w-full border-b border-dashed border-gray-300 print:border-gray-500"></div>
           </div>
 
           {/* Bottom Label Folder/Container */}
           <div
             className="w-full relative flex flex-col items-center justify-center overflow-hidden"
-            style={{ height: '138mm', boxSizing: 'border-box' }}
+            style={{ height: '140mm', boxSizing: 'border-box' }}
           >
-            <div className="w-full h-full border border-gray-100 rounded-lg overflow-hidden shadow-sm print:shadow-none print:border-2 print:border-black">
+
+            <div className="w-full h-full rounded-lg overflow-hidden shadow-sm print:shadow-none">
               <LabelCard 
                 label={label} 
                 languages={languages} 
@@ -63,6 +64,7 @@ export function A5PrintLayout({ labels, languages, fieldVisibility }: A5PrintLay
               />
             </div>
           </div>
+
         </div>
       ))}
 

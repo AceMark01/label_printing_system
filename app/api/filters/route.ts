@@ -1,20 +1,18 @@
 import { NextResponse, NextRequest } from 'next/server';
+import { getCachedSheetData } from '@/lib/data-cache';
 
 const APPS_SCRIPT_URL = process.env.GOOGLE_SHEET_API_URL || '';
 
 export async function GET(request: NextRequest) {
     try {
+        const { searchParams } = new URL(request.url);
+        const includeProcessed = searchParams.get('includeProcessed') === 'true';
+
         if (!APPS_SCRIPT_URL) {
             return NextResponse.json({ error: 'Config missing' }, { status: 500 });
         }
 
-        const response = await fetch(APPS_SCRIPT_URL);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch from Apps Script: ${response.statusText}`);
-        }
-
-        const rawData = await response.json();
-        const allData = Array.isArray(rawData) ? rawData : (rawData?.DataRec || rawData?.data || []);
+        const allData = await getCachedSheetData(APPS_SCRIPT_URL);
 
         const cities = new Set<string>();
         const parties = new Set<string>();
@@ -31,9 +29,11 @@ export async function GET(request: NextRequest) {
         };
 
         allData.forEach((item: any) => {
-            // New Filter: Only show if column N (index 13) is null/empty
-            const colN = item['N'] || item[13] || getValue(item, 'N');
-            if (colN && colN.toString().trim() !== '') return;
+            // "Past" Data Filter: Only include in dropdowns if visible in current mode
+            if (!includeProcessed) {
+                const colN = item['N'] || item[13] || getValue(item, 'N');
+                if (colN && colN.toString().trim() !== '') return;
+            }
 
             const city = getValue(item, 'City');
             if (city) cities.add(city);
@@ -71,3 +71,4 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+

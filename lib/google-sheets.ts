@@ -36,7 +36,8 @@ export async function fetchTicTakData(
         parties?: string[],
         items?: string[],
         transporters?: string[],
-        q?: string
+        q?: string,
+        includeProcessed?: boolean
     }
 ): Promise<PaginatedLabels> {
     const params = new URLSearchParams({
@@ -49,6 +50,7 @@ export async function fetchTicTakData(
     if (filters?.items?.length) params.append('items', filters.items.join(','));
     if (filters?.transporters?.length) params.append('transporters', filters.transporters.join(','));
     if (filters?.q) params.append('q', filters.q);
+    if (filters?.includeProcessed) params.append('includeProcessed', 'true');
 
     const response = await fetch(`/api/labels?${params.toString()}`);
 
@@ -65,10 +67,13 @@ export async function fetchTicTakData(
     return await response.json();
 }
 
-export async function fetchFilterData(): Promise<TicTakFilters> {
-    const response = await fetch('/api/filters');
+export async function fetchFilterData(includeProcessed = false): Promise<TicTakFilters> {
+    const params = new URLSearchParams();
+    if (includeProcessed) params.append('includeProcessed', 'true');
+    const response = await fetch(`/api/filters?${params.toString()}`);
     if (!response.ok) {
         throw new Error('Failed to fetch filters');
     }
     return await response.json();
 }
+

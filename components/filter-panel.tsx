@@ -30,6 +30,8 @@ interface FilterPanelProps {
   availableParties?: string[];
   availableItems?: string[];
   availableTransporters?: string[];
+  includeProcessed?: boolean;
+  onIncludeProcessedChange?: (val: boolean) => void;
 }
 
 const MultiSelectDropdown = ({ 
@@ -171,6 +173,8 @@ export function FilterPanel({
   availableParties,
   availableItems,
   availableTransporters,
+  includeProcessed = false,
+  onIncludeProcessedChange,
 }: FilterPanelProps) {
   const safeLabels = labels || [];
   const t = translations[language] || translations['en'];
@@ -291,6 +295,21 @@ export function FilterPanel({
           onValuesChange={onTransportersChange}
           placeholder="Transporter"
         />
+
+        <div className="flex items-center gap-2.5 p-3 bg-blue-50/30 rounded-xl border border-blue-100/50 hover:bg-blue-50/50 transition-colors cursor-pointer" onClick={() => onIncludeProcessedChange?.(!includeProcessed)}>
+          <Checkbox 
+            id="include-processed"
+            checked={includeProcessed}
+            onCheckedChange={(checked) => onIncludeProcessedChange?.(checked === true)}
+            className="border-blue-200 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+          />
+          <div className="flex flex-col">
+            <Label htmlFor="include-processed" className="text-xs font-bold text-slate-700 cursor-pointer">
+              Show Processed Records
+            </Label>
+            <span className="text-[9px] font-medium text-slate-400">Include historical/completed data</span>
+          </div>
+        </div>
 
         {hasActiveFilters && (
           <Button

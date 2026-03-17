@@ -61,6 +61,7 @@ export default function Home() {
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
+  const [includeProcessed, setIncludeProcessed] = useState(false);
   const [labelLanguages, setLabelLanguages] = useState<Set<Language>>(new Set(['hi', 'od']));
   const [fieldVisibility, setFieldVisibility] = useState<Record<string, Record<Language, { product: boolean, quantity: boolean }>>>({});
   const [bundleOverrides, setBundleOverrides] = useState<Record<string, string>>({});
@@ -78,8 +79,8 @@ export default function Home() {
       try {
         // Fetch labels and filters in parallel
         const [paginated, filters] = await Promise.all([
-          fetchTicTakData(1, 50),
-          fetchFilterData()
+          fetchTicTakData(1, 50, { includeProcessed }),
+          fetchFilterData(includeProcessed)
         ]);
         
         setLabels(paginated.data);
@@ -96,6 +97,19 @@ export default function Home() {
     loadInitialData();
   }, []);
 
+  // Effect to sync filters when mode changes
+  useEffect(() => {
+    async function syncFilters() {
+      try {
+        const filters = await fetchFilterData(includeProcessed);
+        setAvailableFilters(filters);
+      } catch (err) {
+        console.error('Error syncing filters:', err);
+      }
+    }
+    syncFilters();
+  }, [includeProcessed]);
+
   // Fetch more logic
   const fetchMoreData = useCallback(async () => {
     if (isFetchingMore || !hasMore || loading) return;
@@ -107,7 +121,8 @@ export default function Home() {
         parties: Array.from(selectedParties),
         items: Array.from(selectedItems),
         transporters: Array.from(selectedTransporters),
-        q: searchQuery
+        q: searchQuery,
+        includeProcessed
       };
 
       const paginated = await fetchTicTakData(page, 50, filters);
@@ -127,7 +142,7 @@ export default function Home() {
     } finally {
       setIsFetchingMore(false);
     }
-  }, [page, isFetchingMore, hasMore, loading]);
+  }, [page, isFetchingMore, hasMore, loading, includeProcessed]);
 
   // Setup intersection observer
   useEffect(() => {
@@ -168,7 +183,8 @@ export default function Home() {
           parties: Array.from(selectedParties),
           items: Array.from(selectedItems),
           transporters: Array.from(selectedTransporters),
-          q: searchQuery
+          q: searchQuery,
+          includeProcessed
         };
         
         const paginated = await fetchTicTakData(1, 50, filters);
@@ -190,7 +206,7 @@ export default function Home() {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [selectedCities, selectedParties, selectedItems, selectedTransporters, searchQuery]);
+  }, [selectedCities, selectedParties, selectedItems, selectedTransporters, searchQuery, includeProcessed]);
 
   // filteredLabels now just returns the labels since filtering happens on server
   const filteredLabels = useMemo(() => labels, [labels]);
@@ -849,6 +865,8 @@ export default function Home() {
                         availableParties={availableFilters?.parties}
                         availableItems={availableFilters?.items}
                         availableTransporters={availableFilters?.transporters}
+                        includeProcessed={includeProcessed}
+                        onIncludeProcessedChange={setIncludeProcessed}
                       />
                     </CardContent>
                   </Card>
@@ -908,6 +926,8 @@ export default function Home() {
                             availableParties={availableFilters?.parties}
                             availableItems={availableFilters?.items}
                             availableTransporters={availableFilters?.transporters}
+                            includeProcessed={includeProcessed}
+                            onIncludeProcessedChange={setIncludeProcessed}
                           />
                           <div className="mt-8">
                             <Button

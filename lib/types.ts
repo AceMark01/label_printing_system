@@ -14,6 +14,7 @@ export interface Label {
   remark?: string;
   bdlQty?: string | number;
   date?: string;
+  transporter?: string;
   originalData?: Record<string, any>;
 }
 

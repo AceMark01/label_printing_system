@@ -1,89 +1,241 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { Search, X } from 'lucide-react';
+import { Search, X, ChevronDown, Check } from 'lucide-react';
 import { translations } from '@/lib/mock-data';
 import type { Label as LabelType, Language } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 interface FilterPanelProps {
   labels: LabelType[] | undefined;
-  selectedCity: string | null;
-  selectedParty: string | null;
-  selectedItem: string | null;
+  selectedCities: Set<string>;
+  selectedParties: Set<string>;
+  selectedItems: Set<string>;
+  selectedTransporters: Set<string>;
   searchQuery: string;
   language: Language;
-  onCityChange: (city: string | null) => void;
-  onPartyChange: (party: string | null) => void;
-  onItemChange: (item: string | null) => void;
+  onCitiesChange: (cities: Set<string>) => void;
+  onPartiesChange: (parties: Set<string>) => void;
+  onItemsChange: (items: Set<string>) => void;
+  onTransportersChange: (transporters: Set<string>) => void;
   onSearchQueryChange: (query: string) => void;
   onClearFilters: () => void;
+  // New props for remote filter options
+  availableCities?: string[];
+  availableParties?: string[];
+  availableItems?: string[];
+  availableTransporters?: string[];
 }
+
+const MultiSelectDropdown = ({ 
+  label, 
+  options, 
+  selectedValues, 
+  onValuesChange, 
+  placeholder 
+}: { 
+  label: string, 
+  options: string[], 
+  selectedValues: Set<string>, 
+  onValuesChange: (vals: Set<string>) => void,
+  placeholder: string
+}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [open, setOpen] = useState(false);
+  
+  const filteredOptions = options.filter(opt => 
+    opt.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const toggleOption = (opt: string) => {
+    const next = new Set(selectedValues);
+    if (next.has(opt)) {
+      next.delete(opt);
+    } else {
+      next.add(opt);
+    }
+    onValuesChange(next);
+  };
+
+  return (
+    <div className="space-y-2.5">
+      <Label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest ml-1">
+        {label}
+      </Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button 
+            variant="outline" 
+            className="w-full justify-between bg-blue-50/50 border-blue-100 focus:ring-blue-500 rounded-xl h-11 font-medium hover:bg-blue-100/50 text-left"
+          >
+            <span className="truncate">
+              {selectedValues.size === 0 
+                ? placeholder 
+                : `${selectedValues.size} selected`}
+            </span>
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent 
+          className="w-[var(--radix-popover-trigger-width)] p-0 rounded-xl border-blue-100 shadow-xl overflow-hidden z-[100]" 
+          align="start"
+          onInteractOutside={(e) => {
+            // Optional: can prevent closing here if needed, but 'open' state is already controlled
+          }}
+        >
+          <div className="p-2 border-b border-blue-50 bg-slate-50">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <Input 
+                placeholder="Search..." 
+                className="h-8 pl-8 text-xs bg-white rounded-lg border-blue-50 focus-visible:ring-blue-500" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          <div className="max-h-[250px] overflow-y-auto p-1">
+            {filteredOptions.length === 0 ? (
+              <div className="py-4 text-center text-xs text-slate-400 font-medium">No results found</div>
+            ) : (
+              filteredOptions.map((opt) => (
+                <div 
+                  key={opt}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggleOption(opt);
+                  }}
+                  className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors group"
+                >
+                  <Checkbox 
+                    checked={selectedValues.has(opt)}
+                    className="pointer-events-none border-blue-200 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                  />
+                  <span className="text-sm text-slate-700 font-medium group-hover:text-blue-700 transition-colors truncate">
+                    {opt}
+                  </span>
+                  {selectedValues.has(opt) && <Check className="ml-auto h-4 w-4 text-blue-600" />}
+                </div>
+              ))
+            )}
+          </div>
+          <div className="p-2 border-t border-blue-50 bg-slate-50 flex justify-between gap-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-7 text-[10px] font-bold text-slate-500 px-2"
+              onClick={() => onValuesChange(new Set())}
+            >
+              Clear
+            </Button>
+            <div className="flex items-center gap-2">
+              <div className="text-[10px] font-bold text-blue-600 px-1">
+                {selectedValues.size} Selected
+              </div>
+              <Button 
+                size="sm" 
+                className="h-7 text-[10px] bg-blue-600 font-bold px-3 rounded-lg"
+                onClick={() => setOpen(false)}
+              >
+                Done
+              </Button>
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};
 
 export function FilterPanel({
   labels = [],
-  selectedCity,
-  selectedParty,
-  selectedItem,
+  selectedCities,
+  selectedParties,
+  selectedItems,
+  selectedTransporters,
   searchQuery,
   language,
-  onCityChange,
-  onPartyChange,
-  onItemChange,
+  onCitiesChange,
+  onPartiesChange,
+  onItemsChange,
+  onTransportersChange,
   onSearchQueryChange,
   onClearFilters,
+  availableCities,
+  availableParties,
+  availableItems,
+  availableTransporters,
 }: FilterPanelProps) {
   const safeLabels = labels || [];
   const t = translations[language] || translations['en'];
 
   const cities = useMemo(
-    () => [...new Set(safeLabels.map((l) => l.city))].sort(),
-    [safeLabels]
+    () => availableCities || [...new Set(safeLabels.map((l) => l.city))].sort(),
+    [safeLabels, availableCities]
   );
 
   const parties = useMemo(
     () =>
-      [
+      availableParties || [
         ...new Set(
           safeLabels
-            .filter((l) => !selectedCity || l.city === selectedCity)
+            .filter((l) => selectedCities.size === 0 || selectedCities.has(l.city))
             .map((l) => l.party)
         ),
       ].sort(),
-    [safeLabels, selectedCity]
+    [safeLabels, selectedCities, availableParties]
   );
 
   const items = useMemo(
     () =>
-      [
+      availableItems || [
         ...new Set(
           safeLabels
             .filter(
               (l) =>
-                (!selectedCity || l.city === selectedCity) &&
-                (!selectedParty || l.party === selectedParty)
+                (selectedCities.size === 0 || selectedCities.has(l.city)) &&
+                (selectedParties.size === 0 || selectedParties.has(l.party))
             )
             .map((l) => l.item)
         ),
       ].sort(),
-    [safeLabels, selectedCity, selectedParty]
+    [safeLabels, selectedCities, selectedParties, availableItems]
   );
 
-  const hasActiveFilters = selectedCity || selectedParty || selectedItem || searchQuery;
+  const transporters = useMemo(
+    () =>
+      availableTransporters || ([
+        ...new Set(
+          safeLabels
+            .filter(
+              (l) =>
+                (selectedCities.size === 0 || selectedCities.has(l.city)) &&
+                (selectedParties.size === 0 || selectedParties.has(l.party)) &&
+                (selectedItems.size === 0 || selectedItems.has(l.item))
+            )
+            .map((l) => l.transporter)
+            .filter(Boolean)
+        ),
+      ].sort() as string[]),
+    [safeLabels, selectedCities, selectedParties, selectedItems, availableTransporters]
+  );
+
+  const hasActiveFilters = 
+    selectedCities.size > 0 || 
+    selectedParties.size > 0 || 
+    selectedItems.size > 0 || 
+    selectedTransporters.size > 0 || 
+    searchQuery;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-5">
-        {/* Search Bar */}
         <div className="space-y-2.5">
           <Label htmlFor="search-input" className="text-[10px] font-bold text-blue-600 uppercase tracking-widest ml-1">
             Search Party / Item
@@ -108,62 +260,37 @@ export function FilterPanel({
           </div>
         </div>
 
-        <div className="space-y-2.5">
-          <Label htmlFor="city-select" className="text-[10px] font-bold text-blue-600 uppercase tracking-widest ml-1">
-            {t.filterByCity}
-          </Label>
-          <Select value={selectedCity || 'all-cities'} onValueChange={(value) => onCityChange(value === 'all-cities' ? null : value)}>
-            <SelectTrigger id="city-select" className="bg-blue-50/50 border-blue-100 focus:ring-blue-500 rounded-xl h-11 font-medium">
-              <SelectValue placeholder={t.city} />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-blue-100 shadow-xl overflow-hidden">
-              <SelectItem value="all-cities" className="font-bold text-blue-700">All Cities</SelectItem>
-              {cities.map((city) => (
-                <SelectItem key={city} value={city} className="cursor-pointer">
-                  {city}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <MultiSelectDropdown 
+          label={t.filterByCity}
+          options={cities}
+          selectedValues={selectedCities}
+          onValuesChange={onCitiesChange}
+          placeholder={t.city}
+        />
 
-        <div className="space-y-2.5">
-          <Label htmlFor="party-select" className="text-[10px] font-bold text-blue-600 uppercase tracking-widest ml-1">
-            {t.filterByParty}
-          </Label>
-          <Select value={selectedParty || 'all-parties'} onValueChange={(value) => onPartyChange(value === 'all-parties' ? null : value)}>
-            <SelectTrigger id="party-select" className="bg-blue-50/50 border-blue-100 focus:ring-blue-500 rounded-xl h-11 font-medium">
-              <SelectValue placeholder={t.party} />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-blue-100 shadow-xl overflow-hidden">
-              <SelectItem value="all-parties" className="font-bold text-blue-700">All Parties</SelectItem>
-              {parties.map((party) => (
-                <SelectItem key={party} value={party} className="cursor-pointer">
-                  {party}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <MultiSelectDropdown 
+          label={t.filterByParty}
+          options={parties}
+          selectedValues={selectedParties}
+          onValuesChange={onPartiesChange}
+          placeholder={t.party}
+        />
 
-        <div className="space-y-2.5">
-          <Label htmlFor="item-select" className="text-[10px] font-bold text-blue-600 uppercase tracking-widest ml-1">
-            {t.filterByItem}
-          </Label>
-          <Select value={selectedItem || 'all-items'} onValueChange={(value) => onItemChange(value === 'all-items' ? null : value)}>
-            <SelectTrigger id="item-select" className="bg-blue-50/50 border-blue-100 focus:ring-blue-500 rounded-xl h-11 font-medium">
-              <SelectValue placeholder={t.item} />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-blue-100 shadow-xl overflow-hidden">
-              <SelectItem value="all-items" className="font-bold text-blue-700">All Items</SelectItem>
-              {items.map((item) => (
-                <SelectItem key={item} value={item} className="cursor-pointer">
-                  {item}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <MultiSelectDropdown 
+          label={t.filterByItem}
+          options={items}
+          selectedValues={selectedItems}
+          onValuesChange={onItemsChange}
+          placeholder={t.item}
+        />
+
+        <MultiSelectDropdown 
+          label="Filter By Transporter"
+          options={transporters}
+          selectedValues={selectedTransporters}
+          onValuesChange={onTransportersChange}
+          placeholder="Transporter"
+        />
 
         {hasActiveFilters && (
           <Button
@@ -179,3 +306,4 @@ export function FilterPanel({
     </div>
   );
 }
+

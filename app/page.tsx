@@ -3,7 +3,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { translations, languageNames } from '@/lib/mock-data';
-import { fetchTicTakData } from '@/lib/google-sheets';
+import { fetchTicTakData, fetchFilterData } from '@/lib/google-sheets';
 import { FilterPanel } from '@/components/filter-panel';
 import { DataTable } from '@/components/data-table';
 import { LabelCard } from '@/components/label-card';
@@ -14,7 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetDescription } from '@/components/ui/sheet';
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Download, Printer, LayoutGrid, FileText, Box, Loader2, Filter, SlidersHorizontal, Settings2 } from 'lucide-react';
 import type { Language } from '@/lib/types';
 import { useCallback } from 'react';
@@ -48,9 +49,16 @@ export default function Home() {
   const [printingLabel, setPrintingLabel] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const [selectedParty, setSelectedParty] = useState<string | null>(null);
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [selectedCities, setSelectedCities] = useState<Set<string>>(new Set());
+  const [selectedParties, setSelectedParties] = useState<Set<string>>(new Set());
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [selectedTransporters, setSelectedTransporters] = useState<Set<string>>(new Set());
+  const [availableFilters, setAvailableFilters] = useState<{
+    cities: string[];
+    parties: string[];
+    items: string[];
+    transporters: string[];
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
   const [labelLanguages, setLabelLanguages] = useState<Set<Language>>(new Set(['hi', 'od']));
@@ -68,8 +76,14 @@ export default function Home() {
       setLoading(true);
       setError(null);
       try {
-        const paginated = await fetchTicTakData(1, 50);
+        // Fetch labels and filters in parallel
+        const [paginated, filters] = await Promise.all([
+          fetchTicTakData(1, 50),
+          fetchFilterData()
+        ]);
+        
         setLabels(paginated.data);
+        setAvailableFilters(filters);
         setHasMore(paginated.meta.page < paginated.meta.totalPages);
         setPage(2);
       } catch (err: any) {
@@ -88,10 +102,16 @@ export default function Home() {
 
     setIsFetchingMore(true);
     try {
-      console.log(`Loading more data: Page ${page}`);
-      const paginated = await fetchTicTakData(page, 50);
+      const filters = {
+        cities: Array.from(selectedCities),
+        parties: Array.from(selectedParties),
+        items: Array.from(selectedItems),
+        transporters: Array.from(selectedTransporters),
+        q: searchQuery
+      };
+
+      const paginated = await fetchTicTakData(page, 50, filters);
       if (paginated.data && paginated.data.length > 0) {
-        // Prevent adding duplicates if API returns same data
         setLabels(prev => {
           const existingIds = new Set(prev.map(l => l.id));
           const newUniqueLabels = paginated.data.filter(l => !existingIds.has(l.id));
@@ -130,25 +150,50 @@ export default function Home() {
     return () => observer.disconnect();
   }, [hasMore, loading, isFetchingMore, fetchMoreData]);
 
-  // Filter labels based on selected filters (searches across all loaded labels)
-  const filteredLabels = useMemo(() => {
-    return labels.filter((label) => {
-      // Dropdown filters
-      if (selectedCity && label.city !== selectedCity) return false;
-      if (selectedParty && label.party !== selectedParty) return false;
-      if (selectedItem && label.item !== selectedItem) return false;
-
-      // Search bar filter (Party or Item)
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        const partyMatch = label.party?.toLowerCase().includes(query);
-        const itemMatch = label.item?.toLowerCase().includes(query);
-        if (!partyMatch && !itemMatch) return false;
+  // Effect to handle filter changes - reset and fetch from server
+  useEffect(() => {
+    let isMounted = true;
+    
+    async function applyFilters() {
+      // Don't run on initial load if we're already loading
+      if (loading && labels.length === 0) return;
+      
+      setLoading(true);
+      setLabels([]); // Clear current list to show fresh filtered results
+      setPage(1);
+      
+      try {
+        const filters = {
+          cities: Array.from(selectedCities),
+          parties: Array.from(selectedParties),
+          items: Array.from(selectedItems),
+          transporters: Array.from(selectedTransporters),
+          q: searchQuery
+        };
+        
+        const paginated = await fetchTicTakData(1, 50, filters);
+        
+        if (isMounted) {
+          setLabels(paginated.data);
+          setHasMore(paginated.meta.page < paginated.meta.totalPages);
+          setPage(2);
+        }
+      } catch (err: any) {
+        console.error('Error applying filters:', err);
+      } finally {
+        if (isMounted) setLoading(false);
       }
+    }
 
-      return true;
-    });
-  }, [labels, selectedCity, selectedParty, selectedItem, searchQuery]);
+    const timer = setTimeout(applyFilters, 300); // Debounce
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [selectedCities, selectedParties, selectedItems, selectedTransporters, searchQuery]);
+
+  // filteredLabels now just returns the labels since filtering happens on server
+  const filteredLabels = useMemo(() => labels, [labels]);
 
   // Get selected label details
   const selectedLabelDetails = useMemo(() => {
@@ -161,9 +206,10 @@ export default function Home() {
   }, [filteredLabels, selectedLabels, bundleOverrides]);
 
   const handleClearFilters = () => {
-    setSelectedCity(null);
-    setSelectedParty(null);
-    setSelectedItem(null);
+    setSelectedCities(new Set());
+    setSelectedParties(new Set());
+    setSelectedItems(new Set());
+    setSelectedTransporters(new Set());
     setSearchQuery('');
   };
 
@@ -787,16 +833,22 @@ export default function Home() {
                     <CardContent className="pt-6">
                       <FilterPanel
                         labels={labels}
-                        selectedCity={selectedCity}
-                        selectedParty={selectedParty}
-                        selectedItem={selectedItem}
+                        selectedCities={selectedCities}
+                        selectedParties={selectedParties}
+                        selectedItems={selectedItems}
+                        selectedTransporters={selectedTransporters}
                         searchQuery={searchQuery}
                         language="en"
-                        onCityChange={setSelectedCity}
-                        onPartyChange={setSelectedParty}
-                        onItemChange={setSelectedItem}
+                        onCitiesChange={setSelectedCities}
+                        onPartiesChange={setSelectedParties}
+                        onItemsChange={setSelectedItems}
+                        onTransportersChange={setSelectedTransporters}
                         onSearchQueryChange={setSearchQuery}
                         onClearFilters={handleClearFilters}
+                        availableCities={availableFilters?.cities}
+                        availableParties={availableFilters?.parties}
+                        availableItems={availableFilters?.items}
+                        availableTransporters={availableFilters?.transporters}
                       />
                     </CardContent>
                   </Card>
@@ -813,58 +865,63 @@ export default function Home() {
                       </h2>
                     </div>
 
-                    <Sheet>
-                      <SheetTrigger asChild>
+                    <Dialog>
+                      <DialogTrigger asChild>
                         <Button variant="outline" className="rounded-xl border-blue-200 flex items-center gap-2 font-bold text-blue-700 bg-white shadow-sm">
                           <Filter className="w-4 h-4" />
                           Filters
-                          {(selectedCity || selectedParty || selectedItem) && (
+                          {(selectedCities.size > 0 || selectedParties.size > 0 || selectedItems.size > 0 || selectedTransporters.size > 0) && (
                             <span className="w-2 h-2 rounded-full bg-orange-500" />
                           )}
                         </Button>
-                      </SheetTrigger>
-                      <SheetContent side="bottom" className="rounded-t-[2rem] h-[60vh] px-6 py-8">
-                        <SheetHeader className="mb-6">
+                      </DialogTrigger>
+                      <DialogContent className="max-w-[90vw] sm:max-w-[425px] rounded-[2rem] p-6 overflow-hidden">
+                        <DialogHeader className="mb-6">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
                               <SlidersHorizontal className="w-5 h-5 text-white" />
                             </div>
-                            <div>
-                              <SheetTitle className="text-xl font-black text-blue-900">Search Filters</SheetTitle>
-                              <SheetDescription className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                            <div className="text-left">
+                              <DialogTitle className="text-xl font-black text-blue-900">Search Filters</DialogTitle>
+                              <DialogDescription className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                                 Refine your order selection
-                              </SheetDescription>
+                              </DialogDescription>
                             </div>
                           </div>
-                        </SheetHeader>
+                        </DialogHeader>
                         <div className="mt-4">
                           <FilterPanel
                             labels={labels}
-                            selectedCity={selectedCity}
-                            selectedParty={selectedParty}
-                            selectedItem={selectedItem}
+                            selectedCities={selectedCities}
+                            selectedParties={selectedParties}
+                            selectedItems={selectedItems}
+                            selectedTransporters={selectedTransporters}
                             searchQuery={searchQuery}
                             language="en"
-                            onCityChange={setSelectedCity}
-                            onPartyChange={setSelectedParty}
-                            onItemChange={setSelectedItem}
+                            onCitiesChange={setSelectedCities}
+                            onPartiesChange={setSelectedParties}
+                            onItemsChange={setSelectedItems}
+                            onTransportersChange={setSelectedTransporters}
                             onSearchQueryChange={setSearchQuery}
                             onClearFilters={handleClearFilters}
+                            availableCities={availableFilters?.cities}
+                            availableParties={availableFilters?.parties}
+                            availableItems={availableFilters?.items}
+                            availableTransporters={availableFilters?.transporters}
                           />
                           <div className="mt-8">
                             <Button
                               className="w-full h-12 rounded-xl bg-blue-600 font-bold"
                               onClick={() => {
-                                // Standard behavior is just closing, which SheetTrigger handles if wrapped correctly or if we use manual control
-                                // but here we just want a "Show Results" feel
+                                // Dialog auto-closes on interaction if integrated with trigger
                               }}
                             >
-                              Apply Filters & Close
+                              Apply Filters
                             </Button>
                           </div>
                         </div>
-                      </SheetContent>
-                    </Sheet>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                   <Card className="premium-card">
                     <CardHeader className="bg-gradient-to-br from-blue-50 to-white border-b border-blue-100 rounded-t-2xl">

@@ -94,13 +94,17 @@ export async function GET(request: NextRequest) {
         const partyMap = new Map((masterParties || []).map(p => [p.name.toLowerCase().trim(), p]));
         const productMap = new Map((masterProducts || []).map(p => [p.name.toLowerCase().trim(), p]));
 
-        // Fetch already printed labels from Supabase to hide them
-        const { data: printedLabels } = await supabase
-            .from('labels_tracking')
-            .select('label_id')
-            .eq('status', 'printed');
+        // Fetch already printed labels from both tracking and history tables
+        const [
+            { data: printedTracking },
+            { data: printedHistory }
+        ] = await Promise.all([
+            supabase.from('labels_tracking').select('label_id').eq('status', 'printed'),
+            supabase.from('labels').select('order_no')
+        ]);
         
-        const printedIds = new Set((printedLabels || []).map(l => l.label_id));
+        const printedIds = new Set((printedTracking || []).map(l => l.label_id));
+        const printedOrderNos = new Set((printedHistory || []).map(l => l.order_no).filter(Boolean));
 
         const getValue = (obj: any, targetKey: string) => {
             if (!obj) return undefined;
@@ -171,7 +175,11 @@ export async function GET(request: NextRequest) {
 
         const filteredData = mappedData.filter((item: any) => {
             // Hide already printed labels unless specifically requested to show all
-            if (item.isPrinted && !includeProcessed) return false;
+            const isOrderAlreadyInHistory = printedOrderNos.has(item.originalData['OrderNo']) || 
+                                           printedOrderNos.has(item.originalData['SOrderNo']) ||
+                                           printedOrderNos.has(item.originalData['order_no']);
+
+            if ((item.isPrinted || isOrderAlreadyInHistory) && !includeProcessed) return false;
 
             if (!includeProcessed) {
                 // If it's the new API, we might not have 'N' column for processing

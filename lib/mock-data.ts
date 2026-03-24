@@ -73,3 +73,5 @@ export const languageNames = {
   hi: 'हिंदी (Hindi)',
   od: 'ଓଡ଼ିଆ (Odisha)',
 };
+
+

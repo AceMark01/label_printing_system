@@ -176,60 +176,109 @@
     scrollbar-width: none;
   }
 
-  /* Preview Scaler for A4 content in a small container */
+  /* Custom Scrollbar suppression */
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* PREMIUM PREVIEW LAYOUT */
+  .preview-container {
+    background: #0f172a;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .premium-preview-shadow {
+    box-shadow: 
+      0 0 0 1px rgba(0,0,0,0.1),
+      0 30px 60px -12px rgba(0,0,0,0.5),
+      0 18px 36px -18px rgba(0,0,0,0.5);
+  }
+
+  /* Force the scaled content to take up enough space in the scroll container */
+  .preview-scaler-container {
+    width: calc(210mm * var(--preview-scale, 1));
+    height: calc(297mm * var(--preview-scale, 1));
+    margin: 40px auto;
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
   .preview-scaler {
-    transform: scale(0.32);
-    margin-bottom: calc(297mm * (0.32 - 1));
-    transform-origin: top center;
+    transform: scale(var(--preview-scale, 0.5));
+    transform-origin: top left;
+    width: 210mm;
+    height: 297mm;
   }
-  
-  @media (min-width: 480px) {
-    .preview-scaler {
-      transform: scale(0.4);
-      margin-bottom: calc(297mm * (0.4 - 1));
-    }
+
+  @media (min-width: 1536px) {
+    :root { --preview-scale: 0.8; }
   }
-  
-  @media (min-width: 640px) {
-    .preview-scaler {
-      transform: scale(0.5);
-      margin-bottom: calc(297mm * (0.5 - 1));
-    }
+
+  @media (min-width: 1280px) and (max-width: 1535px) {
+    :root { --preview-scale: 0.7; }
+  }
+
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    :root { --preview-scale: 0.6; }
+  }
+
+  @media (max-width: 1023px) {
+    :root { --preview-scale: 0.45; }
+  }
+
+  @media (max-width: 640px) {
+    :root { --preview-scale: 0.35; }
   }
 }
 
 @layer base {
   @media print {
-    /* Utility to hide elements during print */
-    .no-print {
-      display: none !important;
-    }
-
-    /* Standard printer resets */
-    * {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-      box-sizing: border-box !important;
-    }
-
-    html, body { 
-      margin: 0 !important; 
-      padding: 0 !important; 
-      width: 210mm !important;
-      height: 297mm !important;
-      overflow: visible !important;
-      background: white !important;
-    }
-
     @page {
       size: A4 portrait;
-      margin: 0 !important;
+      margin: 0mm;
     }
 
-    /* Ensure specific background utilities work during print */
-    .bg-slate-100 { 
-      background: white !important; 
-      padding: 0 !important; 
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background: white !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Hide any floating UI or dialogs during print, unless specifically marked for printing */
+    .no-print,
+    div[role="dialog"],
+    body > div[data-radix-portal] > div:not(.print\:block),
+    .print\:hidden {
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+    }
+
+    .print\:block {
+      display: block !important;
+      width: 210mm !important;
+      min-height: 297mm !important;
+      margin: 0 auto !important;
+      padding: 0 !important;
+      position: absolute !important;
+      top: 0 !important;
+      left: 0 !important;
+      background-color: white !important;
+      z-index: 9999 !important;
+    }
+    
+    * {
+      text-shadow: none !important;
+      box-shadow: none !important;
     }
   }
-}
+}

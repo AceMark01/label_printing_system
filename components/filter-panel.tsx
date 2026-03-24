@@ -25,7 +25,6 @@ interface FilterPanelProps {
   onTransportersChange: (transporters: Set<string>) => void;
   onSearchQueryChange: (query: string) => void;
   onClearFilters: () => void;
-  // New props for remote filter options
   availableCities?: string[];
   availableParties?: string[];
   availableItems?: string[];
@@ -65,45 +64,45 @@ const MultiSelectDropdown = ({
   };
 
   return (
-    <div className="space-y-2.5">
-      <Label className="text-[10px] font-bold text-blue-600 uppercase tracking-widest ml-1">
+    <div className="flex flex-col gap-1.5 min-w-[140px] flex-1">
+      <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] ml-1">
         {label}
       </Label>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button 
             variant="outline" 
-            className="w-full justify-between bg-blue-50/50 border-blue-100 focus:ring-blue-500 rounded-xl h-11 font-medium hover:bg-blue-100/50 text-left"
+            className={cn(
+              "w-full justify-between bg-white border-slate-200 focus:ring-blue-500 rounded-xl h-11 font-bold text-xs hover:border-blue-200 transition-all text-left shadow-sm",
+              selectedValues.size > 0 && "border-blue-500 bg-blue-50/30 ring-1 ring-blue-500/20"
+            )}
           >
             <span className="truncate">
               {selectedValues.size === 0 
                 ? placeholder 
                 : `${selectedValues.size} selected`}
             </span>
-            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            <ChevronDown className={cn("ml-2 h-3.5 w-3.5 shrink-0 opacity-50 transition-transform", open && "rotate-180")} />
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-[var(--radix-popover-trigger-width)] p-0 rounded-xl border-blue-100 shadow-xl overflow-hidden z-[100]" 
+          className="w-[280px] p-0 rounded-[1.5rem] border-slate-200 shadow-2xl overflow-hidden z-[100] animate-in zoom-in-95 duration-200" 
           align="start"
-          onInteractOutside={(e) => {
-            // Optional: can prevent closing here if needed, but 'open' state is already controlled
-          }}
         >
-          <div className="p-2 border-b border-blue-50 bg-slate-50">
+          <div className="p-3 border-b border-slate-100 bg-slate-50/50">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input 
                 placeholder="Search..." 
-                className="h-8 pl-8 text-xs bg-white rounded-lg border-blue-50 focus-visible:ring-blue-500" 
+                className="h-10 pl-9 text-xs bg-white rounded-xl border-slate-200 focus-visible:ring-blue-500" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
           </div>
-          <div className="max-h-[250px] overflow-y-auto p-1">
+          <div className="max-h-[300px] overflow-y-auto p-2 custom-scrollbar">
             {filteredOptions.length === 0 ? (
-              <div className="py-4 text-center text-xs text-slate-400 font-medium">No results found</div>
+              <div className="py-8 text-center text-xs text-slate-400 font-bold">No results found</div>
             ) : (
               filteredOptions.map((opt) => (
                 <div 
@@ -113,41 +112,39 @@ const MultiSelectDropdown = ({
                     e.stopPropagation();
                     toggleOption(opt);
                   }}
-                  className="flex items-center gap-2.5 px-3 py-2.5 hover:bg-blue-50 rounded-lg cursor-pointer transition-colors group"
+                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-blue-50 rounded-xl cursor-pointer transition-all group mb-0.5 last:mb-0"
                 >
                   <Checkbox 
                     checked={selectedValues.has(opt)}
-                    className="pointer-events-none border-blue-200 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                    className="pointer-events-none border-slate-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 rounded-md"
                   />
-                  <span className="text-sm text-slate-700 font-medium group-hover:text-blue-700 transition-colors truncate">
+                  <span className="text-xs text-slate-700 font-bold group-hover:text-blue-700 transition-colors truncate">
                     {opt}
                   </span>
-                  {selectedValues.has(opt) && <Check className="ml-auto h-4 w-4 text-blue-600" />}
+                  {selectedValues.has(opt) && <Check className="ml-auto h-3.5 w-3.5 text-blue-600" />}
                 </div>
               ))
             )}
           </div>
-          <div className="p-2 border-t border-blue-50 bg-slate-50 flex justify-between gap-2">
+          <div className="p-3 border-t border-slate-100 bg-slate-50/50 flex justify-between gap-3">
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-7 text-[10px] font-bold text-slate-500 px-2"
-              onClick={() => onValuesChange(new Set())}
+              className="h-9 text-[10px] font-black text-slate-500 px-4 hover:bg-white rounded-xl transition-all"
+              onClick={() => {
+                onValuesChange(new Set());
+                setSearchTerm('');
+              }}
             >
-              Clear
+              Reset
             </Button>
-            <div className="flex items-center gap-2">
-              <div className="text-[10px] font-bold text-blue-600 px-1">
-                {selectedValues.size} Selected
-              </div>
-              <Button 
-                size="sm" 
-                className="h-7 text-[10px] bg-blue-600 font-bold px-3 rounded-lg"
-                onClick={() => setOpen(false)}
-              >
-                Done
-              </Button>
-            </div>
+            <Button 
+              size="sm" 
+              className="h-9 text-[10px] bg-blue-600 hover:bg-blue-700 text-white font-black px-6 rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+              onClick={() => setOpen(false)}
+            >
+              Apply Filter
+            </Button>
           </div>
         </PopoverContent>
       </Popover>
@@ -238,25 +235,32 @@ export function FilterPanel({
     searchQuery;
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-5">
-        <div className="space-y-2.5">
-          <Label htmlFor="search-input" className="text-[10px] font-bold text-blue-600 uppercase tracking-widest ml-1">
-            Search Party / Item
+    <div className="w-full bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+        {/* Search */}
+        <div className="flex flex-col gap-1.5 min-w-0">
+          <Label htmlFor="search-input" className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] ml-1">
+            Search
           </Label>
           <div className="relative group">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-500 transition-colors" />
+            <Search className={cn(
+              "absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-colors",
+              searchQuery && "text-blue-500"
+            )} />
             <Input
               id="search-input"
-              placeholder="Type to search..."
+              placeholder="Search party or items..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
-              className="pl-10 pr-10 bg-blue-50/50 border-blue-100 focus:ring-blue-500 rounded-xl h-11 font-medium transition-all"
+              className={cn(
+                "pl-11 pr-10 bg-white border-slate-200 focus:ring-blue-500 rounded-xl h-11 font-bold text-xs transition-all shadow-sm w-full",
+                searchQuery && "border-blue-500 bg-blue-50/30"
+              )}
             />
             {searchQuery && (
               <button
                 onClick={() => onSearchQueryChange('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-blue-100 rounded-full transition-colors text-gray-400 hover:text-blue-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 hover:bg-red-50 rounded-full transition-colors text-slate-300 hover:text-red-500"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -265,64 +269,79 @@ export function FilterPanel({
         </div>
 
         <MultiSelectDropdown 
-          label={t.filterByCity}
-          options={cities}
-          selectedValues={selectedCities}
-          onValuesChange={onCitiesChange}
-          placeholder={t.city}
-        />
-
-        <MultiSelectDropdown 
-          label={t.filterByParty}
+          label="Parties"
           options={parties}
           selectedValues={selectedParties}
           onValuesChange={onPartiesChange}
-          placeholder={t.party}
+          placeholder="All Parties"
         />
 
         <MultiSelectDropdown 
-          label={t.filterByItem}
+          label="Cities"
+          options={cities}
+          selectedValues={selectedCities}
+          onValuesChange={onCitiesChange}
+          placeholder="All Cities"
+        />
+
+        <MultiSelectDropdown 
+          label="Products"
           options={items}
           selectedValues={selectedItems}
           onValuesChange={onItemsChange}
-          placeholder={t.item}
+          placeholder="All Products"
         />
 
         <MultiSelectDropdown 
-          label="Filter By Transporter"
+          label="Transporters"
           options={transporters}
           selectedValues={selectedTransporters}
           onValuesChange={onTransportersChange}
-          placeholder="Transporter"
+          placeholder="Any Transporter"
         />
 
-        <div className="flex items-center gap-2.5 p-3 bg-blue-50/30 rounded-xl border border-blue-100/50 hover:bg-blue-50/50 transition-colors cursor-pointer" onClick={() => onIncludeProcessedChange?.(!includeProcessed)}>
-          <Checkbox 
-            id="include-processed"
-            checked={includeProcessed}
-            onCheckedChange={(checked) => onIncludeProcessedChange?.(checked === true)}
-            className="border-blue-200 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-          />
-          <div className="flex flex-col">
-            <Label htmlFor="include-processed" className="text-xs font-bold text-slate-700 cursor-pointer">
-              Show Processed Records
-            </Label>
-            <span className="text-[9px] font-medium text-slate-400">Include historical/completed data</span>
-          </div>
-        </div>
-
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClearFilters}
-            className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-bold transition-all mt-2"
+        {/* Actions unified in grid */}
+        <div className="flex items-end gap-3 min-w-0">
+          <div 
+            className={cn(
+              "flex items-center gap-3 px-4 h-11 bg-slate-50 border border-slate-100 rounded-xl hover:bg-blue-50 hover:border-blue-100 transition-all cursor-pointer group flex-1 min-w-0 justify-center",
+              includeProcessed && "bg-blue-600 border-blue-600 hover:bg-blue-700 hover:border-blue-700"
+            )} 
+            onClick={() => onIncludeProcessedChange?.(!includeProcessed)}
           >
-            × {t.clearFilters}
-          </Button>
-        )}
+            <Checkbox 
+              id="include-processed"
+              checked={includeProcessed}
+              onCheckedChange={(checked) => onIncludeProcessedChange?.(checked === true)}
+              className={cn(
+                "border-slate-300 data-[state=checked]:bg-white data-[state=checked]:text-blue-600 rounded-md shrink-0",
+                includeProcessed && "border-white/50"
+              )}
+            />
+            <Label 
+              htmlFor="include-processed" 
+              className={cn(
+                "text-[10px] font-black uppercase tracking-widest cursor-pointer transition-colors truncate",
+                includeProcessed ? "text-white" : "text-slate-600 group-hover:text-blue-600"
+              )}
+            >
+              Processed
+            </Label>
+          </div>
+
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClearFilters}
+              className="h-11 w-11 shrink-0 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-50 active:scale-95 transition-all shadow-sm border border-slate-100"
+              title="Clear All Filters"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
 }
-

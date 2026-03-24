@@ -1,7 +1,11 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { getCachedSheetData } from '@/lib/data-cache';
+import { supabase } from '@/lib/supabase';
 
 const APPS_SCRIPT_URL = process.env.GOOGLE_SHEET_API_URL || '';
+const NEW_API_URL = process.env.NEW_LEGACY_API_URL || 'http://eksai12.ddns.net:8786/ek_api/googleAutomation/ReadyForDeliveryV2.ashx';
+const USE_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_URL && 
+                    process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url';
 
 export async function GET(request: NextRequest) {
     try {
@@ -17,81 +21,160 @@ export async function GET(request: NextRequest) {
         const searchQuery = searchParams.get('q')?.toLowerCase() || '';
         const includeProcessed = searchParams.get('includeProcessed') === 'true';
 
-        if (!APPS_SCRIPT_URL) {
-            console.error('GOOGLE_SHEET_API_URL is not set in environment variables');
-            return NextResponse.json({ error: 'Config missing' }, { status: 500 });
+/*
+        // --- SUPABASE PATH ---
+        if (USE_SUPABASE) {
+            let query = supabase
+                .from('labels')
+                .select('*', { count: 'exact' });
+
+            if (!includeProcessed) {
+                query = query.eq('processed', false);
+            }
+
+            // Map UI filter keys to precise Postgres columns
+            if (filterCities.length > 0) query = query.in('city', filterCities);
+            if (filterParties.length > 0) query = query.in('account_name', filterParties);
+            if (filterItems.length > 0) query = query.in('product_name', filterItems);
+            if (filterTransporters.length > 0) query = query.in('transporter_name', filterTransporters);
+
+            if (searchQuery) {
+                query = query.or(`account_name.ilike.%${searchQuery}%,product_name.ilike.%${searchQuery}%`);
+            }
+
+            const { data, count, error } = await query
+                .order('created_at', { ascending: false })
+                .range(offset, offset + limit - 1);
+
+            if (error) throw error;
+
+            // Map Postgres row back to the exact interface the frontend expects (`Label`)
+            const mappedData = (data || []).map(item => ({
+                id: item.id,
+                city: item.city || '',
+                party: item.account_name || '',
+                item: item.product_name || '',
+                quantity: item.dispatch_qty || 0,
+                remark: item.remark || '',
+                bdlQty: item.dispatch_bdl_qty || '',
+                date: item.s_order_date || item.created_on || new Date(item.created_at).toISOString().split('T')[0],
+                // Fallbacks since translations are removed from DB schema
+                partyNames: { hi: '', od: '' },
+                itemNames: { hi: '', od: '' },
+                cityNames: { hi: '', od: '' },
+                transporter: item.transporter_name || '',
+                originalData: item
+            }));
+
+            return NextResponse.json({
+                data: mappedData,
+                meta: {
+                    total: count || 0,
+                    page,
+                    limit,
+                    totalPages: Math.ceil((count || 0) / limit)
+                }
+            });
         }
+*/
 
-        // Use the new cache utility to get data faster
-        const allData = await getCachedSheetData(APPS_SCRIPT_URL);
+        // --- EXTERNAL API / GOOGLE SHEETS FALLBACK ---
+        // We use getCachedSheetData which now also handles the DataRec format
+        const allData = await getCachedSheetData(NEW_API_URL || APPS_SCRIPT_URL);
 
-        // Helper to get value from item with flexible key lookup
+        // --- MASTER DATA CROSS-REFERENCE ---
+        // Fetch all parties and products to use for translation mapping
+        // This is more efficient for batch processing than individual queries
+        const [{ data: masterParties }, { data: masterProducts }] = await Promise.all([
+            supabase.from('parties').select('*'),
+            supabase.from('products').select('*')
+        ]);
+
+        // Create fast lookup maps
+        const partyMap = new Map((masterParties || []).map(p => [p.name.toLowerCase().trim(), p]));
+        const productMap = new Map((masterProducts || []).map(p => [p.name.toLowerCase().trim(), p]));
+
+        // Fetch already printed labels from Supabase to hide them
+        const { data: printedLabels } = await supabase
+            .from('labels_tracking')
+            .select('label_id')
+            .eq('status', 'printed');
+        
+        const printedIds = new Set((printedLabels || []).map(l => l.label_id));
+
         const getValue = (obj: any, targetKey: string) => {
+            if (!obj) return undefined;
             if (obj[targetKey] !== undefined) return obj[targetKey];
-            // Case-insensitive lookup
-            const lowerTarget = targetKey.toLowerCase();
-            const foundKey = Object.keys(obj).find(k => k.toLowerCase() === lowerTarget);
-            if (foundKey) return obj[foundKey];
-            // Lookup with/without spaces
-            const noSpaceTarget = lowerTarget.replace(/\s+/g, '');
-            const foundNoSpaceKey = Object.keys(obj).find(k => k.toLowerCase().replace(/\s+/g, '') === noSpaceTarget);
-            if (foundNoSpaceKey) return obj[foundNoSpaceKey];
             
-            // Special fallback for transporter - search for keys containing 'trans'
-            if (lowerTarget === 'transporter') {
-                const transKey = Object.keys(obj).find(k => k.toLowerCase().includes('trans'));
-                if (transKey) return obj[transKey];
+            const lowerTarget = targetKey.toLowerCase();
+            const keys = Object.keys(obj);
+            
+            // Try case-insensitive exact match first
+            const exactKey = keys.find(k => k.toLowerCase() === lowerTarget);
+            if (exactKey) return obj[exactKey];
+            
+            // Try removing spaces (fuzzy match)
+            const cleanTarget = lowerTarget.replace(/\s+/g, '');
+            const fuzzyKey = keys.find(k => k.toLowerCase().replace(/\s+/g, '') === cleanTarget);
+            if (fuzzyKey) return obj[fuzzyKey];
+            
+            // Field mapping for Quantity
+            if (lowerTarget === 'quantity' || lowerTarget === 'dispatchqty' || lowerTarget === 'actualqty') {
+                return obj['DispatchQty'] || obj['ActualQty'] || obj['Qty'] || obj['quantity'];
+            }
+            
+            // Field mapping for Transporter
+            if (lowerTarget === 'transporter' || lowerTarget === 'transportername' || lowerTarget === 'transportname') {
+                return obj['Transporter'] || obj['TransporterName'] || obj['TransportName'];
             }
             
             return undefined;
         };
 
-        // Map and filter in one pass if possible, or filter mapped data
         const mappedData = allData.map((item: any, index: number) => {
-            const orderNo = getValue(item, 'SOrderNo') || getValue(item, 'OrderNo') || 'no-order';
+            const orderNo = getValue(item, 'OrderNo') || getValue(item, 'SOrderNo') || `item-${index}`;
+            const id = `${orderNo}-${index}`;
+            const englishParty = (getValue(item, 'AccountName') || getValue(item, 'Party') || '').toString().trim();
+            const englishProduct = (getValue(item, 'ProductName') || getValue(item, 'Item') || '').toString().trim();
+            const englishCity = (getValue(item, 'City') || '').toString().trim();
+
+            const masterParty = partyMap.get(englishParty.toLowerCase());
+            const masterProduct = productMap.get(englishProduct.toLowerCase());
+
             return {
-                id: `${orderNo}-${index}`,
-                city: getValue(item, 'City') || '',
-                party: getValue(item, 'AccountName') || '',
-                item: getValue(item, 'ProductName') || '',
+                id,
+                city: englishCity,
+                party: englishParty,
+                item: englishProduct,
                 quantity: parseInt(getValue(item, 'DispatchQty')) || 0,
                 remark: getValue(item, 'Remark') || '',
                 bdlQty: getValue(item, 'DispatchBdlQty') || '',
-                date: new Date().toISOString().split('T')[0],
+                date: getValue(item, 'SOrderDate') || getValue(item, 'CreatedOn') || new Date().toISOString().split('T')[0],
                 partyNames: {
-                    hi: getValue(item, 'Party in hindi') || '',
-                    od: getValue(item, 'Party in oriya') || '',
+                    hi: getValue(item, 'Party in hindi') || masterParty?.name_hi || '',
+                    od: getValue(item, 'Party in oriya') || masterParty?.name_od || '',
                 },
                 itemNames: {
-                    hi: getValue(item, 'Item in hindi') || '',
-                    od: getValue(item, 'Item in oriya') || '',
+                    hi: getValue(item, 'Item in hindi') || masterProduct?.name_hi || '',
+                    od: getValue(item, 'Item in oriya') || masterProduct?.name_od || '',
                 },
                 cityNames: {
-                    hi: getValue(item, 'City in Hindi') || '',
-                    od: getValue(item, 'City in oriya') || '',
+                    hi: getValue(item, 'City in Hindi') || masterParty?.city_hi || '',
+                    od: getValue(item, 'City in oriya') || masterParty?.city_od || '',
                 },
-                transporter: (function() {
-                    const direct = getValue(item, 'Transporter') || getValue(item, 'Transporter Name');
-                    if (direct) return direct;
-                    const pVal = getValue(item, 'P') || item[15] || item['15'] || item[16] || item['16'];
-                    if (pVal) return pVal;
-                    const transKey = Object.keys(item).find(k => {
-                        const kl = k.toLowerCase();
-                        return kl.includes('trans') || kl.includes('transport');
-                    });
-                    if (transKey) return item[transKey];
-                    const pKey = Object.keys(item).find(k => k.toUpperCase() === 'P');
-                    if (pKey) return item[pKey];
-                    return '';
-                })(),
-                originalData: item
+                transporter: getValue(item, 'Transporter') || getValue(item, 'TransportName') || '',
+                pdf: getValue(item, 'PDF Link') || '',
+                originalData: item,
+                isPrinted: printedIds.has(id)
             };
         });
 
-        // Apply server-side filtering
         const filteredData = mappedData.filter((item: any) => {
-            // "Past" Data Filter: Column N must be null/empty unless includeProcessed is true
+            // Hide already printed labels unless specifically requested to show all
+            if (item.isPrinted && !includeProcessed) return false;
+
             if (!includeProcessed) {
+                // If it's the new API, we might not have 'N' column for processing
                 const rawItem = item.originalData;
                 const colN = rawItem['N'] || rawItem[13] || getValue(rawItem, 'N');
                 if (colN && colN.toString().trim() !== '') return false;
@@ -105,7 +188,8 @@ export async function GET(request: NextRequest) {
             if (searchQuery) {
                 const partyMatch = item.party.toLowerCase().includes(searchQuery);
                 const itemMatch = item.item.toLowerCase().includes(searchQuery);
-                if (!partyMatch && !itemMatch) return false;
+                const cityMatch = item.city.toLowerCase().includes(searchQuery);
+                if (!partyMatch && !itemMatch && !cityMatch) return false;
             }
             return true;
         });

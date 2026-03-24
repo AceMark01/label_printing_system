@@ -7,6 +7,8 @@ interface LabelCardProps {
   label: Label;
   languages: Language[];
   fieldVisibility?: Partial<Record<Language, { product: boolean, quantity: boolean }>>;
+  onBundleChange?: (id: string, newQty: string) => void;
+  onVisibilityChange?: (id: string, field: 'product' | 'quantity', visible: boolean, lang: Language) => void;
 }
 
 const labelTranslations: Record<Language, Record<string, string>> = {
@@ -32,7 +34,7 @@ const labelTranslations: Record<Language, Record<string, string>> = {
   }
 };
 
-export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps) {
+export function LabelCard({ label, languages, fieldVisibility, onBundleChange, onVisibilityChange }: LabelCardProps) {
   const sortedLanguages = Array.from(languages).sort((a, b) => {
     if (a === 'hi') return -1;
     if (b === 'hi') return 1;
@@ -55,8 +57,8 @@ export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps)
   const getCityName = (lang: Language) => lang === 'en' ? label.city : (label.cityNames?.[lang] || label.city);
 
   return (
-    <div className="relative bg-white w-full h-full flex flex-col font-sans border border-gray-200 shadow-none overflow-hidden print:border-black print:border-2">
-      <div className={`flex-1 ${isMulti ? 'p-10' : 'p-16'} flex flex-col justify-center bg-white overflow-hidden`}>
+    <div className="relative bg-white w-full h-full flex flex-col font-sans border border-gray-200 shadow-none overflow-hidden print:border-none print:shadow-none print:bg-white">
+      <div className={`flex-1 ${isMulti ? 'p-10' : 'p-16'} flex flex-col justify-center bg-white overflow-hidden print:bg-white`}>
         <div className={`w-full ${isMulti ? 'space-y-12' : 'space-y-24'}`}>
           {sortedLanguages.map((lang, idx) => {
             const t = labelTranslations[lang];
@@ -84,34 +86,52 @@ export function LabelCard({ label, languages, fieldVisibility }: LabelCardProps)
                 </div>
 
                 {/* Product Name Row */}
-                {isProductVisible && (
-                  <div className="flex items-center gap-4">
-                    <p className="leading-tight">
-                      <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.item}: </span>
+                <div className="flex items-center gap-4 group/field relative">
+                  <p className={`leading-tight ${!isProductVisible ? 'opacity-25' : ''}`}>
+                    <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.item}: </span>
+                    {isProductVisible && (
                       <span className={`font-bold text-gray-800 ${getFontSize(itemName, isMulti ? (isHindi ? 'text-[26px]' : 'text-[22px]') : 'text-[34px]', 30)}`}>
                         {itemName}
                       </span>
-                    </p>
-                  </div>
-                )}
+                    )}
+                  </p>
+                  <input 
+                    type="checkbox" 
+                    checked={isProductVisible}
+                    onChange={(e) => onVisibilityChange?.(label.id, 'product', e.target.checked, lang)}
+                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-opacity cursor-pointer print:hidden absolute -left-8"
+                  />
+                </div>
 
                 {/* Quantity & City Row */}
                 <div className={`flex items-center ${isMulti ? (isReduced ? 'gap-12 pt-6' : 'gap-8 pt-2') : (isReduced ? 'gap-24 pt-16' : 'gap-16 pt-8')}`}>
-                  {isQuantityVisible && (
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-3">
-                        <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.qty}: </span>
+                  <div className="flex items-center gap-4 group/field relative">
+                    <div className={`flex items-center gap-3 ${!isQuantityVisible ? 'opacity-25' : ''}`}>
+                      <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.qty}: </span>
+                      {isQuantityVisible && (
                         <span className={`${isMulti ? 'text-[38px]' : 'text-[62px]'} font-black text-black leading-none whitespace-nowrap`}>{label.quantity}</span>
-                      </div>
+                      )}
                     </div>
-                  )}
+                    <input 
+                      type="checkbox" 
+                      checked={isQuantityVisible}
+                      onChange={(e) => onVisibilityChange?.(label.id, 'quantity', e.target.checked, lang)}
+                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-opacity cursor-pointer print:hidden absolute -left-8"
+                    />
+                  </div>
 
                   {label.bdlQty !== undefined && (
                     <div className={`flex items-center gap-4 ${isMulti ? 'pl-6' : 'pl-12'} ${isQuantityVisible ? 'border-l border-gray-100' : ''}`}>
                       <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-[24px]' : 'text-[18px]') : (isReduced ? 'text-[20px]' : 'text-[14px]')) : (isReduced ? 'text-[32px]' : 'text-[22px]')} font-bold text-gray-400 uppercase tracking-widest`}>{t.bundles}: </span>
-                      <div className="relative">
-                        <span className={`${isMulti ? (isReduced ? 'text-[48px]' : 'text-[38px]') : (isReduced ? 'text-[72px]' : 'text-[62px]')} font-black text-gray-700 leading-none whitespace-nowrap`}>{label.bdlQty}</span>
-                        <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-blue-200 print:bg-black" />
+                      <div className="relative group">
+                        <input 
+                          type="text" 
+                          value={label.bdlQty} 
+                          onChange={(e) => onBundleChange?.(label.id, e.target.value)}
+                          className={`${isMulti ? (isReduced ? 'text-[48px]' : 'text-[38px]') : (isReduced ? 'text-[72px]' : 'text-[62px]')} font-black text-gray-700 leading-none whitespace-nowrap bg-transparent border-none outline-none focus:ring-0 p-0 m-0 w-[1.5em] text-left hover:bg-slate-50 focus:bg-white rounded transition-colors print:p-0 print:m-0 print:bg-transparent print:hover:bg-transparent`}
+                          placeholder="0"
+                        />
+                        <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-blue-200 print:bg-black group-hover:bg-blue-400 transition-colors" />
                       </div>
                     </div>
                   )}

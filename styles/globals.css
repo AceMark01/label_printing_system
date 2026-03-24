@@ -139,7 +139,9 @@
       overflow: visible !important;
     }
     
-    .no-print {
+    .no-print,
+    [data-slot="dialog-content"],
+    [data-slot="dialog-overlay"] {
       display: none !important;
     }
     

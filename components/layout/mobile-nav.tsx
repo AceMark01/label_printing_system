@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 const navigation = [
   { name: 'Home', href: '/', icon: LayoutDashboard },
   { name: 'Orders', href: '/orders', icon: Package },
-  { name: 'Add', href: '/master', icon: PlusCircle },
+  // { name: 'Add', href: '/master', icon: PlusCircle }, // Temporarily hidden
   { name: 'History', href: '/history', icon: History },
 ];
 

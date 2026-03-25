@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'All Products', href: '/orders', icon: Package },
-  { name: 'Add Master', href: '/master', icon: PlusCircle },
+  // { name: 'Add Master', href: '/master', icon: PlusCircle }, // Temporarily hidden
   { name: 'History', href: '/history', icon: History },
 ];
 

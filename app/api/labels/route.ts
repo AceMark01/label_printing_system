@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
 
         // Create fast lookup maps
         const partyMap = new Map((masterParties || []).map(p => [(p.name_eng || '').toLowerCase().trim(), p]));
-        const productMap = new Map((masterProducts || []).map(p => [(p.name_eng || '').toLowerCase().trim(), p]));
+        const productMap = new Map((masterProducts || []).map(p => [(p.item_name_eng || p.name_eng || '').toLowerCase().trim(), p]));
 
         // Fetch already printed labels from both tracking and history tables
         const [
@@ -182,8 +182,8 @@ export async function GET(request: NextRequest) {
                     od: getValue(item, 'Party in oriya') || masterParty?.name_od || englishParty,
                 },
                 itemNames: {
-                    hi: getValue(item, 'Item in hindi') || masterProduct?.name_hi || englishProduct,
-                    od: getValue(item, 'Item in oriya') || masterProduct?.name_od || englishProduct,
+                    hi: getValue(item, 'Item in hindi') || masterProduct?.item_name_hi || masterProduct?.name_hi || englishProduct,
+                    od: getValue(item, 'Item in oriya') || masterProduct?.item_name_od || masterProduct?.name_od || englishProduct,
                 },
                 cityNames: {
                     hi: getValue(item, 'City in Hindi') || masterParty?.city_hi || (englishCity && CITY_TRANSLATIONS[englishCity.toLowerCase().trim()] ? CITY_TRANSLATIONS[englishCity.toLowerCase().trim()]?.hi : '') || englishCity,

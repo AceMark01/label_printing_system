@@ -237,7 +237,8 @@ export async function GET(request: NextRequest) {
                 totalPages: Math.ceil(total / limit)
             }
         });
-    } catch (error: any) {
+    } 
+    catch (error: any) {
         console.error('Data Fetching API Error:', error);
         return NextResponse.json({
             error: error.message,

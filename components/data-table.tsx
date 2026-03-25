@@ -47,11 +47,11 @@ export function DataTable({
           <Checkbox
             checked={selectedIds.size > 0 && selectedIds.size === safeLabels.length}
             onCheckedChange={handleSelectAll}
-            className="w-5 h-5 border-blue-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+            className="w-5 h-5 border-indigo-300 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600"
           />
-          <span className="text-sm font-bold text-blue-900">Select All ({safeLabels.length})</span>
+          <span className="text-sm font-bold text-indigo-900">Select All ({safeLabels.length})</span>
         </label>
-        <div className="text-xs font-black text-orange-600 uppercase tracking-tighter">
+        <div className="text-xs font-bold text-indigo-600 uppercase tracking-tighter">
           {selectedIds.size} Selected
         </div>
       </div>
@@ -111,35 +111,35 @@ export function DataTable({
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden sm:block border-2 border-blue-200 rounded-xl overflow-hidden bg-card shadow-md">
+      <div className="hidden sm:block border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10">
-              <tr className="border-b border-blue-700 bg-blue-600 shadow-sm">
-                <th className="px-3 sm:px-4 py-4 text-left">
+              <tr className="border-b border-slate-200 bg-slate-50/80 backdrop-blur-sm">
+                <th className="px-5 py-4 text-left w-12">
                   <Checkbox
                     checked={selectedIds.size > 0 && selectedIds.size === safeLabels.length}
                     onCheckedChange={handleSelectAll}
                     aria-label="Select all"
-                    className="border-white/50 bg-white/10 data-[state=checked]:bg-white data-[state=checked]:text-blue-600 shadow-inner"
+                    className="border-slate-300 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600 shadow-sm"
                   />
                 </th>
-                <th className="px-3 sm:px-4 py-4 text-left font-black text-white text-[10px] sm:text-xs uppercase tracking-[0.2em]">
+                <th className="px-4 py-4 text-left font-bold text-slate-500 text-[10px] uppercase tracking-widest">
                   Order No.
                 </th>
-                <th className="px-3 sm:px-4 py-4 text-left font-black text-white text-[10px] sm:text-xs uppercase tracking-[0.2em]">
+                <th className="px-4 py-4 text-left font-bold text-slate-500 text-[10px] uppercase tracking-widest">
                   City
                 </th>
-                <th className="px-3 sm:px-4 py-4 text-left font-black text-white text-[10px] sm:text-xs uppercase tracking-[0.2em]">
+                <th className="px-4 py-4 text-left font-bold text-slate-500 text-[10px] uppercase tracking-widest">
                   Party
                 </th>
-                <th className="px-3 sm:px-4 py-4 text-left font-black text-white text-[10px] sm:text-xs uppercase tracking-[0.2em]">
+                <th className="px-4 py-4 text-left font-bold text-slate-500 text-[10px] uppercase tracking-widest">
                   Item
                 </th>
-                <th className="px-3 sm:px-4 py-4 text-right font-black text-white text-[10px] sm:text-xs uppercase tracking-[0.2em]">
+                <th className="px-4 py-4 text-right font-bold text-slate-500 text-[10px] uppercase tracking-widest">
                   Qty
                 </th>
-                <th className="px-3 sm:px-4 py-4 text-right font-black text-white text-[10px] sm:text-xs uppercase tracking-[0.2em]">
+                <th className="px-4 py-4 text-right font-bold text-slate-500 text-[10px] uppercase tracking-widest">
                   Bdl Qty
                 </th>
               </tr>
@@ -155,34 +155,34 @@ export function DataTable({
                 safeLabels.map((label, idx) => (
                   <tr
                     key={label.id}
-                    className={`border-b border-blue-100 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-blue-50/30'
-                      } hover:bg-blue-100/50 cursor-pointer`}
+                    className={`border-b border-slate-100 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'
+                      } hover:bg-indigo-50/50 cursor-pointer group`}
                     onClick={() => handleToggleRow(label.id)}
                   >
-                    <td className="px-3 sm:px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-5 py-3" onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selectedIds.has(label.id)}
                         onCheckedChange={() => handleToggleRow(label.id)}
                         aria-label={`Select ${label.city}`}
-                        className="border-blue-400 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 shadow-sm"
+                        className="border-slate-300 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600 shadow-sm"
                       />
                     </td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-500">
+                    <td className="px-4 py-3 text-xs text-slate-500 font-medium">
                       {label.originalData?.SOrderNo || label.originalData?.OrderNo || '-'}
                     </td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-blue-700 font-bold">
+                    <td className="px-4 py-3 text-xs font-bold text-indigo-600">
                       {label.city}
                     </td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-800 whitespace-pre-wrap">
+                    <td className="px-4 py-3 text-sm text-slate-800 font-semibold whitespace-pre-wrap">
                       {label.party}
                     </td>
-                    <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-800 whitespace-pre-wrap">
+                    <td className="px-4 py-3 text-sm text-slate-600 whitespace-pre-wrap">
                       {label.item}
                     </td>
-                    <td className="px-3 sm:px-4 py-3 text-right text-xs sm:text-sm font-bold text-blue-600">
+                    <td className="px-4 py-3 text-right text-sm font-bold text-slate-900">
                       {label.quantity}
                     </td>
-                    <td className="px-3 sm:px-4 py-3 text-right text-xs sm:text-sm text-gray-800">
+                    <td className="px-4 py-3 text-right text-sm font-semibold text-slate-500">
                       {label.bdlQty}
                     </td>
                   </tr>

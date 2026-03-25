@@ -86,7 +86,7 @@ const MultiSelectDropdown = ({
           </Button>
         </PopoverTrigger>
         <PopoverContent 
-          className="w-[280px] p-0 rounded-[1.5rem] border-slate-200 shadow-2xl overflow-hidden z-[100] animate-in zoom-in-95 duration-200" 
+          className="w-[280px] p-0 rounded-xl border-slate-200 shadow-2xl overflow-hidden z-[100] animate-in zoom-in-95 duration-200" 
           align="start"
         >
           <div className="p-3 border-b border-slate-100 bg-slate-50/50">
@@ -130,7 +130,7 @@ const MultiSelectDropdown = ({
             <Button 
               variant="ghost" 
               size="sm" 
-              className="h-9 text-[10px] font-black text-slate-500 px-4 hover:bg-white rounded-xl transition-all"
+              className="h-9 text-[10px] font-bold text-slate-500 px-4 hover:bg-white rounded-lg transition-all"
               onClick={() => {
                 onValuesChange(new Set());
                 setSearchTerm('');
@@ -140,7 +140,7 @@ const MultiSelectDropdown = ({
             </Button>
             <Button 
               size="sm" 
-              className="h-9 text-[10px] bg-blue-600 hover:bg-blue-700 text-white font-black px-6 rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+              className="h-9 text-[10px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 rounded-lg shadow-sm active:scale-95 transition-all"
               onClick={() => setOpen(false)}
             >
               Apply Filter

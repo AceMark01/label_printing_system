@@ -356,24 +356,23 @@ export default function OrdersPage() {
     <div className="space-y-8 animate-in fade-in duration-500 print:hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-[2.5rem] font-black text-slate-900 tracking-tight leading-tight">Orders Master</h1>
-          <p className="text-slate-500 font-bold mt-1 text-lg">Manage and generate labels for your product inventory.</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Orders Master</h1>
+          <p className="text-slate-500 font-medium mt-1">Manage and generate labels for your product inventory.</p>
         </div>
         <div className="hidden lg:flex items-center gap-4">
-          <div className="bg-white px-6 py-3 rounded-[1.5rem] border border-slate-200 shadow-xl shadow-slate-200/40 flex items-center gap-3">
+          <div className="bg-white px-5 py-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
             <div className="relative">
-              <span className="flex h-3 w-3 rounded-full bg-blue-600 animate-ping opacity-20 absolute top-0 left-0" />
-              <span className="flex h-3 w-3 rounded-full bg-blue-600 shadow-lg shadow-blue-500/40 relative" />
+              <span className="flex h-2.5 w-2.5 rounded-full bg-indigo-600 relative" />
             </div>
-            <span className="text-sm font-black text-slate-700 whitespace-nowrap">{selectedLabels.size} Labels Selected</span>
+            <span className="text-sm font-bold text-slate-700 whitespace-nowrap">{selectedLabels.size} Labels Selected</span>
           </div>
           {selectedLabels.size > 0 && (
             <Button 
                 onClick={() => setPreviewOpen(true)}
-                className="h-14 px-10 rounded-[1.5rem] bg-blue-600 hover:bg-black text-white shadow-2xl shadow-blue-600/30 font-black text-lg flex items-center gap-3 active:scale-95 transition-all animate-in zoom-in duration-300"
+                className="h-11 px-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-md font-bold text-sm flex items-center gap-2 active:scale-95 transition-all animate-in zoom-in duration-300"
             >
                 Generate Labels
-                <ArrowRight className="w-5 h-5 animate-pulse" />
+                <ArrowRight className="w-4 h-4" />
             </Button>
           )}
         </div>
@@ -404,7 +403,7 @@ export default function OrdersPage() {
         />
 
         {/* Full-Width Data Table */}
-        <Card className="border-none shadow-2xl shadow-slate-200/50 rounded-[2.5rem] overflow-hidden bg-white/90 backdrop-blur-md">
+        <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
             <CardContent className="p-0">
             {loading && labels.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-48 space-y-8">
@@ -413,7 +412,7 @@ export default function OrdersPage() {
                     <Loader2 className="w-12 h-12 text-blue-600 animate-spin absolute top-6 left-6" />
                 </div>
                 <div className="text-center">
-                    <p className="text-2xl font-black text-slate-900 mb-2">Synchronizing Storefront</p>
+                    <p className="text-2xl font-bold text-slate-900 mb-2">Synchronizing Storefront</p>
                     <p className="text-slate-500 font-bold">Please wait while we fetch the latest order records...</p>
                 </div>
                 </div>
@@ -422,9 +421,9 @@ export default function OrdersPage() {
                 <div className="w-32 h-32 bg-red-50 rounded-[3rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
                     <Box className="w-16 h-16 text-red-600" />
                 </div>
-                <h3 className="text-3xl font-black text-slate-900 mb-4 tracking-tight">Backend Unavailable</h3>
+                <h3 className="text-3xl font-bold text-slate-900 mb-4 tracking-tight">Backend Unavailable</h3>
                 <p className="text-slate-500 font-bold mb-10 max-w-md mx-auto text-lg leading-relaxed">{error}</p>
-                <Button onClick={() => window.location.reload()} variant="outline" className="rounded-[1.5rem] border-red-200 text-red-600 h-16 px-12 font-black text-lg hover:bg-red-50 transition-all shadow-xl shadow-red-500/10 active:scale-95">
+                <Button onClick={() => window.location.reload()} variant="outline" className="rounded-[1.5rem] border-red-200 text-red-600 h-16 px-12 font-bold text-lg hover:bg-red-50 transition-all shadow-xl shadow-red-500/10 active:scale-95">
                     Recover Connection
                 </Button>
                 </div>
@@ -438,13 +437,13 @@ export default function OrdersPage() {
                 />
                 <div ref={observerTarget} className="h-40 flex items-center justify-center border-t border-slate-50/50 bg-slate-50/10">
                     {isFetchingMore && (
-                        <div className="flex items-center gap-4 text-blue-600 font-black bg-white px-10 py-5 rounded-[2rem] shadow-2xl shadow-blue-500/10 animate-bounce">
-                            <Loader2 className="w-6 h-6 animate-spin" />
-                            FETCHING MORE ASSETS...
+                        <div className="flex items-center gap-4 text-indigo-600 font-bold bg-white px-8 py-4 rounded-xl shadow-lg border border-slate-100">
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Fetching records...
                         </div>
                     )}
                     {!hasMore && labels.length > 0 && (
-                        <div className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Inventory sync complete — END OF RECORDS</div>
+                        <div className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.4em]">Inventory sync complete — END OF RECORDS</div>
                     )}
                 </div>
                 </div>
@@ -456,9 +455,9 @@ export default function OrdersPage() {
                         <X className="w-6 h-6 text-red-400" />
                      </div>
                 </div>
-                <p className="text-3xl font-black text-slate-900 mb-2">No Matching Data</p>
+                <p className="text-3xl font-bold text-slate-900 mb-2">No Matching Data</p>
                 <p className="text-slate-500 font-bold text-lg">Try adjusting your filters or clearing the search query.</p>
-                <Button onClick={handleClearFilters} variant="ghost" className="mt-8 font-black text-blue-600 hover:bg-blue-50 rounded-xl px-8 h-12">Clear Active Filters</Button>
+                <Button onClick={handleClearFilters} variant="ghost" className="mt-8 font-bold text-blue-600 hover:bg-blue-50 rounded-xl px-8 h-12">Clear Active Filters</Button>
                 </div>
             )}
             </CardContent>
@@ -711,16 +710,11 @@ export default function OrdersPage() {
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[999] lg:hidden pointer-events-auto w-fit">
           <Button 
             onClick={() => setPreviewOpen(true)}
-            className="h-14 px-6 rounded-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-[0_10px_40px_-10px_rgba(37,99,235,0.6)] flex items-center gap-3 border border-white/20 backdrop-blur-md active:scale-95 transition-all animate-in slide-in-from-bottom-10 fade-in duration-500 overflow-hidden group"
+            className="h-12 px-6 rounded-full bg-indigo-600 text-white shadow-lg flex items-center gap-3 border border-white/20 backdrop-blur-md active:scale-95 transition-all animate-in slide-in-from-bottom-10 fade-in duration-500 overflow-hidden group"
           >
-            <div className="relative">
-              <Printer className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_#4ade80]" />
-            </div>
+            <Printer className="w-4 h-4" />
             <span className="font-bold text-sm tracking-tight">Print {selectedLabels.size} Labels</span>
-            <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center border border-white/30 ml-1">
-              <ArrowRight className="w-4 h-4" />
-            </div>
+            <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       )}

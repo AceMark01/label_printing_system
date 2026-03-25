@@ -8,6 +8,7 @@ import {
   TrendingUp, 
   Clock, 
   ArrowRight,
+  PlusCircle,
   TrendingDown,
   ChevronRight,
   History
@@ -31,7 +32,6 @@ export default function DashboardPage() {
     async function loadDashboardData() {
       setLoading(true);
       try {
-        // Fetch stats from the main labels history table
         const { count: printedCount } = await supabase
           .from('labels')
           .select('*', { count: 'exact', head: true });
@@ -46,7 +46,6 @@ export default function DashboardPage() {
           remaining: Math.max(0, totalCount - printed)
         });
 
-        // Fetch last 20 recent history entries with full details
         const { data: history } = await supabase
           .from('labels')
           .select('*')
@@ -64,17 +63,17 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Dashboard Overview</h1>
-          <p className="text-slate-500 font-bold mt-3 text-lg">Track your printing performance and recent activities.</p>
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
+          <p className="text-slate-500 font-medium mt-1">Track your printing performance and recent activities.</p>
         </div>
         <div className="flex items-center gap-3">
            <Link href="/orders">
-            <Button className="h-14 px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black shadow-xl shadow-blue-600/20 group transition-all">
+            <Button className="h-11 px-6 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-sm group transition-all">
               New Print Job
-              <ArrowRight className="w-5 h-5 ml-3 group-hover:translate-x-1 transition-transform" />
+              <PlusCircle className="w-4 h-4 ml-2" />
             </Button>
            </Link>
         </div>
@@ -105,15 +104,15 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="col-span-1 md:col-span-3 border border-slate-200 shadow-sm rounded-2xl overflow-hidden bg-white">
-          <CardHeader className="p-6 border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <History className="w-5 h-5 text-slate-400" />
+        <Card className="col-span-1 md:col-span-3 border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
+          <CardHeader className="p-5 border-b border-slate-100 flex flex-row items-center justify-between space-y-0">
+            <CardTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <History className="w-4 h-4 text-slate-400" />
               Recent Activity Log
             </CardTitle>
             <Link href="/history">
-              <Button variant="outline" size="sm" className="font-bold text-xs h-9 px-4 rounded-lg border-slate-200 hover:bg-slate-50">
-                Full History Archives <ArrowRight className="w-3 h-3 ml-2" />
+              <Button variant="outline" size="sm" className="font-bold text-xs h-8 px-3 rounded-md border-slate-200 hover:bg-slate-50">
+                View Full History <ArrowRight className="w-3 h-3 ml-2" />
               </Button>
             </Link>
           </CardHeader>
@@ -161,16 +160,16 @@ export default function DashboardPage() {
 
 function StatCard({ title, value, icon, label }: any) {
   return (
-    <Card className="border border-slate-100 shadow-sm rounded-2xl bg-white hover:border-slate-300 transition-colors group">
-      <CardHeader className="flex flex-row items-center justify-between p-6 pb-2 space-y-0">
+    <Card className="border border-slate-200 shadow-sm rounded-xl bg-white hover:border-indigo-200 transition-colors group">
+      <CardHeader className="flex flex-row items-center justify-between p-5 pb-2 space-y-0">
         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{title}</p>
-        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:bg-blue-50 group-hover:border-blue-100 transition-colors">
+        <div className="w-9 h-9 rounded-lg bg-slate-50 flex items-center justify-center border border-slate-100 group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-colors">
           {icon}
         </div>
       </CardHeader>
-      <CardContent className="p-6 pt-0">
-        <CardTitle className="text-3xl font-black text-slate-900 tracking-tight">{value}</CardTitle>
-        <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-tight">{label}</p>
+      <CardContent className="p-5 pt-0">
+        <CardTitle className="text-2xl font-bold text-slate-900 tracking-tight">{value}</CardTitle>
+        <p className="text-[10px] font-medium text-slate-400 mt-1.5">{label}</p>
       </CardContent>
     </Card>
   );

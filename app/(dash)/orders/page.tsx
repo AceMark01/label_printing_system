@@ -652,15 +652,7 @@ export default function OrdersPage() {
                   </div>
                 </div>
 
-                <div className="mt-8 mb-12">
-                  <Button 
-                    onClick={handlePrint}
-                    className="h-14 px-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl flex items-center gap-3 font-bold group transition-all active:scale-95"
-                  >
-                    <Printer className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    Print All Selected Labels
-                  </Button>
-                </div>
+
               </div>
             </div>
           </div>
@@ -709,12 +701,12 @@ export default function OrdersPage() {
       {selectedLabels.size > 0 && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[999] lg:hidden pointer-events-auto w-fit">
           <Button 
-            onClick={() => setPreviewOpen(true)}
+            onClick={() => previewOpen ? handlePrint() : setPreviewOpen(true)}
             className="h-12 px-6 rounded-full bg-indigo-600 text-white shadow-lg flex items-center gap-3 border border-white/20 backdrop-blur-md active:scale-95 transition-all animate-in slide-in-from-bottom-10 fade-in duration-500 overflow-hidden group"
           >
             <Printer className="w-4 h-4" />
-            <span className="font-bold text-sm tracking-tight">Print {selectedLabels.size} Labels</span>
-            <ArrowRight className="w-4 h-4 ml-1" />
+            <span className="font-bold text-sm tracking-tight">{previewOpen ? 'Confirm & Print' : `Print ${selectedLabels.size} Labels`}</span>
+            {!previewOpen && <ArrowRight className="w-4 h-4 ml-1" />}
           </Button>
         </div>
       )}

@@ -73,8 +73,8 @@ const MultiSelectDropdown = ({
           <Button 
             variant="outline" 
             className={cn(
-              "w-full justify-between bg-white border-slate-200 focus:ring-blue-500 rounded-xl h-11 font-bold text-xs hover:border-blue-200 transition-all text-left shadow-sm",
-              selectedValues.size > 0 && "border-blue-500 bg-blue-50/30 ring-1 ring-blue-500/20"
+              "w-full justify-between bg-white border-slate-200 rounded-xl h-11 font-bold text-xs hover:border-slate-300 transition-all text-left shadow-sm",
+              selectedValues.size > 0 && "border-indigo-500 bg-indigo-50/30 ring-1 ring-indigo-500/20"
             )}
           >
             <span className="truncate">
@@ -253,8 +253,8 @@ export function FilterPanel({
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
               className={cn(
-                "pl-11 pr-10 bg-white border-slate-200 focus:ring-blue-500 rounded-xl h-11 font-bold text-xs transition-all shadow-sm w-full",
-                searchQuery && "border-blue-500 bg-blue-50/30"
+                "pl-11 pr-10 bg-white border-slate-200 rounded-xl h-11 font-bold text-xs transition-all shadow-sm w-full",
+                searchQuery && "border-indigo-500 bg-indigo-50/30 ring-1 ring-indigo-500/20"
               )}
             />
             {searchQuery && (

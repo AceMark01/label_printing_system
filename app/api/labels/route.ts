@@ -7,6 +7,29 @@ const NEW_API_URL = process.env.NEW_LEGACY_API_URL || 'http://eksai12.ddns.net:8
 const USE_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_URL && 
                     process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url';
 
+const CITY_TRANSLATIONS: Record<string, { hi: string, od: string }> = {
+    'kolkata': { hi: 'कोलकाता', od: 'କୋଲକାତା' },
+    'delhi': { hi: 'दिल्ली', od: 'ଦିଲ୍ଲୀ' },
+    'mumbai': { hi: 'मुंबई', od: 'ମୁମ୍ବାଇ' },
+    'chennai': { hi: 'चेन्नई', od: 'ଚେନ୍ନାଇ' },
+    'bhubaneswar': { hi: 'भुवनेश्वर', od: 'ଭୁବନେଶ୍ୱର' },
+    'cuttack': { hi: 'कटक', od: 'କଟକ' },
+    'rourkela': { hi: 'राउरकेला', od: 'ରାଉରକେଲା' },
+    'puri': { hi: 'पुरी', od: 'ପୁରୀ' },
+    'sambalpur': { hi: 'संबलपुर', od: 'ସମ୍ବଲପୁର' },
+    'balasore': { hi: 'बालासोर', od: 'ବାଲେଶ୍ୱର' },
+    'berhampur': { hi: 'बरहामपुर', od: 'ବ୍ରହ୍ମପୁର' },
+    'baripada': { hi: 'बारीपदा', od: 'ବାରିପଦା' },
+    'angul': { hi: 'अंगुल', od: 'ଅନୁଗୋଳ' },
+    'jharsuguda': { hi: 'झारसुगुड़ा', od: 'ଝାରସୁଗୁଡ଼ା' },
+    'jaipur': { hi: 'जयपुर', od: 'ଜୟପୁର' },
+    'bangalore': { hi: 'बेंगलुरु', od: 'ବାଙ୍ଗାଲୋର' },
+    'hyderabad': { hi: 'हैदराबाद', od: 'ହାଇଦ୍ରାବାଦ' },
+    'patna': { hi: 'पटना', od: 'ପାଟନା' },
+    'ranchi': { hi: 'रांची', od: 'ରାଞ୍ଚି' },
+    'raipur': { hi: 'रायपुर', od: 'ରାୟପୁର' },
+};
+
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
@@ -79,8 +102,8 @@ export async function GET(request: NextRequest) {
 */
 
         // --- EXTERNAL API / GOOGLE SHEETS FALLBACK ---
-        // We use getCachedSheetData which now also handles the DataRec format
-        const allData = await getCachedSheetData(NEW_API_URL || APPS_SCRIPT_URL);
+        // We use APPS_SCRIPT_URL (Google) first as requested
+        const allData = await getCachedSheetData(APPS_SCRIPT_URL || NEW_API_URL);
 
         // --- MASTER DATA CROSS-REFERENCE ---
         // Fetch all parties and products to use for translation mapping
@@ -91,8 +114,8 @@ export async function GET(request: NextRequest) {
         ]);
 
         // Create fast lookup maps
-        const partyMap = new Map((masterParties || []).map(p => [p.name.toLowerCase().trim(), p]));
-        const productMap = new Map((masterProducts || []).map(p => [p.name.toLowerCase().trim(), p]));
+        const partyMap = new Map((masterParties || []).map(p => [(p.name_eng || '').toLowerCase().trim(), p]));
+        const productMap = new Map((masterProducts || []).map(p => [(p.name_eng || '').toLowerCase().trim(), p]));
 
         // Fetch already printed labels from both tracking and history tables
         const [
@@ -155,16 +178,16 @@ export async function GET(request: NextRequest) {
                 bdlQty: getValue(item, 'DispatchBdlQty') || '',
                 date: getValue(item, 'SOrderDate') || getValue(item, 'CreatedOn') || new Date().toISOString().split('T')[0],
                 partyNames: {
-                    hi: getValue(item, 'Party in hindi') || masterParty?.name_hi || '',
-                    od: getValue(item, 'Party in oriya') || masterParty?.name_od || '',
+                    hi: getValue(item, 'Party in hindi') || masterParty?.name_hi || englishParty,
+                    od: getValue(item, 'Party in oriya') || masterParty?.name_od || englishParty,
                 },
                 itemNames: {
-                    hi: getValue(item, 'Item in hindi') || masterProduct?.name_hi || '',
-                    od: getValue(item, 'Item in oriya') || masterProduct?.name_od || '',
+                    hi: getValue(item, 'Item in hindi') || masterProduct?.name_hi || englishProduct,
+                    od: getValue(item, 'Item in oriya') || masterProduct?.name_od || englishProduct,
                 },
                 cityNames: {
-                    hi: getValue(item, 'City in Hindi') || masterParty?.city_hi || '',
-                    od: getValue(item, 'City in oriya') || masterParty?.city_od || '',
+                    hi: getValue(item, 'City in Hindi') || masterParty?.city_hi || (englishCity && CITY_TRANSLATIONS[englishCity.toLowerCase().trim()] ? CITY_TRANSLATIONS[englishCity.toLowerCase().trim()]?.hi : '') || englishCity,
+                    od: getValue(item, 'City in oriya') || masterParty?.city_od || (englishCity && CITY_TRANSLATIONS[englishCity.toLowerCase().trim()] ? CITY_TRANSLATIONS[englishCity.toLowerCase().trim()]?.od : '') || englishCity,
                 },
                 transporter: getValue(item, 'Transporter') || getValue(item, 'TransportName') || '',
                 pdf: getValue(item, 'PDF Link') || '',

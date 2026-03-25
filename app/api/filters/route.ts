@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const includeProcessed = searchParams.get('includeProcessed') === 'true';
 
-        // Fetch all data from the primary external API
-        const allData = await getCachedSheetData(NEW_API_URL || APPS_SCRIPT_URL);
+        // Fetch fresh data from Google Sheets first
+        const allData = await getCachedSheetData(APPS_SCRIPT_URL || NEW_API_URL);
 
         // Fetch already printed labels from Supabase to hide them from the dropdowns if necessary
         const { data: printedLabels } = await supabase

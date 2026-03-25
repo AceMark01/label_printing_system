@@ -7,14 +7,14 @@ export async function POST(request: NextRequest) {
         const { type, data } = body;
 
         if (type === 'party') {
-            const { name, name_hi, name_od, city, city_hi, city_od } = data;
+            const { name_eng, name_hi, name_od, city_eng, city_hi, city_od } = data;
             const { data: result, error } = await supabase
                 .from('parties')
                 .insert([{ 
-                    name, 
+                    name_eng, 
                     name_hi, 
                     name_od, 
-                    city, 
+                    city_eng, 
                     city_hi, 
                     city_od 
                 }])
@@ -25,11 +25,11 @@ export async function POST(request: NextRequest) {
         } 
         
         if (type === 'product') {
-            const { name, name_hi, name_od } = data;
+            const { name_eng, name_hi, name_od } = data;
             const { data: result, error } = await supabase
                 .from('products')
                 .insert([{ 
-                    name, 
+                    name_eng, 
                     name_hi, 
                     name_od 
                 }])

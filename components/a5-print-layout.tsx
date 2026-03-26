@@ -25,12 +25,14 @@ export function A5PrintLayout({ labels, languages, fieldVisibility, onBundleChan
             height: '297mm',
             display: 'flex',
             flexDirection: 'column',
-            padding: '5mm 8mm',
+            padding: '4mm 6mm',
             boxSizing: 'border-box',
-            pageBreakAfter: idx === labels.length - 1 ? 'auto' : 'always',
+            pageBreakAfter: idx === labels.length - 1 ? 'avoid' : 'always',
+            breakAfter: idx === labels.length - 1 ? 'avoid' : 'page',
             pageBreakInside: 'avoid',
             margin: '0 auto',
-            position: 'relative'
+            position: 'relative',
+            backgroundColor: 'white'
           }}
         >
           {/* Top Label Folder/Container */}

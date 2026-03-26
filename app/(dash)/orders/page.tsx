@@ -40,7 +40,7 @@ export default function OrdersPage() {
   const [labelLanguages, setLabelLanguages] = useState<Set<Language>>(new Set(['hi', 'od']));
   const [fieldVisibility, setFieldVisibility] = useState<Record<string, Record<Language, { product: boolean, quantity: boolean }>>>({});
   const [bundleOverrides, setBundleOverrides] = useState<Record<string, string>>({});
-  
+
   const [previewOpen, setPreviewOpen] = useState(false);
   const [confirmPrintOpen, setConfirmPrintOpen] = useState(false);
 
@@ -57,7 +57,7 @@ export default function OrdersPage() {
           fetchTicTakData(1, 50, { includeProcessed }),
           fetchFilterData(includeProcessed)
         ]);
-        
+
         setLabels(paginated.data);
         setAvailableFilters(filters);
         setHasMore(paginated.meta.page < paginated.meta.totalPages);
@@ -207,9 +207,9 @@ export default function OrdersPage() {
       const hi = current.hi || { product: true, quantity: true };
       const od = current.od || { product: true, quantity: true };
       const en = current.en || { product: true, quantity: true };
-      
-      const newVisibility = { 
-        hi: { ...hi }, 
+
+      const newVisibility = {
+        hi: { ...hi },
         od: { ...od },
         en: { ...en }
       };
@@ -238,10 +238,10 @@ export default function OrdersPage() {
   const handlePrint = async () => {
     const printContent = printRef.current;
     if (!printContent) return;
-    
+
     // Open the system print dialog
     window.print();
-    
+
     // After the print dialog closes, ask if it was successful
     // We can't know if they clicked print or cancel, so we must ask
     setTimeout(() => {
@@ -255,9 +255,9 @@ export default function OrdersPage() {
         await fetch('/api/master', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            type: 'track_printed', 
-            data: { 
+          body: JSON.stringify({
+            type: 'track_printed',
+            data: {
               labels: selectedLabelDetails.map(l => ({
                 id: l.id,
                 orderNo: l.originalData?.OrderNo || l.originalData?.SOrderNo || l.id.split('-')[0],
@@ -278,7 +278,7 @@ export default function OrdersPage() {
                 transporter: l.transporter || '',
                 originalData: l
               }))
-            } 
+            }
           }),
         });
         setLabels(prev => prev.filter(l => !selectedLabels.has(l.id)));
@@ -299,16 +299,16 @@ export default function OrdersPage() {
     try {
       const { default: jsPDF } = await import('jspdf');
       const { default: html2canvas } = await import('html2canvas');
-      
-      const pdf = new jsPDF({ 
-        orientation: 'portrait', 
-        unit: 'mm', 
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
         format: 'a4',
         compress: true
       });
 
       const pages = printRef.current.querySelectorAll('[data-pdf-page]');
-      
+
       for (let i = 0; i < pages.length; i++) {
         const pageElement = pages[i] as HTMLElement;
         const canvas = await html2canvas(pageElement, {
@@ -327,16 +327,16 @@ export default function OrdersPage() {
 
       const pdfName = `Ace-Labels-${new Date().toLocaleDateString('en-IN').replace(/\//g, '-')}.pdf`;
       pdf.save(pdfName);
-      
+
       await fetch('/api/master', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          type: 'track_printed', 
-          data: { 
+        body: JSON.stringify({
+          type: 'track_printed',
+          data: {
             labels: selectedLabelDetails,
-            pdf: pdfName 
-          } 
+            pdf: pdfName
+          }
         }),
       });
       setLabels(prev => prev.filter(l => !selectedLabels.has(l.id)));
@@ -353,230 +353,230 @@ export default function OrdersPage() {
 
   return (
     <>
-    <div className="space-y-8 animate-in fade-in duration-500 print:hidden">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Orders Master</h1>
-          <p className="text-slate-500 font-medium mt-1">Manage and generate labels for your product inventory.</p>
-        </div>
-        <div className="hidden lg:flex items-center gap-4">
-          <div className="bg-white px-5 py-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
-            <div className="relative">
-              <span className="flex h-2.5 w-2.5 rounded-full bg-indigo-600 relative" />
-            </div>
-            <span className="text-sm font-bold text-slate-700 whitespace-nowrap">{selectedLabels.size} Labels Selected</span>
+      <div className="space-y-8 animate-in fade-in duration-500 print:hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Orders Master</h1>
+            <p className="text-slate-500 font-medium mt-1">Manage and generate labels for your product inventory.</p>
           </div>
-          {selectedLabels.size > 0 && (
-            <Button 
+          <div className="hidden lg:flex items-center gap-4">
+            <div className="bg-white px-5 py-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
+              <div className="relative">
+                <span className="flex h-2.5 w-2.5 rounded-full bg-indigo-600 relative" />
+              </div>
+              <span className="text-sm font-bold text-slate-700 whitespace-nowrap">{selectedLabels.size} Labels Selected</span>
+            </div>
+            {selectedLabels.size > 0 && (
+              <Button
                 onClick={() => setPreviewOpen(true)}
                 className="h-11 px-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-md font-bold text-sm flex items-center gap-2 active:scale-95 transition-all animate-in zoom-in duration-300"
-            >
+              >
                 Generate Labels
                 <ArrowRight className="w-4 h-4" />
-            </Button>
-          )}
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
 
-      <div className="space-y-8">
-        {/* Horizontal Filter Bar at the Top */}
-        <FilterPanel
-          labels={labels}
-          selectedCities={selectedCities}
-          selectedParties={selectedParties}
-          selectedItems={selectedItems}
-          selectedTransporters={selectedTransporters}
-          searchQuery={searchQuery}
-          language="en"
-          onCitiesChange={setSelectedCities}
-          onPartiesChange={setSelectedParties}
-          onItemsChange={setSelectedItems}
-          onTransportersChange={setSelectedTransporters}
-          onSearchQueryChange={setSearchQuery}
-          onClearFilters={handleClearFilters}
-          availableCities={availableFilters?.cities}
-          availableParties={availableFilters?.parties}
-          availableItems={availableFilters?.items}
-          availableTransporters={availableFilters?.transporters}
-          includeProcessed={includeProcessed}
-          onIncludeProcessedChange={setIncludeProcessed}
-        />
+        <div className="space-y-8">
+          {/* Horizontal Filter Bar at the Top */}
+          <FilterPanel
+            labels={labels}
+            selectedCities={selectedCities}
+            selectedParties={selectedParties}
+            selectedItems={selectedItems}
+            selectedTransporters={selectedTransporters}
+            searchQuery={searchQuery}
+            language="en"
+            onCitiesChange={setSelectedCities}
+            onPartiesChange={setSelectedParties}
+            onItemsChange={setSelectedItems}
+            onTransportersChange={setSelectedTransporters}
+            onSearchQueryChange={setSearchQuery}
+            onClearFilters={handleClearFilters}
+            availableCities={availableFilters?.cities}
+            availableParties={availableFilters?.parties}
+            availableItems={availableFilters?.items}
+            availableTransporters={availableFilters?.transporters}
+            includeProcessed={includeProcessed}
+            onIncludeProcessedChange={setIncludeProcessed}
+          />
 
-        {/* Full-Width Data Table */}
-        <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
+          {/* Full-Width Data Table */}
+          <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
             <CardContent className="p-0">
-            {loading && labels.length === 0 ? (
+              {loading && labels.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-48 space-y-8">
-                <div className="relative">
+                  <div className="relative">
                     <div className="w-24 h-24 rounded-[2rem] bg-blue-50 animate-pulse" />
                     <Loader2 className="w-12 h-12 text-blue-600 animate-spin absolute top-6 left-6" />
-                </div>
-                <div className="text-center">
+                  </div>
+                  <div className="text-center">
                     <p className="text-2xl font-bold text-slate-900 mb-2">Synchronizing Storefront</p>
                     <p className="text-slate-500 font-bold">Please wait while we fetch the latest order records...</p>
+                  </div>
                 </div>
-                </div>
-            ) : error ? (
+              ) : error ? (
                 <div className="text-center py-40 px-8">
-                <div className="w-32 h-32 bg-red-50 rounded-[3rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
+                  <div className="w-32 h-32 bg-red-50 rounded-[3rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
                     <Box className="w-16 h-16 text-red-600" />
-                </div>
-                <h3 className="text-3xl font-bold text-slate-900 mb-4 tracking-tight">Backend Unavailable</h3>
-                <p className="text-slate-500 font-bold mb-10 max-w-md mx-auto text-lg leading-relaxed">{error}</p>
-                <Button onClick={() => window.location.reload()} variant="outline" className="rounded-[1.5rem] border-red-200 text-red-600 h-16 px-12 font-bold text-lg hover:bg-red-50 transition-all shadow-xl shadow-red-500/10 active:scale-95">
+                  </div>
+                  <h3 className="text-3xl font-bold text-slate-900 mb-4 tracking-tight">Backend Unavailable</h3>
+                  <p className="text-slate-500 font-bold mb-10 max-w-md mx-auto text-lg leading-relaxed">{error}</p>
+                  <Button onClick={() => window.location.reload()} variant="outline" className="rounded-[1.5rem] border-red-200 text-red-600 h-16 px-12 font-bold text-lg hover:bg-red-50 transition-all shadow-xl shadow-red-500/10 active:scale-95">
                     Recover Connection
-                </Button>
+                  </Button>
                 </div>
-            ) : labels.length > 0 ? (
+              ) : labels.length > 0 ? (
                 <div className="overflow-hidden">
-                <DataTable
+                  <DataTable
                     labels={labels}
                     selectedIds={selectedLabels}
                     language="en"
                     onSelectionChange={setSelectedLabels}
-                />
-                <div ref={observerTarget} className="h-40 flex items-center justify-center border-t border-slate-50/50 bg-slate-50/10">
+                  />
+                  <div ref={observerTarget} className="h-40 flex items-center justify-center border-t border-slate-50/50 bg-slate-50/10">
                     {isFetchingMore && (
-                        <div className="flex items-center gap-4 text-indigo-600 font-bold bg-white px-8 py-4 rounded-xl shadow-lg border border-slate-100">
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                            Fetching records...
-                        </div>
+                      <div className="flex items-center gap-4 text-indigo-600 font-bold bg-white px-8 py-4 rounded-xl shadow-lg border border-slate-100">
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Fetching records...
+                      </div>
                     )}
                     {!hasMore && labels.length > 0 && (
-                        <div className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.4em]">Inventory sync complete — END OF RECORDS</div>
+                      <div className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.4em]">Inventory sync complete — END OF RECORDS</div>
                     )}
-                </div>
-                </div>
-            ) : (
-                <div className="py-56 text-center">
-                <div className="w-40 h-40 bg-slate-50 rounded-[3.5rem] flex items-center justify-center mx-auto mb-10 relative">
-                     <Box className="w-20 h-20 text-slate-200" />
-                     <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center">
-                        <X className="w-6 h-6 text-red-400" />
-                     </div>
-                </div>
-                <p className="text-3xl font-bold text-slate-900 mb-2">No Matching Data</p>
-                <p className="text-slate-500 font-bold text-lg">Try adjusting your filters or clearing the search query.</p>
-                <Button onClick={handleClearFilters} variant="ghost" className="mt-8 font-bold text-blue-600 hover:bg-blue-50 rounded-xl px-8 h-12">Clear Active Filters</Button>
-                </div>
-            )}
-            </CardContent>
-        </Card>
-      </div>
-
-
-
-      {/* PREVIEW MODAL */}
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="print:hidden max-w-[98vw] w-full lg:max-w-[1400px] h-[95vh] rounded-xl p-0 overflow-hidden shadow-2xl flex flex-col bg-slate-50 border border-slate-200 animate-in zoom-in-95 duration-200">
-          <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 z-20">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
-                <Printer className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight">Print Preview</DialogTitle>
-                <DialogDescription className="sr-only">Preview and configure your labels before printing.</DialogDescription>
-                <p className="font-medium text-slate-500 text-sm mt-0.5 flex items-center gap-2">
-                  Ready to print {selectedLabels.size} labels
-                </p>
-              </div>
-            </div>
-            <Button variant="ghost" size="icon" onClick={() => setPreviewOpen(false)} className="rounded-lg hover:bg-slate-100 w-10 h-10">
-              <X className="w-5 h-5 text-slate-500" />
-            </Button>
-          </div>
-          
-          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-            <div className="w-full lg:w-[320px] bg-white border-b lg:border-b-0 lg:border-r border-slate-200 p-4 lg:p-5 flex flex-col gap-4 lg:gap-6 z-10 box-border lg:h-full max-h-[35vh] lg:max-h-full min-h-0">
-              <section className="space-y-3 flex-shrink-0">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Print Languages</h3>
-                <div className="flex flex-col gap-2">
-                  {allLanguages.map(lang => (
-                    <button
-                      key={lang}
-                      onClick={() => {
-                        const newLangs = new Set(labelLanguages);
-                        if (newLangs.has(lang)) {
-                          if (newLangs.size > 1) newLangs.delete(lang);
-                        } else {
-                          if (newLangs.size < 2) newLangs.add(lang);
-                        }
-                        setLabelLanguages(newLangs);
-                      }}
-                      className={cn(
-                        "h-10 px-3 rounded-md font-medium text-sm transition-all flex items-center justify-between border",
-                        labelLanguages.has(lang) 
-                          ? "bg-blue-50 border-blue-200 text-blue-700" 
-                          : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
-                      )}
-                    >
-                      <span>{lang === 'en' ? 'English' : lang === 'hi' ? 'Hindi' : 'Oriya'}</span>
-                      <div className={cn(
-                        "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
-                        labelLanguages.has(lang) ? "border-blue-600 bg-blue-600" : "border-slate-300"
-                      )}>
-                        {labelLanguages.has(lang) && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </section>
-
-              <div className="flex-1 min-h-0" />
-
-
-              <section className="space-y-3 pt-4 border-t border-slate-100 mt-auto flex-shrink-0">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</h3>
-                <div className="grid gap-2">
-                  <Button 
-                    disabled={isExportingPdf}
-                    onClick={handleExportPdf}
-                    variant="outline"
-                    className="h-10 w-full justify-start rounded-md border-slate-200 font-medium text-slate-700 hover:bg-slate-50"
-                  >
-                    {isExportingPdf ? <Loader2 className="w-4 h-4 mr-2 animate-spin text-blue-600" /> : <Download className="w-4 h-4 mr-2" /> }
-                    Save PDF
-                  </Button>
-
-                  <Button 
-                    disabled={isExportingPdf}
-                    onClick={handlePrint}
-                    className="h-10 w-full justify-start rounded-md bg-blue-600 hover:bg-blue-700 font-medium text-white shadow-sm"
-                  >
-                    <Printer className="w-4 h-4 mr-2" />
-                    Print Now
-                  </Button>
-                </div>
-              </section>
-            </div>
-
-            <div className="flex-1 bg-slate-100/50 overflow-y-auto preview-container custom-scrollbar relative">
-              <div className="flex flex-col items-center py-8 px-4 min-h-full">
-                <div className="mb-4 bg-white border border-slate-200 text-slate-600 px-4 py-1.5 rounded-full text-xs font-medium shadow-sm w-fit mx-auto z-20 relative">
-                  A4 Template Output
-                </div>
-
-                <div className="preview-scaler-container shadow-sm bg-white rounded flex-shrink-0 border border-slate-200">
-                  <div className="preview-scaler">
-                    <div className="w-[210mm] min-h-[297mm] bg-white" ref={printRef}>
-                      <A5PrintLayout
-                        labels={selectedLabelDetails}
-                        languages={Array.from(labelLanguages)}
-                        fieldVisibility={fieldVisibility}
-                        onBundleChange={handleBundleChange}
-                        onVisibilityChange={handleVisibilityChange}
-                      />
-                    </div>
                   </div>
                 </div>
+              ) : (
+                <div className="py-56 text-center">
+                  <div className="w-40 h-40 bg-slate-50 rounded-[3.5rem] flex items-center justify-center mx-auto mb-10 relative">
+                    <Box className="w-20 h-20 text-slate-200" />
+                    <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-white rounded-2xl shadow-xl flex items-center justify-center">
+                      <X className="w-6 h-6 text-red-400" />
+                    </div>
+                  </div>
+                  <p className="text-3xl font-bold text-slate-900 mb-2">No Matching Data</p>
+                  <p className="text-slate-500 font-bold text-lg">Try adjusting your filters or clearing the search query.</p>
+                  <Button onClick={handleClearFilters} variant="ghost" className="mt-8 font-bold text-blue-600 hover:bg-blue-50 rounded-xl px-8 h-12">Clear Active Filters</Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
 
+
+        {/* PREVIEW MODAL */}
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="print:hidden max-w-[98vw] w-full lg:max-w-[1400px] h-[95vh] rounded-xl p-0 overflow-hidden shadow-2xl flex flex-col bg-slate-50 border border-slate-200 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 z-20">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
+                  <Printer className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight">Print Preview</DialogTitle>
+                  <DialogDescription className="sr-only">Preview and configure your labels before printing.</DialogDescription>
+                  <p className="font-medium text-slate-500 text-sm mt-0.5 flex items-center gap-2">
+                    Ready to print {selectedLabels.size} labels
+                  </p>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setPreviewOpen(false)} className="rounded-lg hover:bg-slate-100 w-10 h-10">
+                <X className="w-5 h-5 text-slate-500" />
+              </Button>
+            </div>
+
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+              <div className="w-full lg:w-[320px] bg-white border-b lg:border-b-0 lg:border-r border-slate-200 p-4 lg:p-5 flex flex-col gap-4 lg:gap-6 z-10 box-border lg:h-full max-h-[35vh] lg:max-h-full min-h-0">
+                <section className="space-y-3 flex-shrink-0">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Print Languages</h3>
+                  <div className="flex flex-col gap-2">
+                    {allLanguages.map(lang => (
+                      <button
+                        key={lang}
+                        onClick={() => {
+                          const newLangs = new Set(labelLanguages);
+                          if (newLangs.has(lang)) {
+                            if (newLangs.size > 1) newLangs.delete(lang);
+                          } else {
+                            if (newLangs.size < 2) newLangs.add(lang);
+                          }
+                          setLabelLanguages(newLangs);
+                        }}
+                        className={cn(
+                          "h-10 px-3 rounded-md font-medium text-sm transition-all flex items-center justify-between border",
+                          labelLanguages.has(lang)
+                            ? "bg-blue-50 border-blue-200 text-blue-700"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                        )}
+                      >
+                        <span>{lang === 'en' ? 'English' : lang === 'hi' ? 'Hindi' : 'Oriya'}</span>
+                        <div className={cn(
+                          "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
+                          labelLanguages.has(lang) ? "border-blue-600 bg-blue-600" : "border-slate-300"
+                        )}>
+                          {labelLanguages.has(lang) && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                <div className="flex-1 min-h-0" />
+
+
+                <section className="space-y-3 pt-4 border-t border-slate-100 mt-auto flex-shrink-0">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</h3>
+                  <div className="grid gap-2">
+                    <Button
+                      disabled={isExportingPdf}
+                      onClick={handleExportPdf}
+                      variant="outline"
+                      className="h-10 w-full justify-start rounded-md border-slate-200 font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      {isExportingPdf ? <Loader2 className="w-4 h-4 mr-2 animate-spin text-blue-600" /> : <Download className="w-4 h-4 mr-2" />}
+                      Save PDF
+                    </Button>
+
+                    <Button
+                      disabled={isExportingPdf}
+                      onClick={handlePrint}
+                      className="h-10 w-full justify-start rounded-md bg-blue-600 hover:bg-blue-700 font-medium text-white shadow-sm"
+                    >
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print Now
+                    </Button>
+                  </div>
+                </section>
+              </div>
+
+              <div className="flex-1 bg-slate-100/50 overflow-y-auto preview-container custom-scrollbar relative">
+                <div className="flex flex-col items-center py-8 px-4 min-h-full">
+                  <div className="mb-4 bg-white border border-slate-200 text-slate-600 px-4 py-1.5 rounded-full text-xs font-medium shadow-sm w-fit mx-auto z-20 relative">
+                    A4 Template Output
+                  </div>
+
+                  <div className="preview-scaler-container shadow-sm bg-white rounded flex-shrink-0 border border-slate-200">
+                    <div className="preview-scaler">
+                      <div className="w-[210mm] min-h-[297mm] bg-white" ref={printRef}>
+                        <A5PrintLayout
+                          labels={selectedLabelDetails}
+                          languages={Array.from(labelLanguages)}
+                          fieldVisibility={fieldVisibility}
+                          onBundleChange={handleBundleChange}
+                          onVisibilityChange={handleVisibilityChange}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+
+                </div>
               </div>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
 
       </div>
 
@@ -599,18 +599,18 @@ export default function OrdersPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col sm:flex-row gap-3 pt-6">
-            <Button 
-                variant="outline" 
-                onClick={() => setConfirmPrintOpen(false)}
-                className="flex-1 h-12 rounded-xl font-bold text-slate-600 border-slate-200"
+            <Button
+              variant="outline"
+              onClick={() => setConfirmPrintOpen(false)}
+              className="flex-1 h-12 rounded-xl font-bold text-slate-600 border-slate-200"
             >
-                No, Keep Selected
+              No, Keep Selected
             </Button>
-            <Button 
-                onClick={handleConfirmPrintSuccess}
-                className="flex-1 h-12 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white"
+            <Button
+              onClick={handleConfirmPrintSuccess}
+              className="flex-1 h-12 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white"
             >
-                Yes, Printed Successfully
+              Yes, Printed Successfully
             </Button>
           </div>
         </DialogContent>
@@ -619,7 +619,7 @@ export default function OrdersPage() {
       {/* Floating Action Button for Mobile Visibility - Fixed Bottom Center - Modern FAB Style */}
       {selectedLabels.size > 0 && (
         <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[999] lg:hidden pointer-events-auto w-fit">
-          <Button 
+          <Button
             onClick={() => previewOpen ? handlePrint() : setPreviewOpen(true)}
             className="h-12 px-6 rounded-full bg-indigo-600 text-white shadow-lg flex items-center gap-3 border border-white/20 backdrop-blur-md active:scale-95 transition-all animate-in slide-in-from-bottom-10 fade-in duration-500 overflow-hidden group"
           >

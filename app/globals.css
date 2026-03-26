@@ -275,5 +275,17 @@
       text-shadow: none !important;
       box-shadow: none !important;
     }
+
+    /* Prevent mobile print engines from adding extra pages */
+    html, body {
+      height: auto !important;
+      overflow: visible !important;
+    }
+
+    /* Target the root layout which might have min-h-screen */
+    div[class*='min-h-screen'] {
+      min-height: auto !important;
+      height: auto !important;
+    }
   }
 }

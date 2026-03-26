@@ -143,14 +143,14 @@ export default function MissingTranslationsPage() {
   const isEmpty = (data?.parties.length === 0 && data?.products.length === 0);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500 pb-20 px-2">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-500 pb-20 px-1 md:px-2 max-w-6xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 px-1">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Translation Sync</h1>
-          <p className="text-slate-500 font-bold mt-3 text-lg">Fix or export untranslated master data records.</p>
+          <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight leading-none">Translation Sync</h1>
+          <p className="hidden md:block text-slate-500 font-bold mt-3 text-lg">Fix or export untranslated master data records.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Button onClick={fetchData} variant="outline" className="h-11 px-5 rounded-xl font-bold border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm flex items-center gap-2">
+        <div className="flex items-center gap-2">
+          <Button onClick={fetchData} variant="outline" className="flex-1 md:flex-none h-10 md:h-11 px-4 md:px-5 rounded-xl font-bold border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm flex items-center justify-center gap-2">
             <RefreshCw className="w-4 h-4" />
             Refresh
           </Button>
@@ -158,45 +158,47 @@ export default function MissingTranslationsPage() {
       </div>
 
       <Tabs defaultValue="products" className="w-full">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-8">
-            <TabsList className="bg-slate-100 p-1 rounded-xl h-11">
-                <TabsTrigger value="products" className="rounded-lg px-8 font-bold data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm transition-all flex items-center gap-2">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-6 mb-8">
+            <TabsList className="bg-slate-100 p-1 rounded-xl h-12 w-full lg:w-auto">
+                <TabsTrigger value="products" className="rounded-lg px-2 md:px-8 font-bold data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm transition-all flex items-center justify-center gap-2 flex-1 lg:flex-none">
                     <Package className="w-4 h-4" />
                     Products
-                    <Badge variant="outline" className="ml-1 bg-emerald-50 text-emerald-600 border-emerald-100 font-black h-5 px-1.5 text-[10px]">
+                    <Badge variant="outline" className="ml-0.5 md:ml-1 bg-emerald-50 text-emerald-600 border-emerald-100 font-black h-5 px-1.5 text-[10px]">
                         {data?.products.length}
                     </Badge>
                 </TabsTrigger>
-                <TabsTrigger value="parties" className="rounded-lg px-8 font-bold data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm transition-all flex items-center gap-2">
+                <TabsTrigger value="parties" className="rounded-lg px-2 md:px-8 font-bold data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm transition-all flex items-center justify-center gap-2 flex-1 lg:flex-none">
                     <Building2 className="w-4 h-4" />
                     Parties
-                    <Badge variant="outline" className="ml-1 bg-indigo-50 text-indigo-600 border-indigo-100 font-black h-5 px-1.5 text-[10px]">
+                    <Badge variant="outline" className="ml-0.5 md:ml-1 bg-indigo-50 text-indigo-600 border-indigo-100 font-black h-5 px-1.5 text-[10px]">
                         {data?.parties.length}
                     </Badge>
                 </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="products" className="m-0">
-               <Button onClick={() => exportToCsv('product')} className="h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-bold text-white shadow-lg shadow-emerald-600/10 flex items-center gap-2">
-                 <Download className="w-4 h-4" />
-                 Export Products CSV
-               </Button>
-            </TabsContent>
-            <TabsContent value="parties" className="m-0">
-               <Button onClick={() => exportToCsv('party')} className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-white shadow-lg shadow-indigo-600/10 flex items-center gap-2">
-                 <Download className="w-4 h-4" />
-                 Export Parties CSV
-               </Button>
-            </TabsContent>
+            <div className="w-full lg:w-auto">
+                <TabsContent value="products" className="m-0">
+                    <Button onClick={() => exportToCsv('product')} className="w-full h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-bold text-white shadow-lg shadow-emerald-600/10 flex items-center justify-center gap-2">
+                        <Download className="w-4 h-4" />
+                        Export Products CSV
+                    </Button>
+                </TabsContent>
+                <TabsContent value="parties" className="m-0">
+                    <Button onClick={() => exportToCsv('party')} className="w-full h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-white shadow-lg shadow-indigo-600/10 flex items-center justify-center gap-2">
+                        <Download className="w-4 h-4" />
+                        Export Parties CSV
+                    </Button>
+                </TabsContent>
+            </div>
         </div>
 
         <TabsContent value="products" className="mt-0 focus-visible:outline-none">
           {data?.products.length === 0 ? (
-            <div className="py-24 text-center bg-emerald-50/20 rounded-3xl border border-dashed border-emerald-100 italic font-medium text-emerald-600">
+            <div className="py-20 md:py-24 text-center bg-emerald-50/20 rounded-3xl border border-dashed border-emerald-100 italic font-medium text-emerald-600 px-4">
                 All products are correctly translated!
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {data?.products.map((product) => (
                   <TranslationCard 
                     key={product.english} 
@@ -213,11 +215,11 @@ export default function MissingTranslationsPage() {
 
         <TabsContent value="parties" className="mt-0 focus-visible:outline-none">
           {data?.parties.length === 0 ? (
-            <div className="py-24 text-center bg-indigo-50/20 rounded-3xl border border-dashed border-indigo-100 italic font-medium text-indigo-600">
+            <div className="py-20 md:py-24 text-center bg-indigo-50/20 rounded-3xl border border-dashed border-indigo-100 italic font-medium text-indigo-600 px-4">
                 All parties are correctly translated!
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {data?.parties.map((party) => (
                   <TranslationCard 
                     key={party.english} 

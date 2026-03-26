@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Building2, Package, Plus, Upload, Download, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Building2, Package, Plus, Upload, Download, FileText, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import Papa from 'papaparse';
 import { 
   AlertDialog, 
@@ -22,6 +22,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 
 const partySchema = z.object({
   name_eng: z.string().min(2, 'Name is required'),
@@ -111,10 +112,7 @@ export default function MasterDataForm() {
       transformHeader: (header) => header.trim().toLowerCase(),
       complete: (results) => {
         const data = results.data as any[];
-        console.log('CSV Raw Data:', data);
-
         const mappedData = data.map(row => {
-          // Priority Mapping: Exact schema matches first
           const eng = (
             row.name_eng || row.item_name_eng || 
             row.name || row.party || row.product || row.item || 
@@ -135,34 +133,18 @@ export default function MasterDataForm() {
           ).toString().trim();
 
           if (type === 'party') {
-            return {
-              name_eng: eng,
-              name_hi: hi,
-              name_od: od,
-            };
+            return { name_eng: eng, name_hi: hi, name_od: od };
           } else {
-            return {
-              item_name_eng: eng,
-              item_name_hi: hi,
-              item_name_od: od,
-            };
+            return { item_name_eng: eng, item_name_hi: hi, item_name_od: od };
           }
         }).filter(item => (item.name_eng || item.item_name_eng || '').length >= 2);
 
-        console.log('Mapped Data:', mappedData);
-
         if (mappedData.length === 0) {
-          toast.error('No valid data found. Ensure your CSV has a "name_eng", "name", or "item_name_eng" column.');
+          toast.error('No valid data found. Ensure your CSV has a "name_eng" or "item_name_eng" column.');
           return;
         }
 
-        setPendingImport({
-            type,
-            data: mappedData,
-            isOpen: true
-        });
-        
-        // Clear input
+        setPendingImport({ type, data: mappedData, isOpen: true });
         e.target.value = '';
       },
       error: (err) => {
@@ -178,7 +160,7 @@ export default function MasterDataForm() {
   };
 
   const downloadSampleCsv = (type: 'party' | 'product') => {
-    const headers = ['name_eng', 'name_hi', 'name_od'];
+    const headers = type === 'party' ? ['name_eng', 'name_hi', 'name_od'] : ['item_name_eng', 'item_name_hi', 'item_name_od'];
     const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\nSample Name,नल नमूना,ନମୁନା ନାମ";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
@@ -190,59 +172,34 @@ export default function MasterDataForm() {
   };
 
   return (
-    <>
-    <Card className="w-full max-w-5xl mx-auto border-none shadow-xl bg-background/60 backdrop-blur-md">
-      <CardHeader>
-        <div className="flex items-center gap-2 mb-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-                <Plus className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
-                    Master Data Management
-                </CardTitle>
-                <CardDescription>Add new parties or products with multi-language support (English, Hindi, Odia).</CardDescription>
-            </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="party" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/50 p-1">
-            <TabsTrigger value="party" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <Building2 className="w-4 h-4 mr-2" />
-              Party Master
-            </TabsTrigger>
-            <TabsTrigger value="product" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
-              <Package className="w-4 h-4 mr-2" />
-              Product Master
-            </TabsTrigger>
-          </TabsList>
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-500 pb-20 px-2 max-w-6xl mx-auto">
+      <Tabs defaultValue="party" className="w-full">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-100 pb-6 mb-10">
+            <TabsList className="bg-slate-100 p-1 rounded-xl h-11 w-full lg:w-auto">
+                <TabsTrigger value="party" className="rounded-lg px-8 font-bold data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm transition-all flex items-center gap-2 flex-1 lg:flex-none">
+                    <Building2 className="w-4 h-4" />
+                    Parties
+                </TabsTrigger>
+                <TabsTrigger value="product" className="rounded-lg px-8 font-bold data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm transition-all flex items-center gap-2 flex-1 lg:flex-none">
+                    <Package className="w-4 h-4" />
+                    Products
+                </TabsTrigger>
+            </TabsList>
 
-          {/* Bulk Import Section - Fully Restored */}
-          <div className="mb-8 p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 overflow-hidden shadow-sm">
-             <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-100">
-                    <Upload className="w-6 h-6" />
-                </div>
-                <div>
-                    <h4 className="text-base font-black text-slate-900 leading-none">Bulk Data Import</h4>
-                    <p className="text-xs text-slate-500 font-bold mt-2">Swiftly add multiple records via CSV file</p>
-                </div>
-             </div>
-             <div className="flex flex-col xs:flex-row gap-3 w-full sm:w-auto">
+            <div className="flex items-center gap-3">
                 <Button 
                     variant="outline" 
-                    size="sm" 
                     onClick={() => {
                         const activeTab = document.querySelector('[data-state="active"][role="tab"]')?.getAttribute('value') as any;
                         downloadSampleCsv(activeTab || 'party');
                     }}
-                    className="h-10 text-[11px] font-black border-slate-200 text-slate-600 hover:bg-white rounded-xl w-full sm:w-auto px-5"
+                    className="h-11 px-5 rounded-xl font-bold border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm flex items-center gap-2"
                 >
-                    <FileText className="w-3.5 h-3.5 mr-2" />
-                    Sample Template
+                    <FileText className="w-4 h-4" />
+                    Sample CSV
                 </Button>
-                <div className="relative w-full sm:w-auto">
+
+                <div className="relative">
                     <input 
                         type="file" 
                         accept=".csv" 
@@ -253,220 +210,218 @@ export default function MasterDataForm() {
                             handleCsvUpload(activeTab || 'party', e);
                         }}
                     />
-                    <Button size="sm" className="h-10 text-[11px] font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100 rounded-xl w-full sm:w-auto px-5">
-                        <Upload className="w-3.5 h-3.5 mr-2" />
-                        Upload CSV
+                    <Button className="h-11 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-lg shadow-slate-900/10 flex items-center gap-2 transition-all">
+                        <Upload className="w-4 h-4" />
+                        Bulk Upload CSV
                     </Button>
                 </div>
-             </div>
-          </div>
+            </div>
+        </div>
 
-          <TabsContent value="party">
-            <Form {...partyForm}>
-              <form onSubmit={partyForm.handleSubmit(onPartySubmit)} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {/* English Names */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-primary mb-4 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px]">EN</span>
-                      English
-                    </h3>
+        <TabsContent value="party" className="mt-0 focus-visible:outline-none">
+          <Form {...partyForm}>
+            <form onSubmit={partyForm.handleSubmit(onPartySubmit)} className="space-y-8">
+              <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden p-8 rounded-3xl">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-2 text-indigo-600 font-bold text-[10px] uppercase tracking-widest bg-indigo-50 w-fit px-3 py-1 rounded-full">
+                       <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse" />
+                       English Name
+                    </div>
                     <FormField
                       control={partyForm.control}
                       name="name_eng"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Party Name</FormLabel>
+                          <FormLabel className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">Full Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Aalok Book Depot" {...field} className="h-11 border-blue-100 focus:border-primary" />
+                            <Input placeholder="Enter English name..." {...field} className="h-12 border-slate-100 focus:border-indigo-500/30 bg-slate-50/50 focus:bg-white transition-all rounded-xl font-bold" />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="font-bold text-xs" />
                         </FormItem>
                       )}
                     />
                   </div>
 
-                  {/* Hindi Names */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-orange-600 mb-4 flex items-center gap-2">
-                       <span className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-[10px]">HI</span>
-                       Hindi
-                    </h3>
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-2 text-orange-600 font-bold text-[10px] uppercase tracking-widest bg-orange-50 w-fit px-3 py-1 rounded-full">
+                       <span className="w-1.5 h-1.5 rounded-full bg-orange-600" />
+                       Hindi Name
+                    </div>
                     <FormField
                       control={partyForm.control}
                       name="name_hi"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>नाम (हिंदी)</FormLabel>
+                          <FormLabel className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">नाम (हिंदी)</FormLabel>
                           <FormControl>
-                            <Input placeholder="आलोक बुक डिपो" {...field} className="h-11 border-orange-100 focus:border-orange-500" />
+                            <Input placeholder="हिंदी में नाम लिखें..." {...field} className="h-12 border-slate-100 focus:border-orange-500/30 bg-slate-50/50 focus:bg-white transition-all rounded-xl font-bold text-lg" />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="font-bold text-xs" />
                         </FormItem>
                       )}
                     />
                   </div>
 
-                  {/* Odia Names */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-blue-600 mb-4 flex items-center gap-2">
-                       <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px]">OD</span>
-                       Odia
-                    </h3>
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-2 text-blue-600 font-bold text-[10px] uppercase tracking-widest bg-blue-50 w-fit px-3 py-1 rounded-full">
+                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                       Odia Name
+                    </div>
                     <FormField
                       control={partyForm.control}
                       name="name_od"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>ନାମ (ଓଡ଼ିଆ)</FormLabel>
+                          <FormLabel className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">ନାମ (ଓଡ଼ିଆ)</FormLabel>
                           <FormControl>
-                            <Input placeholder="ଆଲୋକ ବୁକ୍ ଡିପୋ" {...field} className="h-11 border-blue-100 focus:border-blue-500" />
+                            <Input placeholder="ଓଡ଼ିଆରେ ନାମ ଲେଖନ୍ତୁ..." {...field} className="h-12 border-slate-100 focus:border-blue-500/30 bg-slate-50/50 focus:bg-white transition-all rounded-xl font-bold text-lg" />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="font-bold text-xs" />
                         </FormItem>
                       )}
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-6 border-t border-muted/30">
-                  <Button variant="outline" type="button" onClick={() => partyForm.reset()} className="h-11 px-8 rounded-xl">Clear</Button>
-                  <Button type="submit" disabled={isSubmitting} className="min-w-[160px] h-11 rounded-xl shadow-lg bg-gradient-to-r from-primary to-primary/80">
-                    {isSubmitting ? 'Saving...' : 'Add Party'}
+                <div className="flex justify-end gap-3 mt-12 pt-8 border-t border-slate-50">
+                  <Button variant="ghost" type="button" onClick={() => partyForm.reset()} className="h-12 px-8 rounded-xl font-bold text-slate-400 hover:text-slate-600">Clear Form</Button>
+                  <Button type="submit" disabled={isSubmitting} className="min-w-[200px] h-12 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white font-black uppercase tracking-wider text-[11px] shadow-lg shadow-slate-900/10 active:scale-95 transition-all flex items-center gap-2 text-xs">
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    Add Master Party
                   </Button>
                 </div>
-              </form>
-            </Form>
-          </TabsContent>
+              </Card>
+            </form>
+          </Form>
+        </TabsContent>
 
-          <TabsContent value="product">
-            <Form {...productForm}>
-              <form onSubmit={productForm.handleSubmit(onProductSubmit)} className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {/* English Name */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-primary mb-4 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px]">EN</span>
-                      English
-                    </h3>
+        <TabsContent value="product" className="mt-0 focus-visible:outline-none">
+          <Form {...productForm}>
+            <form onSubmit={productForm.handleSubmit(onProductSubmit)} className="space-y-8">
+              <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden p-8 rounded-3xl">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-2 text-emerald-600 font-bold text-[10px] uppercase tracking-widest bg-emerald-50 w-fit px-3 py-1 rounded-full">
+                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                       English Product
+                    </div>
                     <FormField
                       control={productForm.control}
                       name="item_name_eng"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Product Name</FormLabel>
+                          <FormLabel className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">Product Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="Cash Register 1Q" {...field} className="h-11 border-blue-100 focus:border-primary" />
+                            <Input placeholder="Enter product name..." {...field} className="h-12 border-slate-100 focus:border-emerald-500/30 bg-slate-50/50 focus:bg-white transition-all rounded-xl font-bold" />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="font-bold text-xs" />
                         </FormItem>
                       )}
                     />
                   </div>
 
-                  {/* Hindi Name */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-orange-600 mb-4 flex items-center gap-2">
-                       <span className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-[10px]">HI</span>
-                       Hindi
-                    </h3>
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-2 text-orange-600 font-bold text-[10px] uppercase tracking-widest bg-orange-50 w-fit px-3 py-1 rounded-full">
+                       <span className="w-1.5 h-1.5 rounded-full bg-orange-600" />
+                       Hindi Name
+                    </div>
                     <FormField
                       control={productForm.control}
                       name="item_name_hi"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>उत्पाद (हिंदी)</FormLabel>
+                          <FormLabel className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">उत्पाद (हिंदी)</FormLabel>
                           <FormControl>
-                            <Input placeholder="कैश रजिस्टर" {...field} className="h-11 border-orange-100 focus:border-orange-500" />
+                            <Input placeholder="हिंदी में नाम लिखें..." {...field} className="h-12 border-slate-100 focus:border-orange-500/30 bg-slate-50/50 focus:bg-white transition-all rounded-xl font-bold text-lg" />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="font-bold text-xs" />
                         </FormItem>
                       )}
                     />
                   </div>
 
-                  {/* Odia Name */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-wider text-blue-600 mb-4 flex items-center gap-2">
-                       <span className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px]">OD</span>
-                       Odia
-                    </h3>
+                  <div className="space-y-5">
+                    <div className="flex items-center gap-2 text-blue-600 font-bold text-[10px] uppercase tracking-widest bg-blue-50 w-fit px-3 py-1 rounded-full">
+                       <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                       Odia Name
+                    </div>
                     <FormField
                       control={productForm.control}
                       name="item_name_od"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>ଉତ୍ପାଦ (ଓଡ଼ିଆ)</FormLabel>
+                          <FormLabel className="text-slate-400 font-bold text-[10px] uppercase tracking-wider">ଉତ୍ପାଦ (ଓଡ଼ିଆ)</FormLabel>
                           <FormControl>
-                            <Input placeholder="କ୍ୟାସ୍ ରେଜିଷ୍ଟର" {...field} className="h-11 border-blue-100 focus:border-blue-500" />
+                            <Input placeholder="ଓଡ଼ିଆରେ ନାମ ଲେଖନ୍ତୁ..." {...field} className="h-12 border-slate-100 focus:border-blue-500/30 bg-slate-50/50 focus:bg-white transition-all rounded-xl font-bold text-lg" />
                           </FormControl>
-                          <FormMessage />
+                          <FormMessage className="font-bold text-xs" />
                         </FormItem>
                       )}
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-3 pt-6 border-t border-muted/30">
-                  <Button variant="outline" type="button" onClick={() => productForm.reset()} className="h-11 px-8 rounded-xl">Clear</Button>
-                  <Button type="submit" disabled={isSubmitting} className="min-w-[160px] h-11 rounded-xl shadow-lg bg-gradient-to-r from-primary to-primary/80">
-                    {isSubmitting ? 'Saving...' : 'Add Product'}
+                <div className="flex justify-end gap-3 mt-12 pt-8 border-t border-slate-50">
+                  <Button variant="ghost" type="button" onClick={() => productForm.reset()} className="h-12 px-8 rounded-xl font-bold text-slate-400 hover:text-slate-600">Clear Form</Button>
+                  <Button type="submit" disabled={isSubmitting} className="min-w-[200px] h-12 rounded-xl bg-slate-900 hover:bg-emerald-600 text-white font-black uppercase tracking-wider text-[11px] shadow-lg shadow-slate-900/10 active:scale-[0.98] transition-all flex items-center gap-2 text-xs">
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                    Add Master Product
                   </Button>
                 </div>
-              </form>
-            </Form>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+              </Card>
+            </form>
+          </Form>
+        </TabsContent>
+      </Tabs>
 
-    <AlertDialog open={pendingImport.isOpen} onOpenChange={(open) => setPendingImport(prev => ({ ...prev, isOpen: open }))}>
-        <AlertDialogContent className="max-w-md border-none shadow-2xl">
+      <AlertDialog open={pendingImport.isOpen} onOpenChange={(open) => setPendingImport(prev => ({ ...prev, isOpen: open }))}>
+        <AlertDialogContent className="max-w-md border-none shadow-2xl rounded-[2rem] p-8">
             <AlertDialogHeader>
-                <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-600 mb-4">
-                    <FileText className="w-6 h-6" />
+                <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-6 shadow-sm border border-indigo-100">
+                    <FileText className="w-8 h-8" />
                 </div>
-                <AlertDialogTitle className="text-xl font-black text-slate-900">Confirm Your Import</AlertDialogTitle>
-                <AlertDialogDescription asChild>
-                    <div className="space-y-4 pt-2">
-                        <p className="text-slate-600 font-medium leading-relaxed">
-                            We found <span className="text-indigo-600 font-black">{pendingImport.data.length} records</span> in your file. 
-                            Do you want to import them into the <span className="text-slate-900 font-bold uppercase tracking-tight">{pendingImport.type === 'party' ? 'Party Master' : 'Product Master'}</span>?
-                        </p>
-                        
-                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 overflow-hidden">
-                            <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                                <CheckCircle2 className="w-3 h-3" />
-                                Preview (First 3 Items)
-                            </h5>
-                            <div className="space-y-2">
-                                {pendingImport.data.slice(0, 3).map((item, idx) => (
-                                    <div key={idx} className="flex items-center justify-between text-xs py-1.5 border-b border-slate-200 last:border-0">
-                                        <span className="font-bold text-slate-700 truncate max-w-[150px]">{item.name_eng}</span>
-                                        <span className="text-[10px] text-slate-400 italic">... ready</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="flex items-start gap-2 text-[10px] text-orange-600 bg-orange-50 p-3 rounded-lg border border-orange-100 italic">
-                            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                            Existing items with the same English name will be updated with these translations.
+                <AlertDialogTitle className="text-2xl font-black text-slate-900 leading-tight">Confirm Bulk Import</AlertDialogTitle>
+                <div className="space-y-6 pt-2">
+                    <p className="text-slate-600 font-bold leading-relaxed">
+                        We matched <span className="text-indigo-600 font-black">{pendingImport.data.length} valid records</span> from your CSV file. 
+                    </p>
+                    
+                    <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 overflow-hidden">
+                        <h5 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                            Data Preview
+                        </h5>
+                        <div className="space-y-3">
+                            {pendingImport.data.slice(0, 3).map((item, idx) => (
+                                <div key={idx} className="flex items-center justify-between text-xs py-2 border-b border-slate-100 last:border-0">
+                                    <span className="font-black text-slate-700 truncate max-w-[180px]">{item.name_eng || item.item_name_eng}</span>
+                                    <Badge variant="outline" className="text-[9px] font-bold bg-white text-slate-400 px-1.5 h-5">READY</Badge>
+                                </div>
+                            ))}
+                            {pendingImport.data.length > 3 && (
+                                <p className="text-[10px] text-center text-slate-400 font-bold pt-2">+{pendingImport.data.length - 3} more records...</p>
+                            )}
                         </div>
                     </div>
-                </AlertDialogDescription>
+
+                    <div className="flex items-start gap-3 text-[11px] text-amber-700 bg-amber-50 p-4 rounded-xl border border-amber-100/50 font-bold italic">
+                        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+                        Duplicate English names will be automatically updated with these new translations.
+                    </div>
+                </div>
             </AlertDialogHeader>
-            <AlertDialogFooter className="pt-6">
-                <AlertDialogCancel className="rounded-xl border-slate-200 h-11 px-6 font-bold text-slate-500 hover:bg-slate-50 transition-colors">Cancel</AlertDialogCancel>
+            <AlertDialogFooter className="pt-8 gap-3">
+                <AlertDialogCancel className="rounded-xl border-slate-200 h-12 px-6 font-bold text-slate-500 hover:bg-slate-50 transition-colors mt-0">Discard</AlertDialogCancel>
                 <AlertDialogAction 
                     onClick={confirmImport}
-                    className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white h-11 px-8 font-bold shadow-lg shadow-indigo-100 transition-all active:scale-95"
+                    className="rounded-xl bg-slate-900 hover:bg-indigo-600 text-white h-12 px-10 font-black uppercase tracking-wider text-xs shadow-xl shadow-indigo-600/20 transition-all active:scale-[0.98]"
                 >
-                    Yes, Import {pendingImport.data.length} Rows
+                    Confirm Import
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
-    </AlertDialog>
-    </>
+      </AlertDialog>
+    </div>
   );
 }

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Loader2, AlertTriangle, CheckCircle2, Building2, Package, RefreshCw } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle2, Building2, Package, RefreshCw, Download } from 'lucide-react';
 
 interface MissingTranslation {
   type: 'party' | 'product';
@@ -16,11 +16,46 @@ interface MissingTranslation {
   orderNo: string;
 }
 
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+
 export default function MissingTranslationsPage() {
   const [data, setData] = useState<{ parties: MissingTranslation[], products: MissingTranslation[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [formState, setFormState] = useState<Record<string, { hi: string, od: string }>>({});
+
+  const exportToCsv = (type: 'party' | 'product') => {
+    if (!data) return;
+    const items = type === 'party' ? data.parties : data.products;
+    if (items.length === 0) {
+      toast.info(`No missing ${type}s to export`);
+      return;
+    }
+
+    const headers = type === 'party' 
+      ? ['name_eng', 'name_hi', 'name_od'] 
+      : ['item_name_eng', 'item_name_hi', 'item_name_od'];
+
+    const csvContent = [
+      headers.join(','),
+      ...items.map(item => {
+        // Wrap in quotes and handle existing quotes
+        const escape = (str: string) => `"${(str || '').replace(/"/g, '""')}"`;
+        return [escape(item.english), escape(item.hindi || ''), escape(item.odia || '')].join(',');
+      })
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `missing_${type}s_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success(`Exported ${items.length} ${type}s to CSV`);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -108,70 +143,60 @@ export default function MissingTranslationsPage() {
   const isEmpty = (data?.parties.length === 0 && data?.products.length === 0);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 px-2">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500 pb-20 px-2">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Missing Translations</h1>
-          <p className="text-slate-500 font-bold mt-3 text-lg">Identify and fix master data before printing.</p>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-none">Translation Sync</h1>
+          <p className="text-slate-500 font-bold mt-3 text-lg">Fix or export untranslated master data records.</p>
         </div>
-        <Button onClick={fetchData} variant="outline" className="h-12 px-6 rounded-xl font-bold border-indigo-200 text-indigo-700 hover:bg-indigo-50 shadow-sm flex items-center gap-2">
-          <RefreshCw className="w-4 h-4" />
-          Refresh List
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button onClick={fetchData} variant="outline" className="h-11 px-5 rounded-xl font-bold border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm flex items-center gap-2">
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
-      {isEmpty ? (
-        <Card className="border-none shadow-xl bg-background/60 backdrop-blur-md py-20">
-          <CardContent className="flex flex-col items-center text-center">
-            <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-6">
-              <CheckCircle2 className="w-10 h-10" />
+      <Tabs defaultValue="products" className="w-full">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-8">
+            <TabsList className="bg-slate-100 p-1 rounded-xl h-11">
+                <TabsTrigger value="products" className="rounded-lg px-8 font-bold data-[state=active]:bg-white data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm transition-all flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    Products
+                    <Badge variant="outline" className="ml-1 bg-emerald-50 text-emerald-600 border-emerald-100 font-black h-5 px-1.5 text-[10px]">
+                        {data?.products.length}
+                    </Badge>
+                </TabsTrigger>
+                <TabsTrigger value="parties" className="rounded-lg px-8 font-bold data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm transition-all flex items-center gap-2">
+                    <Building2 className="w-4 h-4" />
+                    Parties
+                    <Badge variant="outline" className="ml-1 bg-indigo-50 text-indigo-600 border-indigo-100 font-black h-5 px-1.5 text-[10px]">
+                        {data?.parties.length}
+                    </Badge>
+                </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="products" className="m-0">
+               <Button onClick={() => exportToCsv('product')} className="h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-bold text-white shadow-lg shadow-emerald-600/10 flex items-center gap-2">
+                 <Download className="w-4 h-4" />
+                 Export Products CSV
+               </Button>
+            </TabsContent>
+            <TabsContent value="parties" className="m-0">
+               <Button onClick={() => exportToCsv('party')} className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 font-bold text-white shadow-lg shadow-indigo-600/10 flex items-center gap-2">
+                 <Download className="w-4 h-4" />
+                 Export Parties CSV
+               </Button>
+            </TabsContent>
+        </div>
+
+        <TabsContent value="products" className="mt-0 focus-visible:outline-none">
+          {data?.products.length === 0 ? (
+            <div className="py-24 text-center bg-emerald-50/20 rounded-3xl border border-dashed border-emerald-100 italic font-medium text-emerald-600">
+                All products are correctly translated!
             </div>
-            <h3 className="text-2xl font-bold text-slate-900">Perfect Coverage!</h3>
-            <p className="text-slate-500 max-w-sm mt-2 font-medium">All active orders have complete master data in Hindi and Odia.</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 gap-10">
-          {data?.parties.length !== 0 && (
-            <section className="space-y-6">
-              <div className="flex items-center gap-3 px-2">
-                <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 shadow-sm border border-indigo-100">
-                  <Building2 className="w-5 h-5" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900">Untranslated Parties</h2>
-                <Badge variant="outline" className="bg-white border-slate-200 text-slate-500 font-bold px-3 py-1 text-xs">
-                  {data?.parties.length} Record(s) Need Attention
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {data?.parties.map((party) => (
-                  <TranslationCard 
-                    key={party.english} 
-                    item={party} 
-                    state={formState[`party-${party.english}`]} 
-                    onChange={(val) => setFormState(prev => ({ ...prev, [`party-${party.english}`]: val }))}
-                    onSave={() => handleSave(party)}
-                    saving={saving === `party-${party.english}`}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {data?.products.length !== 0 && (
-            <section className="space-y-6">
-              <div className="flex items-center gap-3 px-3">
-                <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 shadow-sm border border-emerald-100">
-                  <Package className="w-5 h-5" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900">Untranslated Products</h2>
-                <Badge variant="outline" className="bg-white border-slate-200 text-slate-500 font-bold px-3 py-1 text-xs">
-                  {data?.products.length} Record(s) Need Attention
-                </Badge>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {data?.products.map((product) => (
                   <TranslationCard 
                     key={product.english} 
@@ -182,11 +207,31 @@ export default function MissingTranslationsPage() {
                     saving={saving === `product-${product.english}`}
                   />
                 ))}
-              </div>
-            </section>
+            </div>
           )}
-        </div>
-      )}
+        </TabsContent>
+
+        <TabsContent value="parties" className="mt-0 focus-visible:outline-none">
+          {data?.parties.length === 0 ? (
+            <div className="py-24 text-center bg-indigo-50/20 rounded-3xl border border-dashed border-indigo-100 italic font-medium text-indigo-600">
+                All parties are correctly translated!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {data?.parties.map((party) => (
+                  <TranslationCard 
+                    key={party.english} 
+                    item={party} 
+                    state={formState[`party-${party.english}`]} 
+                    onChange={(val) => setFormState(prev => ({ ...prev, [`party-${party.english}`]: val }))}
+                    onSave={() => handleSave(party)}
+                    saving={saving === `party-${party.english}`}
+                  />
+                ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

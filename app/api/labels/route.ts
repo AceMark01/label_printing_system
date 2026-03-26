@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
         const filterTransporters = searchParams.get('transporters')?.split(',').filter(Boolean) || [];
         const searchQuery = searchParams.get('q')?.toLowerCase() || '';
         const includeProcessed = searchParams.get('includeProcessed') === 'true';
+        const countOnly = searchParams.get('countOnly') === 'true';
 
 /*
         // --- SUPABASE PATH ---
@@ -104,6 +105,10 @@ export async function GET(request: NextRequest) {
         // --- EXTERNAL API / GOOGLE SHEETS FALLBACK ---
         // We use APPS_SCRIPT_URL (Google) first as requested
         const allData = await getCachedSheetData(APPS_SCRIPT_URL || NEW_API_URL);
+
+        if (countOnly) {
+            return NextResponse.json({ count: allData.length });
+        }
 
         // --- MASTER DATA CROSS-REFERENCE ---
         // Fetch all parties and products to use for translation mapping

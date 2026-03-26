@@ -32,13 +32,14 @@ export default function DashboardPage() {
     async function loadDashboardData() {
       setLoading(true);
       try {
-        const { count: printedCount } = await supabase
-          .from('labels')
-          .select('*', { count: 'exact', head: true });
+        // Use a more optimized way to get counts
+        const [printedRes, totalRes] = await Promise.all([
+           supabase.from('labels').select('*', { count: 'exact', head: true }),
+           fetch('/api/labels?countOnly=true&includeProcessed=true').then(res => res.json())
+        ]);
         
-        const paginated = await fetchTicTakData(1, 1, { includeProcessed: true });
-        const totalCount = paginated.meta.total || 0;
-        const printed = printedCount || 0;
+        const totalCount = totalRes.count || 0;
+        const printed = printedRes.count || 0;
         
         setStats({
           total: totalCount,

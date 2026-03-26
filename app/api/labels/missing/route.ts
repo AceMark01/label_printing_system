@@ -22,6 +22,41 @@ export async function GET(request: NextRequest) {
         const seenParties = new Set<string>();
         const seenProducts = new Set<string>();
 
+        // 1. Scan the entire Master Parties table for missing translations
+        masterParties?.forEach(p => {
+            if (!p.name_hi || !p.name_od || p.name_hi.trim() === '' || p.name_od.trim() === '') {
+                const key = (p.name_eng || '').toLowerCase().trim();
+                if (!seenParties.has(key)) {
+                    missingItems.push({
+                        type: 'party',
+                        english: p.name_eng,
+                        hindi: p.name_hi || '',
+                        odia: p.name_od || '',
+                        orderNo: 'MASTER'
+                    });
+                    seenParties.add(key);
+                }
+            }
+        });
+
+        // 2. Scan the entire Master Products table for missing translations
+        masterProducts?.forEach(p => {
+            if (!p.item_name_hi || !p.item_name_od || p.item_name_hi.trim() === '' || p.item_name_od.trim() === '') {
+                const key = (p.item_name_eng || '').toLowerCase().trim();
+                if (!seenProducts.has(key)) {
+                    missingItems.push({
+                        type: 'product',
+                        english: p.item_name_eng,
+                        hindi: p.item_name_hi || '',
+                        odia: p.item_name_od || '',
+                        orderNo: 'MASTER'
+                    });
+                    seenProducts.add(key);
+                }
+            }
+        });
+
+        // 3. Keep existing logic to scan *New* items from current orders (to pick up items not in master yet)
         allData.forEach((item: any) => {
             const rawParty = (item['AccountName'] || item['Party'] || '').toString().trim();
             const rawProduct = (item['ProductName'] || item['Item'] || '').toString().trim();
@@ -31,45 +66,37 @@ export async function GET(request: NextRequest) {
             const partyKey = rawParty.toLowerCase();
             const productKey = rawProduct.toLowerCase();
 
-            const masterParty = partyMap.get(partyKey);
-            const masterProduct = productMap.get(productKey);
-
-            // Check if party is missing or untranslated
-            if (!masterParty || !masterParty.name_hi || !masterParty.name_od) {
-                if (!seenParties.has(partyKey)) {
-                    missingItems.push({
-                        type: 'party',
-                        english: rawParty,
-                        hindi: masterParty?.name_hi || '',
-                        odia: masterParty?.name_od || '',
-                        orderNo: item['OrderNo'] || item['SOrderNo'] || 'N/A'
-                    });
-                    seenParties.add(partyKey);
-                }
+            // Only add if we haven't already seen it in the master scan
+            if (!partyMap.has(partyKey) && !seenParties.has(partyKey)) {
+                missingItems.push({
+                    type: 'party',
+                    english: rawParty,
+                    hindi: '',
+                    odia: '',
+                    orderNo: item['OrderNo'] || item['SOrderNo'] || 'ORDER'
+                });
+                seenParties.add(partyKey);
             }
 
-            // Check if product is missing or untranslated
-            if (!masterProduct || !masterProduct.item_name_hi || !masterProduct.item_name_od) {
-                if (!seenProducts.has(productKey)) {
-                    missingItems.push({
-                        type: 'product',
-                        english: rawProduct,
-                        hindi: masterProduct?.item_name_hi || '',
-                        odia: masterProduct?.item_name_od || '',
-                        orderNo: item['OrderNo'] || item['SOrderNo'] || 'N/A'
-                    });
-                    seenProducts.add(productKey);
-                }
+            if (!productMap.has(productKey) && !seenProducts.has(productKey)) {
+                missingItems.push({
+                    type: 'product',
+                    english: rawProduct,
+                    hindi: '',
+                    odia: '',
+                    orderNo: item['OrderNo'] || item['SOrderNo'] || 'ORDER'
+                });
+                seenProducts.add(productKey);
             }
         });
 
-        // Group by type for easier consumption
+        // Correctly group collected items by type
         const parties = missingItems.filter(i => i.type === 'party');
         const products = missingItems.filter(i => i.type === 'product');
 
         return NextResponse.json({
-            parties,
-            products,
+            parties: parties,
+            products: products,
             total: missingItems.length
         });
     } catch (error: any) {

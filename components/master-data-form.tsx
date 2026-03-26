@@ -114,10 +114,25 @@ export default function MasterDataForm() {
         console.log('CSV Raw Data:', data);
 
         const mappedData = data.map(row => {
-          // Robust mapping: check for common header variations
-          const eng = (row.name_eng || row.name || row.party || row.product || row.item || '').toString().trim();
-          const hi = (row.name_hi || row.hindi || row.hi || '').toString().trim();
-          const od = (row.name_od || row.odia || row.od || '').toString().trim();
+          // Priority Mapping: Exact schema matches first
+          const eng = (
+            row.name_eng || row.item_name_eng || 
+            row.name || row.party || row.product || row.item || 
+            row['english name'] || row['party name'] || row['product name'] || ''
+          ).toString().trim();
+          
+          const hi = (
+            row.name_hi || row.item_name_hi || 
+            row.hindi || row.hi || row['hindi name'] || 
+            row['party in hindi'] || row['item in hindi'] || ''
+          ).toString().trim();
+          
+          const od = (
+            row.name_od || row.item_name_od || 
+            row.odia || row.od || row.or || row.oriya || 
+            row['odia name'] || row['oriya name'] || row['party in oriya'] || 
+            row['item in oriya'] || row['party in odia'] || ''
+          ).toString().trim();
 
           if (type === 'party') {
             return {
@@ -132,7 +147,7 @@ export default function MasterDataForm() {
               item_name_od: od,
             };
           }
-        }).filter(item => (item.name_eng || item.item_name_eng).length >= 2);
+        }).filter(item => (item.name_eng || item.item_name_eng || '').length >= 2);
 
         console.log('Mapped Data:', mappedData);
 
@@ -203,16 +218,15 @@ export default function MasterDataForm() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Bulk Import Hint */}
-          {/* Bulk Import Hint - Temporarily Disabled 
-          <div className="mb-6 p-4 rounded-2xl bg-indigo-50 border border-indigo-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 overflow-hidden">
+          {/* Bulk Import Section - Fully Restored */}
+          <div className="mb-8 p-6 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 overflow-hidden shadow-sm">
              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-100">
+                <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-100">
                     <Upload className="w-6 h-6" />
                 </div>
                 <div>
                     <h4 className="text-base font-black text-slate-900 leading-none">Bulk Data Import</h4>
-                    <p className="text-xs text-slate-500 font-bold mt-1.5">Swiftly add multiple records via CSV</p>
+                    <p className="text-xs text-slate-500 font-bold mt-2">Swiftly add multiple records via CSV file</p>
                 </div>
              </div>
              <div className="flex flex-col xs:flex-row gap-3 w-full sm:w-auto">
@@ -223,17 +237,17 @@ export default function MasterDataForm() {
                         const activeTab = document.querySelector('[data-state="active"][role="tab"]')?.getAttribute('value') as any;
                         downloadSampleCsv(activeTab || 'party');
                     }}
-                    className="h-10 text-[11px] font-black border-indigo-200 text-indigo-700 hover:bg-indigo-100 rounded-xl w-full sm:w-auto px-5"
+                    className="h-10 text-[11px] font-black border-slate-200 text-slate-600 hover:bg-white rounded-xl w-full sm:w-auto px-5"
                 >
                     <FileText className="w-3.5 h-3.5 mr-2" />
-                    Download Template
+                    Sample Template
                 </Button>
                 <div className="relative w-full sm:w-auto">
                     <input 
                         type="file" 
                         accept=".csv" 
                         id="csv-upload"
-                        className="absolute inset-0 opacity-0 cursor-pointer"
+                        className="absolute inset-0 opacity-0 cursor-pointer z-10"
                         onChange={(e) => {
                             const activeTab = document.querySelector('[data-state="active"][role="tab"]')?.getAttribute('value') as any;
                             handleCsvUpload(activeTab || 'party', e);
@@ -241,12 +255,11 @@ export default function MasterDataForm() {
                     />
                     <Button size="sm" className="h-10 text-[11px] font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100 rounded-xl w-full sm:w-auto px-5">
                         <Upload className="w-3.5 h-3.5 mr-2" />
-                        Upload CSV File
+                        Upload CSV
                     </Button>
                 </div>
              </div>
           </div>
-          */}
 
           <TabsContent value="party">
             <Form {...partyForm}>

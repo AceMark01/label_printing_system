@@ -6,6 +6,7 @@ import {
   LayoutDashboard, 
   Package, 
   History, 
+  AlertCircle,
   PlusCircle 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -13,7 +14,8 @@ import { cn } from '@/lib/utils';
 const navigation = [
   { name: 'Home', href: '/', icon: LayoutDashboard },
   { name: 'Orders', href: '/orders', icon: Package },
-  // { name: 'Add', href: '/master', icon: PlusCircle }, // Temporarily hidden
+  { name: 'Add', href: '/master', icon: PlusCircle },
+  { name: 'Missing', href: '/missing', icon: AlertCircle },
   { name: 'History', href: '/history', icon: History },
 ];
 

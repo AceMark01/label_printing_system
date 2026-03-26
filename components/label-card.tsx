@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import { cn } from "@/lib/utils";
 import type { Label, Language } from '@/lib/types';
 
 interface LabelCardProps {
@@ -58,77 +59,138 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
 
   return (
     <div className="relative bg-white w-full h-full flex flex-col font-sans border border-gray-200 shadow-none overflow-hidden print:border-none print:shadow-none print:bg-white">
-      <div className={`flex-1 ${isMulti ? 'p-10' : 'p-16'} flex flex-col justify-center bg-white overflow-hidden print:bg-white`}>
-        <div className={`w-full ${isMulti ? 'space-y-12' : 'space-y-24'}`}>
+      <div className={`flex-1 ${isMulti ? 'p-6' : 'p-10'} flex flex-col justify-center bg-white overflow-y-auto print:overflow-visible print:bg-white`}>
+        <div className={`w-full flex flex-col ${isMulti ? 'gap-6' : 'gap-12'} justify-center`}>
           {sortedLanguages.map((lang, idx) => {
             const t = labelTranslations[lang];
             const isLast = idx === sortedLanguages.length - 1;
             const partyName = getPartyName(lang);
             const itemName = getItemName(lang);
             const isHindi = lang === 'hi';
+            
+            // Check visibility per language
             const isProductVisible = fieldVisibility?.[lang]?.product !== false;
             const isQuantityVisible = fieldVisibility?.[lang]?.quantity !== false;
+            
+            // If both are hidden, the layout should still be balanced
             const isReduced = !isProductVisible && !isQuantityVisible;
 
             return (
               <div 
                 key={lang} 
-                className={`${!isLast && isMulti ? 'pb-10 border-b border-dashed border-gray-200 print:pb-12 print:mb-12' : !isLast ? 'pb-16 border-b border-dashed border-gray-200' : ''} ${isReduced ? 'space-y-12' : 'space-y-5'}`}
+                className={cn(
+                  "flex flex-col flex-shrink-0",
+                  !isLast && isMulti && "pb-6 border-b border-dashed border-gray-100 mb-2",
+                  isReduced ? "justify-center min-h-[40%]" : "gap-4"
+                )}
               >
                 {/* Party Name Row */}
-                <div className={isReduced ? 'space-y-6' : 'space-y-3'}>
-                  <p className="leading-tight">
-                    <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-[24px]' : 'text-[18px]') : (isReduced ? 'text-[20px]' : 'text-[14px]')) : (isReduced ? 'text-[32px]' : 'text-[22px]')} font-bold text-gray-400 uppercase tracking-widest`}>{t.party}: </span>
-                    <span className={`font-black text-gray-900 ${getFontSize(partyName, isMulti ? (isHindi ? (isReduced ? 'text-[48px]' : 'text-[34px]') : (isReduced ? 'text-[44px]' : 'text-[30px]')) : (isReduced ? 'text-[72px]' : 'text-[52px]'), 20)}`}>
+                <div className="w-full">
+                  <p className="leading-tight flex flex-wrap items-baseline gap-x-3">
+                    <span className={cn(
+                      "font-bold text-gray-400 uppercase tracking-widest shrink-0",
+                      isMulti ? (isHindi ? "text-[16px]" : "text-[12px]") : "text-[20px]"
+                    )}>
+                      {t.party}:
+                    </span>
+                    <span className={cn(
+                      "font-black text-gray-900",
+                      getFontSize(partyName, isMulti ? (isHindi ? "text-[32px]" : "text-[28px]") : "text-[52px]", 20)
+                    )}>
                       {partyName}
                     </span>
                   </p>
                 </div>
 
-                {/* Product Name Row */}
-                <div className="flex items-center gap-4 group/field relative">
-                  <p className={`leading-tight ${!isProductVisible ? 'opacity-25' : ''}`}>
-                    <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.item}: </span>
-                    {isProductVisible && (
-                      <span className={`font-bold text-gray-800 ${getFontSize(itemName, isMulti ? (isHindi ? 'text-[26px]' : 'text-[22px]') : 'text-[34px]', 30)}`}>
+                {/* Product Name Row - Only if visible */}
+                {isProductVisible && (
+                  <div className="flex items-center gap-4 group/field relative pr-8">
+                    <p className="leading-tight flex flex-wrap items-baseline gap-x-3">
+                      <span className={cn(
+                        "font-bold text-gray-400 uppercase tracking-widest shrink-0",
+                        isMulti ? (isHindi ? "text-[16px]" : "text-[12px]") : "text-18px"
+                      )}>
+                        {t.item}:
+                      </span>
+                      <span className={cn(
+                        "font-bold text-gray-800",
+                        getFontSize(itemName, isMulti ? (isHindi ? "text-[24px]" : "text-[20px]") : "text-[32px]", 30)
+                      )}>
                         {itemName}
                       </span>
-                    )}
-                  </p>
-                  <input 
-                    type="checkbox" 
-                    checked={isProductVisible}
-                    onChange={(e) => onVisibilityChange?.(label.id, 'product', e.target.checked, lang)}
-                    className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-opacity cursor-pointer print:hidden absolute -left-8"
-                  />
-                </div>
+                    </p>
+                    <input 
+                      type="checkbox" 
+                      checked={isProductVisible}
+                      onChange={(e) => onVisibilityChange?.(label.id, 'product', e.target.checked, lang)}
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-opacity cursor-pointer print:hidden absolute right-0"
+                    />
+                  </div>
+                )}
+                {!isProductVisible && (
+                   <div className="print:hidden h-0 relative">
+                     <input 
+                        type="checkbox" 
+                        checked={false}
+                        onChange={(e) => onVisibilityChange?.(label.id, 'product', e.target.checked, lang)}
+                        className="w-4 h-4 rounded border-gray-100 text-gray-300 transition-opacity cursor-pointer absolute right-0 -top-4"
+                      />
+                   </div>
+                )}
 
-                {/* Quantity & City Row */}
-                <div className={`flex items-center ${isMulti ? (isReduced ? 'gap-12 pt-6' : 'gap-8 pt-2') : (isReduced ? 'gap-24 pt-16' : 'gap-16 pt-8')}`}>
-                  <div className="flex items-center gap-4 group/field relative">
-                    <div className={`flex items-center gap-3 ${!isQuantityVisible ? 'opacity-25' : ''}`}>
-                      <span className={`${isMulti ? (isHindi ? 'text-[18px]' : 'text-[14px]') : 'text-[24px]'} font-bold text-gray-400 uppercase tracking-widest`}>{t.qty}: </span>
-                      {isQuantityVisible && (
-                        <span className={`${isMulti ? 'text-[38px]' : 'text-[62px]'} font-black text-black leading-none whitespace-nowrap`}>{label.quantity}</span>
-                      )}
-                    </div>
+                {/* Quantity & City & Bundles Row */}
+                <div className={cn(
+                  "flex flex-wrap items-center gap-y-4",
+                  isMulti ? "gap-x-6" : "gap-x-12",
+                  isReduced ? "pt-4" : "pt-2"
+                )}>
+                  {/* Quantity Group */}
+                  <div className="flex items-center gap-4 group/field relative pr-8 min-w-[120px]">
+                    {isQuantityVisible && (
+                      <div className="flex items-center gap-3">
+                        <span className={cn(
+                          "font-bold text-gray-400 uppercase tracking-widest shrink-0",
+                          isMulti ? (isHindi ? "text-[16px]" : "text-[12px]") : "text-[18px]"
+                        )}>
+                          {t.qty}:
+                        </span>
+                        <span className={cn(
+                          "font-black text-black leading-none whitespace-nowrap",
+                          isMulti ? "text-[32px]" : "text-[52px]"
+                        )}>
+                          {label.quantity}
+                        </span>
+                      </div>
+                    )}
                     <input 
                       type="checkbox" 
                       checked={isQuantityVisible}
                       onChange={(e) => onVisibilityChange?.(label.id, 'quantity', e.target.checked, lang)}
-                      className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-opacity cursor-pointer print:hidden absolute -left-8"
+                      className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-opacity cursor-pointer print:hidden absolute right-0"
                     />
                   </div>
 
+                  {/* Bundles (Always visible if exists) */}
                   {label.bdlQty !== undefined && (
-                    <div className={`flex items-center gap-4 ${isMulti ? 'pl-6' : 'pl-12'} ${isQuantityVisible ? 'border-l border-gray-100' : ''}`}>
-                      <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-[24px]' : 'text-[18px]') : (isReduced ? 'text-[20px]' : 'text-[14px]')) : (isReduced ? 'text-[32px]' : 'text-[22px]')} font-bold text-gray-400 uppercase tracking-widest`}>{t.bundles}: </span>
+                    <div className={cn(
+                      "flex items-center gap-3 border-l border-gray-100 px-4",
+                      !isQuantityVisible && "border-l-0 pl-0"
+                    )}>
+                      <span className={cn(
+                        "font-bold text-gray-400 uppercase tracking-widest shrink-0",
+                        isMulti ? (isHindi ? "text-[16px]" : "text-[12px]") : "text-[18px]"
+                      )}>
+                        {t.bundles}:
+                      </span>
                       <div className="relative group">
                         <input 
                           type="text" 
                           value={label.bdlQty} 
                           onChange={(e) => onBundleChange?.(label.id, e.target.value)}
-                          className={`${isMulti ? (isReduced ? 'text-[48px]' : 'text-[38px]') : (isReduced ? 'text-[72px]' : 'text-[62px]')} font-black text-gray-700 leading-none whitespace-nowrap bg-transparent border-none outline-none focus:ring-0 p-0 m-0 w-[1.5em] text-left hover:bg-slate-50 focus:bg-white rounded transition-colors print:p-0 print:m-0 print:bg-transparent print:hover:bg-transparent`}
+                          className={cn(
+                            "font-black text-gray-700 leading-none whitespace-nowrap bg-transparent border-none outline-none focus:ring-0 p-0 m-0 w-[1.5em] text-left hover:bg-slate-50 focus:bg-white rounded transition-colors",
+                            isMulti ? "text-[32px]" : "text-[52px]"
+                          )}
                           placeholder="0"
                         />
                         <div className="absolute -bottom-1 left-0 w-full h-0.5 bg-blue-200 print:bg-black group-hover:bg-blue-400 transition-colors" />
@@ -136,9 +198,23 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                     </div>
                   )}
 
-                  <div className={`flex items-center gap-4 ${isMulti ? 'pl-6' : 'pl-12'} ${(isQuantityVisible || label.bdlQty !== undefined) ? 'border-l border-gray-100' : ''}`}>
-                    <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-[24px]' : 'text-[18px]') : (isReduced ? 'text-[20px]' : 'text-[14px]')) : (isReduced ? 'text-[32px]' : 'text-[22px]')} font-bold text-gray-400 uppercase tracking-widest`}>{t.city}: </span>
-                    <span className={`${isMulti ? (isReduced ? 'text-[40px]' : 'text-[28px]') : (isReduced ? 'text-[60px]' : 'text-[44px]')} font-black text-gray-800 uppercase whitespace-nowrap`}>{getCityName(lang)}</span>
+                  {/* City (Always visible) */}
+                  <div className={cn(
+                    "flex items-center gap-3 border-l border-gray-100 px-4",
+                    !isQuantityVisible && label.bdlQty === undefined && "border-l-0 pl-0"
+                  )}>
+                    <span className={cn(
+                      "font-bold text-gray-400 uppercase tracking-widest shrink-0",
+                      isMulti ? (isHindi ? "text-[16px]" : "text-[12px]") : "text-[18px]"
+                    )}>
+                      {t.city}:
+                    </span>
+                    <span className={cn(
+                      "font-black text-gray-800 uppercase whitespace-nowrap",
+                      isMulti ? "text-[24px]" : "text-[38px]"
+                    )}>
+                      {getCityName(lang)}
+                    </span>
                   </div>
                 </div>
               </div>

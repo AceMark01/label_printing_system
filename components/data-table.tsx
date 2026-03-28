@@ -52,9 +52,20 @@ export const DataTable = memo(function DataTable({
           />
           <span className="text-sm font-bold text-indigo-900">Select All ({safeLabels.length})</span>
         </label>
-        <div className="text-xs font-bold text-indigo-600 uppercase tracking-tighter">
-          {selectedIds.size} Selected
-        </div>
+        {selectedIds.size > 0 ? (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => onSelectionChange(new Set())}
+            className="h-8 px-3 text-xs font-bold text-rose-600 hover:bg-rose-100 hover:text-rose-700 rounded-lg transition-colors"
+          >
+            Clear Selected
+          </Button>
+        ) : (
+          <div className="text-xs font-bold text-indigo-600 uppercase tracking-tighter">
+            {selectedIds.size} Selected
+          </div>
+        )}
       </div>
 
       {/* Mobile Card View */}
@@ -93,11 +104,16 @@ export const DataTable = memo(function DataTable({
                       <span className="text-base font-black text-blue-900">{label.quantity}</span>
                     </div>
                     {label.bdlQty && (
-                      <div className="flex flex-col text-right">
+                      <div className="flex flex-col text-center">
                         <span className="text-[9px] font-bold text-gray-400 uppercase">Bdl</span>
                         <span className="text-sm font-bold text-green-700">{label.bdlQty}</span>
                       </div>
                     )}
+
+                  </div>
+                  <div className="pt-1">
+                    <span className="text-[10px] font-bold text-blue-500 uppercase">Transporter: </span>
+                    <span className="text-[11px] font-black text-slate-700">{label.transporter || label.originalData?.TransporterName || label.originalData?.Transporter || '-'}</span>
                   </div>
                 </div>
                 <Checkbox
@@ -116,31 +132,34 @@ export const DataTable = memo(function DataTable({
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-10">
-              <tr className="border-b border-slate-200 bg-slate-50/80 backdrop-blur-sm">
-                <th className="px-5 py-4 text-left w-12">
+              <tr className="bg-indigo-600 text-white border-b-0 shadow-md relative z-20">
+                <th className="px-5 py-4 text-left w-12 rounded-tl-xl">
                   <Checkbox
                     checked={selectedIds.size > 0 && selectedIds.size === safeLabels.length}
                     onCheckedChange={handleSelectAll}
                     aria-label="Select all"
-                    className="border-slate-300 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600 shadow-sm"
+                    className="border-indigo-300/50 data-[state=checked]:bg-white data-[state=checked]:text-indigo-600 data-[state=checked]:border-white shadow-sm"
                   />
                 </th>
-                <th className="px-4 py-4 text-left font-bold text-slate-500 text-[10px] uppercase tracking-widest">
+                <th className="px-4 py-4 text-left font-black text-indigo-100 text-[10px] uppercase tracking-[0.2em]">
                   Order No.
                 </th>
-                <th className="px-4 py-4 text-left font-bold text-slate-500 text-[10px] uppercase tracking-widest">
+                <th className="px-4 py-4 text-left font-black text-indigo-100 text-[10px] uppercase tracking-[0.2em]">
                   City
                 </th>
-                <th className="px-4 py-4 text-left font-bold text-slate-500 text-[10px] uppercase tracking-widest">
+                <th className="px-4 py-4 text-left font-black text-indigo-100 text-[10px] uppercase tracking-[0.2em]">
                   Party
                 </th>
-                <th className="px-4 py-4 text-left font-bold text-slate-500 text-[10px] uppercase tracking-widest">
+                <th className="px-4 py-4 text-left font-black text-indigo-100 text-[10px] uppercase tracking-[0.2em]">
                   Item
                 </th>
-                <th className="px-4 py-4 text-right font-bold text-slate-500 text-[10px] uppercase tracking-widest">
+                <th className="px-4 py-4 text-left font-black text-indigo-100 text-[10px] uppercase tracking-[0.2em]">
+                  Transporter
+                </th>
+                <th className="px-4 py-4 text-right font-black text-indigo-100 text-[10px] uppercase tracking-[0.2em]">
                   Qty
                 </th>
-                <th className="px-4 py-4 text-right font-bold text-slate-500 text-[10px] uppercase tracking-widest">
+                <th className="px-4 py-4 text-right font-black text-indigo-100 text-[10px] uppercase tracking-[0.2em] rounded-tr-xl">
                   Bdl Qty
                 </th>
               </tr>
@@ -168,23 +187,26 @@ export const DataTable = memo(function DataTable({
                         className="border-slate-300 data-[state=checked]:bg-indigo-600 data-[state=checked]:border-indigo-600 shadow-sm"
                       />
                     </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 font-medium">
+                    <td className="px-4 py-3 text-xs text-slate-500 font-medium whitespace-nowrap">
                       {label.originalData?.SOrderNo || label.originalData?.OrderNo || '-'}
                     </td>
-                    <td className="px-4 py-3 text-xs font-bold text-indigo-600">
+                    <td className="px-4 py-3 text-xs font-bold text-indigo-600 whitespace-nowrap">
                       {label.city}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-800 font-semibold whitespace-pre-wrap">
+                    <td className="px-4 py-3 text-sm text-slate-800 font-bold whitespace-pre-wrap max-w-[200px]">
                       {label.party}
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 whitespace-pre-wrap">
+                    <td className="px-4 py-3 text-sm text-slate-600 font-semibold whitespace-pre-wrap max-w-[150px]">
                       {label.item}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm font-bold text-slate-900">
+                    <td className="px-4 py-3 text-sm text-slate-600 font-medium whitespace-nowrap">
+                      {label.transporter || label.originalData?.TransporterName || label.originalData?.Transporter || '-'}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-black text-slate-900 bg-slate-50/50">
                       {label.quantity}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm font-semibold text-slate-500">
-                      {label.bdlQty}
+                    <td className="px-4 py-3 text-right text-sm font-bold text-slate-500">
+                      {label.bdlQty || '-'}
                     </td>
                   </tr>
                 ))

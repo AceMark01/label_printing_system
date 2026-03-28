@@ -359,13 +359,23 @@ export default function OrdersPage() {
               <span className="text-sm font-bold text-slate-700 whitespace-nowrap">{selectedLabels.size} Labels Selected</span>
             </div>
             {selectedLabels.size > 0 && (
-              <Button
-                onClick={() => setPreviewOpen(true)}
-                className="h-11 px-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-md font-bold text-sm flex items-center gap-2 active:scale-95 transition-all animate-in zoom-in duration-300"
-              >
-                Generate Labels
-                <ArrowRight className="w-4 h-4" />
-              </Button>
+              <>
+                <Button
+                  onClick={() => setSelectedLabels(new Set())}
+                  variant="outline"
+                  className="h-11 px-5 rounded-lg border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-bold text-sm flex items-center gap-2 transition-all animate-in zoom-in duration-300"
+                >
+                  <X className="w-4 h-4" />
+                  Unselect All
+                </Button>
+                <Button
+                  onClick={() => setPreviewOpen(true)}
+                  className="h-11 px-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-md font-bold text-sm flex items-center gap-2 active:scale-95 transition-all animate-in zoom-in duration-300"
+                >
+                  Generate Labels
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </>
             )}
           </div>
         </div>

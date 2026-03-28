@@ -218,7 +218,7 @@ export default function MasterDataForm() {
             </div>
         </div>
 
-        <TabsContent value="party" className="mt-0 focus-visible:outline-none">
+        <TabsContent value="party" className="mt-0 focus-visible:outline-none animate-in fade-in slide-in-from-right-3 duration-500">
           <Form {...partyForm}>
             <form onSubmit={partyForm.handleSubmit(onPartySubmit)} className="space-y-8">
               <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden p-8 rounded-3xl">
@@ -296,7 +296,7 @@ export default function MasterDataForm() {
           </Form>
         </TabsContent>
 
-        <TabsContent value="product" className="mt-0 focus-visible:outline-none">
+        <TabsContent value="product" className="mt-0 focus-visible:outline-none animate-in fade-in slide-in-from-right-3 duration-500">
           <Form {...productForm}>
             <form onSubmit={productForm.handleSubmit(onProductSubmit)} className="space-y-8">
               <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden p-8 rounded-3xl">

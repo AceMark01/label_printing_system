@@ -1,5 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { invalidateSheetCache } from '@/lib/data-cache';
 
 // Use Service Role Key for server-side operations to bypass RLS
 const supabase = createClient(
@@ -152,6 +153,9 @@ export async function POST(request: NextRequest) {
                 console.error('Labels Full History Insert Error:', historyError);
                 throw historyError;
             }
+
+            // Invalidate the sheet data cache so next fetch gets updated data
+            invalidateSheetCache();
 
             return NextResponse.json({ success: true, count: fullInserts.length });
         }

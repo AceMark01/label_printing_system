@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { getCachedSheetData } from '@/lib/data-cache';
+import { getCachedData } from '@/lib/data-cache';
 import { supabase } from '@/lib/supabase';
 
 const APPS_SCRIPT_URL = process.env.GOOGLE_SHEET_API_URL || '';
@@ -7,7 +7,7 @@ const NEW_API_URL = process.env.NEW_LEGACY_API_URL || 'http://eksai12.ddns.net:8
 
 export async function GET(request: NextRequest) {
     try {
-        const allData = await getCachedSheetData(APPS_SCRIPT_URL || NEW_API_URL);
+        const allData = await getCachedData(NEW_API_URL);
 
         // Fetch master data for cross-referencing
         const [{ data: masterParties }, { data: masterProducts }] = await Promise.all([

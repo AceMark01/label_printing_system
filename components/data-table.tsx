@@ -1,5 +1,6 @@
 'use client';
 
+import React, { memo } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { translations } from '@/lib/mock-data';
@@ -12,7 +13,7 @@ interface DataTableProps {
   onSelectionChange: (ids: Set<string>) => void;
 }
 
-export function DataTable({
+export const DataTable = memo(function DataTable({
   labels = [],
   selectedIds,
   language,
@@ -194,4 +195,4 @@ export function DataTable({
       </div>
     </div>
   );
-}
+});

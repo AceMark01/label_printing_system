@@ -1,12 +1,12 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { getCachedSheetData } from '@/lib/data-cache';
+import { getCachedData } from '@/lib/data-cache';
 import { supabase } from '@/lib/supabase';
 
 const APPS_SCRIPT_URL = process.env.GOOGLE_SHEET_API_URL || '';
 
 /**
  * MIGRATION API
- * This route fetches all data from Google Sheets and inserts it into Supabase labels table.
+ * This route fetches all data from the fallback API and inserts it into Supabase labels table.
  * Use this only once to seed your Supabase database.
  * 
  * Access: GET /api/migrate
@@ -17,8 +17,8 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ error: 'GOOGLE_SHEET_API_URL missing' }, { status: 500 });
         }
 
-        console.log('Fetching data from Google Sheets for migration...');
-        const allData = await getCachedSheetData(APPS_SCRIPT_URL, true);
+        console.log('Fetching data from API for migration...');
+        const allData = await getCachedData(APPS_SCRIPT_URL, true);
 
         const getValue = (obj: any, targetKey: string) => {
             if (obj[targetKey] !== undefined) return obj[targetKey];

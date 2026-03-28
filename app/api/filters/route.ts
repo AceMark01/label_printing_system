@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { getCachedSheetData } from '@/lib/data-cache';
+import { getCachedData } from '@/lib/data-cache';
 import { supabase } from '@/lib/supabase';
 
 const APPS_SCRIPT_URL = process.env.GOOGLE_SHEET_API_URL || '';
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
         const includeProcessed = searchParams.get('includeProcessed') === 'true';
 
         // Fetch fresh data from Google Sheets first
-        const allData = await getCachedSheetData(APPS_SCRIPT_URL || NEW_API_URL);
+        const allData = await getCachedData(NEW_API_URL);
 
         // Fetch already printed labels from Supabase to hide them from the dropdowns if necessary
         const { data: printedLabels } = await supabase
@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
         const parties = new Set<string>();
         const items = new Set<string>();
         const transporters = new Set<string>();
+        const godowns = new Set<string>();
 
         const getValue = (obj: any, targetKey: string) => {
             if (!obj) return undefined;
@@ -73,13 +74,17 @@ export async function GET(request: NextRequest) {
 
             const transporter = getValue(item, 'Transporter') || getValue(item, 'TransportName');
             if (transporter) transporters.add(transporter.toString().trim());
+
+            const godown = getValue(item, 'Godown') || getValue(item, 'GodownName') || getValue(item, 'GName');
+            if (godown) godowns.add(godown.toString().trim());
         });
 
         return NextResponse.json({
             cities: Array.from(cities).filter(Boolean).sort(),
             parties: Array.from(parties).filter(Boolean).sort(),
             items: Array.from(items).filter(Boolean).sort(),
-            transporters: Array.from(transporters).filter(Boolean).sort()
+            transporters: Array.from(transporters).filter(Boolean).sort(),
+            godowns: Array.from(godowns).filter(Boolean).sort()
         });
     } catch (error: any) {
         console.error('Filter API Error:', error);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
-import { fetchTicTakData, fetchFilterData } from '@/lib/google-sheets';
+import { fetchTicTakData, fetchFilterData } from '@/lib/data-api';
 import { FilterPanel } from '@/components/filter-panel';
 import { DataTable } from '@/components/data-table';
 import { A5PrintLayout } from '@/components/a5-print-layout';
@@ -9,10 +9,20 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Download, Printer, Box, Loader2, Filter, SlidersHorizontal, ArrowRight, X } from 'lucide-react';
-import type { Language } from '@/lib/types';
+import { useDebounce } from '@/hooks/use-debounce';
+import type { Language, FilterState } from '@/lib/types';
 import { toast } from 'sonner';
 
 const allLanguages: Language[] = ['en', 'hi', 'od'];
+
+const INITIAL_FILTERS: FilterState = {
+  cities: [],
+  parties: [],
+  items: [],
+  transporters: [],
+  q: '',
+  includeProcessed: false
+};
 
 export default function OrdersPage() {
   const [labels, setLabels] = useState<any[]>([]);
@@ -24,19 +34,23 @@ export default function OrdersPage() {
   const [printingLabel, setPrintingLabel] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedCities, setSelectedCities] = useState<Set<string>>(new Set());
-  const [selectedParties, setSelectedParties] = useState<Set<string>>(new Set());
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [selectedTransporters, setSelectedTransporters] = useState<Set<string>>(new Set());
+  // 1. Draft State: Updates instantly when any filter is changed
+  const [draftFilters, setDraftFilters] = useState<FilterState>(INITIAL_FILTERS);
+
+  // 2. Active State: Triggers the heavy lifting/API calls
+  const [activeFilters, setActiveFilters] = useState<FilterState>(INITIAL_FILTERS);
+
+  // Debounced active filter update (Auto-apply after 500ms of inactivity)
+  const debouncedFilters = useDebounce<FilterState>(draftFilters, 500);
+
   const [availableFilters, setAvailableFilters] = useState<{
     cities: string[];
     parties: string[];
     items: string[];
     transporters: string[];
   } | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
-  const [includeProcessed, setIncludeProcessed] = useState(false);
   const [labelLanguages, setLabelLanguages] = useState<Set<Language>>(new Set(['hi', 'od']));
   const [fieldVisibility, setFieldVisibility] = useState<Record<string, Record<Language, { product: boolean, quantity: boolean }>>>({});
   const [bundleOverrides, setBundleOverrides] = useState<Record<string, string>>({});
@@ -47,49 +61,59 @@ export default function OrdersPage() {
   const printRef = useRef<HTMLDivElement>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
 
-  // Initial load
+  // Sync active filters with debounced draft filters
   useEffect(() => {
-    async function loadInitialData() {
-      setLoading(true);
-      setError(null);
-      try {
-        const [paginated, filters] = await Promise.all([
-          fetchTicTakData(1, 50, { includeProcessed }),
-          fetchFilterData(includeProcessed)
-        ]);
+    setActiveFilters(debouncedFilters);
+  }, [debouncedFilters]);
 
-        setLabels(paginated.data);
+  // Initial load of filters only
+  useEffect(() => {
+    async function loadInitialFilters() {
+      try {
+        const filters = await fetchFilterData(draftFilters.includeProcessed);
         setAvailableFilters(filters);
-        setHasMore(paginated.meta.page < paginated.meta.totalPages);
-        setPage(2);
-      } catch (err: any) {
-        console.error('Error loading data:', err);
-        setError(err.message || 'Something went wrong while fetching data.');
-      } finally {
-        setLoading(false);
+      } catch (err) {
+        console.error('Error loading initial filters:', err);
       }
     }
-    loadInitialData();
-  }, [includeProcessed]);
+    loadInitialFilters();
+  }, [draftFilters.includeProcessed]);
+
+  // Main data fetching effect reacting ONLY to activeFilters
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchData() {
+      setLoading(true);
+      setLabels([]);
+      setPage(1);
+      try {
+        const paginated = await fetchTicTakData(1, 50, activeFilters);
+        if (isMounted) {
+          setLabels(paginated.data);
+          setHasMore(paginated.meta.page < paginated.meta.totalPages);
+          setPage(2);
+        }
+      } catch (err: any) {
+        console.error('Error fetching data:', err);
+        setError(err.message || 'Something went wrong while fetching data.');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+    fetchData();
+    return () => { isMounted = false; };
+  }, [activeFilters]);
 
   // Fetch more logic
   const fetchMoreData = useCallback(async () => {
     if (isFetchingMore || !hasMore || loading) return;
     setIsFetchingMore(true);
     try {
-      const filters = {
-        cities: Array.from(selectedCities),
-        parties: Array.from(selectedParties),
-        items: Array.from(selectedItems),
-        transporters: Array.from(selectedTransporters),
-        q: searchQuery,
-        includeProcessed
-      };
-      const paginated = await fetchTicTakData(page, 50, filters);
+      const paginated = await fetchTicTakData(page, 50, activeFilters);
       if (paginated.data && paginated.data.length > 0) {
         setLabels(prev => {
-          const existingIds = new Set(prev.map(l => l.id));
-          const newUniqueLabels = paginated.data.filter(l => !existingIds.has(l.id));
+          const existingIds = new Set(prev.map((l: any) => l.id));
+          const newUniqueLabels = paginated.data.filter((l: any) => !existingIds.has(l.id));
           return [...prev, ...newUniqueLabels];
         });
         setHasMore(paginated.meta.page < paginated.meta.totalPages);
@@ -102,56 +126,28 @@ export default function OrdersPage() {
     } finally {
       setIsFetchingMore(false);
     }
-  }, [page, isFetchingMore, hasMore, loading, includeProcessed, selectedCities, selectedParties, selectedItems, selectedTransporters, searchQuery]);
+  }, [page, isFetchingMore, hasMore, loading, activeFilters]);
 
-  // Setup intersection observer
+  // Scrolling Pagination Effect (Intersection Observer)
   useEffect(() => {
-    const target = observerTarget.current;
-    if (!target) return;
     const observer = new IntersectionObserver(
-      (entries) => {
+      entries => {
         if (entries[0].isIntersecting && hasMore && !loading && !isFetchingMore) {
           fetchMoreData();
         }
       },
-      { rootMargin: '200px', threshold: 0.1 }
+      { threshold: 0.1, rootMargin: '100px' }
     );
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [hasMore, loading, isFetchingMore, fetchMoreData]);
 
-  // Effect to handle filter changes
-  useEffect(() => {
-    let isMounted = true;
-    async function applyFilters() {
-      if (loading && labels.length === 0) return;
-      setLoading(true);
-      setLabels([]);
-      setPage(1);
-      try {
-        const filters = {
-          cities: Array.from(selectedCities),
-          parties: Array.from(selectedParties),
-          items: Array.from(selectedItems),
-          transporters: Array.from(selectedTransporters),
-          q: searchQuery,
-          includeProcessed
-        };
-        const paginated = await fetchTicTakData(1, 50, filters);
-        if (isMounted) {
-          setLabels(paginated.data);
-          setHasMore(paginated.meta.page < paginated.meta.totalPages);
-          setPage(2);
-        }
-      } catch (err: any) {
-        console.error('Error applying filters:', err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+    const target = observerTarget.current;
+    if (target) {
+      observer.observe(target);
     }
-    const timer = setTimeout(applyFilters, 300);
-    return () => { isMounted = false; clearTimeout(timer); };
-  }, [selectedCities, selectedParties, selectedItems, selectedTransporters, searchQuery, includeProcessed]);
+
+    return () => {
+      if (target) observer.unobserve(target);
+    };
+  }, [fetchMoreData, hasMore, loading, isFetchingMore]);
 
   // Handle Re-generation from history
   useEffect(() => {
@@ -180,18 +176,14 @@ export default function OrdersPage() {
   const selectedLabelDetails = useMemo(() => {
     return labels
       .filter((label) => selectedLabels.has(label.id))
-      .map(label => ({
+      .map((label: any) => ({
         ...label,
         bdlQty: bundleOverrides[label.id] !== undefined ? bundleOverrides[label.id] : label.bdlQty
       }));
   }, [labels, selectedLabels, bundleOverrides]);
 
   const handleClearFilters = () => {
-    setSelectedCities(new Set());
-    setSelectedParties(new Set());
-    setSelectedItems(new Set());
-    setSelectedTransporters(new Set());
-    setSearchQuery('');
+    setDraftFilters(INITIAL_FILTERS);
   };
 
   const handleBundleChange = (id: string, newQty: string) => {
@@ -382,24 +374,22 @@ export default function OrdersPage() {
           {/* Horizontal Filter Bar at the Top */}
           <FilterPanel
             labels={labels}
-            selectedCities={selectedCities}
-            selectedParties={selectedParties}
-            selectedItems={selectedItems}
-            selectedTransporters={selectedTransporters}
-            searchQuery={searchQuery}
+            selectedCities={draftFilters.cities}
+            selectedParties={draftFilters.parties}
+            selectedItems={draftFilters.items}
+            selectedTransporters={draftFilters.transporters}
+            searchQuery={draftFilters.q}
             language="en"
-            onCitiesChange={setSelectedCities}
-            onPartiesChange={setSelectedParties}
-            onItemsChange={setSelectedItems}
-            onTransportersChange={setSelectedTransporters}
-            onSearchQueryChange={setSearchQuery}
+            onCitiesChange={(cities) => setDraftFilters(prev => ({ ...prev, cities }))}
+            onPartiesChange={(parties) => setDraftFilters(prev => ({ ...prev, parties }))}
+            onItemsChange={(items) => setDraftFilters(prev => ({ ...prev, items }))}
+            onTransportersChange={(transporters) => setDraftFilters(prev => ({ ...prev, transporters }))}
+            onSearchQueryChange={(q) => setDraftFilters(prev => ({ ...prev, q }))}
             onClearFilters={handleClearFilters}
             availableCities={availableFilters?.cities}
             availableParties={availableFilters?.parties}
             availableItems={availableFilters?.items}
             availableTransporters={availableFilters?.transporters}
-            includeProcessed={includeProcessed}
-            onIncludeProcessedChange={setIncludeProcessed}
           />
 
           {/* Full-Width Data Table */}

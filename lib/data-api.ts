@@ -1,15 +1,4 @@
-import { Label } from './types';
-
-export interface TicTakRow {
-    ProductName: string;
-    AccountName: string;
-    Remark: string;
-    DispatchQty: number;
-    DispatchBdlQty: number;
-    SOrderNo: string;
-    City: string;
-    Transporter?: string;
-}
+import { Label, FilterState } from './types';
 
 export interface PaginatedLabels {
     data: Label[];
@@ -28,29 +17,31 @@ export interface TicTakFilters {
     transporters: string[];
 }
 
+/**
+ * Fetches label data from the centralized Supabase/API backend.
+ * Now strictly using the new FilterState interface for type safety.
+ */
 export async function fetchTicTakData(
     page = 1, 
     limit = 20, 
-    filters?: {
-        cities?: string[],
-        parties?: string[],
-        items?: string[],
-        transporters?: string[],
-        q?: string,
-        includeProcessed?: boolean
-    }
+    filters?: Partial<FilterState>
 ): Promise<PaginatedLabels> {
     const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString()
     });
 
-    if (filters?.cities?.length) params.append('cities', filters.cities.join(','));
-    if (filters?.parties?.length) params.append('parties', filters.parties.join(','));
-    if (filters?.items?.length) params.append('items', filters.items.join(','));
-    if (filters?.transporters?.length) params.append('transporters', filters.transporters.join(','));
-    if (filters?.q) params.append('q', filters.q);
-    if (filters?.includeProcessed) params.append('includeProcessed', 'true');
+    if (filters) {
+        Object.entries(filters).forEach(([key, value]) => {
+            if (Array.isArray(value) && value.length > 0) {
+                params.append(key, value.join(','));
+            } else if (typeof value === 'string' && value) {
+                params.append(key, value);
+            } else if (typeof value === 'boolean' && value) {
+                params.append(key, 'true');
+            }
+        });
+    }
 
     const response = await fetch(`/api/labels?${params.toString()}`);
 
@@ -67,6 +58,9 @@ export async function fetchTicTakData(
     return await response.json();
 }
 
+/**
+ * Fetches available filter options (cities, parties, etc.) from Supabase.
+ */
 export async function fetchFilterData(includeProcessed = false): Promise<TicTakFilters> {
     const params = new URLSearchParams();
     if (includeProcessed) params.append('includeProcessed', 'true');
@@ -76,4 +70,3 @@ export async function fetchFilterData(includeProcessed = false): Promise<TicTakF
     }
     return await response.json();
 }
-

@@ -15,11 +15,23 @@ export interface Label {
   bdlQty?: string | number;
   date?: string;
   transporter?: string;
+  godown?: string;
   originalData?: Record<string, any>;
 }
 
 export type Language = 'en' | 'hi' | 'od';
 export type LanguageKey = Language;
+
+export interface FilterState {
+  cities: string[];
+  parties: string[];
+  items: string[];
+  transporters: string[];
+  q: string;
+  includeProcessed: boolean;
+}
+
+export type DataItem = Label;
 
 export interface LabelTranslations {
   party: string;

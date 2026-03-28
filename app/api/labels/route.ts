@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { getCachedSheetData } from '@/lib/data-cache';
+import { getCachedData } from '@/lib/data-cache';
 import { supabase } from '@/lib/supabase';
 
 const APPS_SCRIPT_URL = process.env.GOOGLE_SHEET_API_URL || '';
@@ -37,11 +37,23 @@ export async function GET(request: NextRequest) {
         const limit = parseInt(searchParams.get('limit') || '20');
         const offset = (page - 1) * limit;
 
-        const filterCities = searchParams.get('cities')?.split(',').filter(Boolean) || [];
-        const filterParties = searchParams.get('parties')?.split(',').filter(Boolean) || [];
-        const filterItems = searchParams.get('items')?.split(',').filter(Boolean) || [];
-        const filterTransporters = searchParams.get('transporters')?.split(',').filter(Boolean) || [];
-        const searchQuery = searchParams.get('q')?.toLowerCase() || '';
+        // Build normalized lowercase Sets for O(1) lookups — fixes case/whitespace mismatch bugs
+        const filterCitiesSet = new Set(
+            (searchParams.get('cities')?.split(',').filter(Boolean) || []).map(v => v.toLowerCase().trim())
+        );
+        const filterPartiesSet = new Set(
+            (searchParams.get('parties')?.split(',').filter(Boolean) || []).map(v => v.toLowerCase().trim())
+        );
+        const filterItemsSet = new Set(
+            (searchParams.get('items')?.split(',').filter(Boolean) || []).map(v => v.toLowerCase().trim())
+        );
+        const filterTransportersSet = new Set(
+            (searchParams.get('transporters')?.split(',').filter(Boolean) || []).map(v => v.toLowerCase().trim())
+        );
+        const filterGodownsSet = new Set(
+            (searchParams.get('godowns')?.split(',').filter(Boolean) || []).map(v => v.toLowerCase().trim())
+        );
+        const searchQuery = searchParams.get('q')?.toLowerCase().trim() || '';
         const includeProcessed = searchParams.get('includeProcessed') === 'true';
         const countOnly = searchParams.get('countOnly') === 'true';
 
@@ -102,9 +114,9 @@ export async function GET(request: NextRequest) {
         }
 */
 
-        // --- EXTERNAL API / GOOGLE SHEETS FALLBACK ---
-        // We use APPS_SCRIPT_URL (Google) first as requested
-        const allData = await getCachedSheetData(APPS_SCRIPT_URL || NEW_API_URL);
+        // --- EXTERNAL API FALLBACK ---
+        // Fetch from the centralized legacy API
+        const allData = await getCachedData(NEW_API_URL);
 
         if (countOnly) {
             return NextResponse.json({ count: allData.length });
@@ -160,6 +172,11 @@ export async function GET(request: NextRequest) {
                 return obj['Transporter'] || obj['TransporterName'] || obj['TransportName'];
             }
             
+            // Field mapping for Godown
+            if (lowerTarget === 'godown' || lowerTarget === 'godownname' || lowerTarget === 'gname') {
+                return obj['Godown'] || obj['GodownName'] || obj['GName'] || obj['godown'] || obj['GODOWN'];
+            }
+            
             return undefined;
         };
 
@@ -195,6 +212,7 @@ export async function GET(request: NextRequest) {
                     od: getValue(item, 'City in oriya') || masterParty?.city_od || (englishCity && CITY_TRANSLATIONS[englishCity.toLowerCase().trim()] ? CITY_TRANSLATIONS[englishCity.toLowerCase().trim()]?.od : '') || englishCity,
                 },
                 transporter: getValue(item, 'Transporter') || getValue(item, 'TransportName') || '',
+                godown: (getValue(item, 'Godown') || getValue(item, 'GodownName') || getValue(item, 'GName') || '').toString().trim(),
                 pdf: getValue(item, 'PDF Link') || '',
                 originalData: item,
                 isPrinted: printedIds.has(id)
@@ -216,16 +234,19 @@ export async function GET(request: NextRequest) {
                 if (colN && colN.toString().trim() !== '') return false;
             }
 
-            if (filterCities.length > 0 && !filterCities.includes(item.city)) return false;
-            if (filterParties.length > 0 && !filterParties.includes(item.party)) return false;
-            if (filterItems.length > 0 && !filterItems.includes(item.item)) return false;
-            if (filterTransporters.length > 0 && (!item.transporter || !filterTransporters.includes(item.transporter))) return false;
-            
+            // O(1) Set.has() lookup with case-insensitive normalized keys
+            if (filterCitiesSet.size > 0 && !filterCitiesSet.has(item.city.toLowerCase().trim())) return false;
+            if (filterPartiesSet.size > 0 && !filterPartiesSet.has(item.party.toLowerCase().trim())) return false;
+            if (filterItemsSet.size > 0 && !filterItemsSet.has(item.item.toLowerCase().trim())) return false;
+            if (filterTransportersSet.size > 0 && !filterTransportersSet.has((item.transporter || '').toLowerCase().trim())) return false;
+            if (filterGodownsSet.size > 0 && !filterGodownsSet.has((item.godown || '').toLowerCase().trim())) return false;
+
             if (searchQuery) {
                 const partyMatch = item.party.toLowerCase().includes(searchQuery);
                 const itemMatch = item.item.toLowerCase().includes(searchQuery);
                 const cityMatch = item.city.toLowerCase().includes(searchQuery);
-                if (!partyMatch && !itemMatch && !cityMatch) return false;
+                const transporterMatch = (item.transporter || '').toLowerCase().includes(searchQuery);
+                if (!partyMatch && !itemMatch && !cityMatch && !transporterMatch) return false;
             }
             return true;
         });

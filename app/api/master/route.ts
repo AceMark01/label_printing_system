@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { invalidateSheetCache } from '@/lib/data-cache';
+import { invalidateDataCache } from '@/lib/data-cache';
 
 // Use Service Role Key for server-side operations to bypass RLS
 const supabase = createClient(
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
             }
 
             // Invalidate the sheet data cache so next fetch gets updated data
-            invalidateSheetCache();
+            invalidateDataCache();
 
             return NextResponse.json({ success: true, count: fullInserts.length });
         }

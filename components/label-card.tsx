@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { cn } from "@/lib/utils";
 import type { Label, Language } from '@/lib/types';
@@ -53,9 +54,38 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
     return baseSize;
   };
 
+  const [dynamicCityNames, setDynamicCityNames] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    languages.forEach(async (lang) => {
+      if (lang === 'en') return;
+      
+      const existingTranslation = label.cityNames?.[lang];
+      // Only translate if we don't have a valid translation yet, or if it exactly matches English
+      if (!existingTranslation || existingTranslation.toLowerCase() === label.city.toLowerCase()) {
+        try {
+          const res = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: label.city, target: lang })
+          });
+          const data = await res.json();
+          if (data.translatedText) {
+            setDynamicCityNames(prev => ({ ...prev, [lang]: data.translatedText }));
+          }
+        } catch (e) {
+          console.error("Failed to dynamically translate city", e);
+        }
+      }
+    });
+  }, [languages, label.city, label.cityNames]);
+
   const getPartyName = (lang: Language) => lang === 'en' ? label.party : (label.partyNames?.[lang] || label.party);
   const getItemName = (lang: Language) => lang === 'en' ? label.item : (label.itemNames?.[lang] || label.item);
-  const getCityName = (lang: Language) => lang === 'en' ? label.city : (label.cityNames?.[lang] || label.city);
+  const getCityName = (lang: Language) => {
+    if (lang === 'en') return label.city;
+    return dynamicCityNames[lang] || label.cityNames?.[lang] || label.city;
+  };
 
   return (
     <div className="relative bg-white w-full h-full flex flex-col font-sans border border-gray-200 shadow-none overflow-hidden print:border-none print:shadow-none print:bg-white">
@@ -67,17 +97,17 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
             const partyName = getPartyName(lang);
             const itemName = getItemName(lang);
             const isHindi = lang === 'hi';
-            
+
             // Check visibility per language
             const isProductVisible = fieldVisibility?.[lang]?.product !== false;
             const isQuantityVisible = fieldVisibility?.[lang]?.quantity !== false;
-            
+
             // If both are hidden, the layout should still be balanced
             const isReduced = !isProductVisible && !isQuantityVisible;
 
             return (
-              <div 
-                key={lang} 
+              <div
+                key={lang}
                 className={cn(
                   "flex flex-col flex-shrink-0",
                   !isLast && isMulti && "pb-6 border-b border-dashed border-gray-100 mb-2",
@@ -119,8 +149,8 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                         {itemName}
                       </span>
                     </p>
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={isProductVisible}
                       onChange={(e) => onVisibilityChange?.(label.id, 'product', e.target.checked, lang)}
                       className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-opacity cursor-pointer print:hidden absolute right-0"
@@ -128,14 +158,14 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                   </div>
                 )}
                 {!isProductVisible && (
-                   <div className="print:hidden h-0 relative">
-                     <input 
-                        type="checkbox" 
-                        checked={false}
-                        onChange={(e) => onVisibilityChange?.(label.id, 'product', e.target.checked, lang)}
-                        className="w-4 h-4 rounded border-gray-100 text-gray-300 transition-opacity cursor-pointer absolute right-0 -top-4"
-                      />
-                   </div>
+                  <div className="print:hidden h-0 relative">
+                    <input
+                      type="checkbox"
+                      checked={false}
+                      onChange={(e) => onVisibilityChange?.(label.id, 'product', e.target.checked, lang)}
+                      className="w-4 h-4 rounded border-gray-100 text-gray-300 transition-opacity cursor-pointer absolute right-0 -top-4"
+                    />
+                  </div>
                 )}
 
                 {/* Quantity & City & Bundles Row */}
@@ -162,8 +192,8 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                         </span>
                       </div>
                     )}
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={isQuantityVisible}
                       onChange={(e) => onVisibilityChange?.(label.id, 'quantity', e.target.checked, lang)}
                       className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-opacity cursor-pointer print:hidden absolute right-0"
@@ -183,9 +213,9 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                         {t.bundles}:
                       </span>
                       <div className="relative group">
-                        <input 
-                          type="text" 
-                          value={label.bdlQty} 
+                        <input
+                          type="text"
+                          value={label.bdlQty}
                           onChange={(e) => onBundleChange?.(label.id, e.target.value)}
                           className={cn(
                             "font-black text-gray-700 leading-none whitespace-nowrap bg-transparent border-none outline-none focus:ring-0 p-0 m-0 w-[1.5em] text-left hover:bg-slate-50 focus:bg-white rounded transition-colors",
@@ -234,10 +264,10 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
         <div className="flex items-center gap-6">
           <div className="w-24 h-0.5 bg-gray-200" />
           <div className="relative w-16 h-8">
-            <Image 
-              src="/ace.png" 
-              alt="Ace Logo" 
-              fill 
+            <Image
+              src="/ace.png"
+              alt="Ace Logo"
+              fill
               className="object-contain"
               priority
             />

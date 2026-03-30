@@ -346,42 +346,43 @@ export default function OrdersPage() {
   return (
     <>
       <div className="space-y-8 animate-in fade-in duration-500 print:hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Orders Master</h1>
-            <p className="text-slate-500 font-medium mt-1">Manage and generate labels for your product inventory.</p>
-          </div>
-          <div className="hidden lg:flex items-center gap-4">
-            <div className="bg-white px-5 py-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
-              <div className="relative">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-indigo-600 relative" />
-              </div>
-              <span className="text-sm font-bold text-slate-700 whitespace-nowrap">{selectedLabels.size} Labels Selected</span>
+        {/* Sticky Control Bar (Frozen Top) */}
+        <div className="sticky top-0 z-40 bg-slate-50/80 backdrop-blur-md pt-6 pb-4 -mt-8 mb-4 -mx-8 px-8 border-b border-slate-200/50 space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">Orders Master</h1>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Inventory Management</p>
             </div>
-            {selectedLabels.size > 0 && (
-              <>
-                <Button
-                  onClick={() => setSelectedLabels(new Set())}
-                  variant="outline"
-                  className="h-11 px-5 rounded-lg border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-bold text-sm flex items-center gap-2 transition-all animate-in zoom-in duration-300"
-                >
-                  <X className="w-4 h-4" />
-                  Unselect All
-                </Button>
-                <Button
-                  onClick={() => setPreviewOpen(true)}
-                  className="h-11 px-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-md font-bold text-sm flex items-center gap-2 active:scale-95 transition-all animate-in zoom-in duration-300"
-                >
-                  Generate Labels
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </>
-            )}
+            <div className="hidden lg:flex items-center gap-4">
+              <div className="bg-white px-5 py-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
+                <div className="relative">
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-indigo-600 relative" />
+                </div>
+                <span className="text-sm font-bold text-slate-700 whitespace-nowrap">{selectedLabels.size} Labels Selected</span>
+              </div>
+              {selectedLabels.size > 0 && (
+                <>
+                  <Button
+                    onClick={() => setSelectedLabels(new Set())}
+                    variant="outline"
+                    className="h-11 px-5 rounded-lg border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-bold text-sm flex items-center gap-2 transition-all animate-in zoom-in duration-300"
+                  >
+                    <X className="w-4 h-4" />
+                    Unselect All
+                  </Button>
+                  <Button
+                    onClick={() => setPreviewOpen(true)}
+                    className="h-11 px-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-md font-bold text-sm flex items-center gap-2 active:scale-95 transition-all animate-in zoom-in duration-300"
+                  >
+                    Generate Labels
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-8">
-          {/* Horizontal Filter Bar at the Top */}
+          {/* Horizontal Filter Bar (part of sticky) */}
           <FilterPanel
             labels={labels}
             selectedCities={draftFilters.cities}
@@ -401,6 +402,7 @@ export default function OrdersPage() {
             availableItems={availableFilters?.items}
             availableTransporters={availableFilters?.transporters}
           />
+        </div>
 
           {/* Full-Width Data Table */}
           <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
@@ -577,8 +579,6 @@ export default function OrdersPage() {
             </div>
           </DialogContent>
         </Dialog>
-
-      </div>
 
       <div className="hidden print:block print:w-full print:bg-white print:m-0 print:p-0">
         <A5PrintLayout

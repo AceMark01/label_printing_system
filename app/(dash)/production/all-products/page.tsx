@@ -91,8 +91,8 @@ export default function ProductionAllProducts() {
 
   return (
     <div className="flex flex-col gap-6 p-8 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-32">
-      {/* Search and Stats Section (Minimized) */}
-      <div className="flex flex-col lg:flex-row items-center gap-4">
+      {/* Search and Stats Section (Frozen Top) */}
+      <div className="sticky top-0 z-40 bg-slate-50/80 backdrop-blur-md pt-6 pb-4 -mt-8 mb-2 -mx-8 px-8 border-b border-slate-200/50 flex flex-col lg:flex-row items-center gap-4 transition-all">
         <div className="w-fit bg-white border border-slate-200 p-3 rounded-2xl shadow-sm flex items-center gap-4 group hover:border-indigo-100 transition-colors">
           <div className="flex flex-col">
             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Queue</span>

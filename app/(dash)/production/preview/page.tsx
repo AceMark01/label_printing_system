@@ -13,7 +13,9 @@ import {
   Type, 
   Languages, 
   Layers,
-  Edit3
+  Edit3,
+  X,
+  AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -22,6 +24,8 @@ export default function ProductionPreview() {
   const [items, setItems] = useState<any[]>([]);
   const [templateType, setTemplateType] = useState('standard');
   const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isPrintSuccessOpen, setIsPrintSuccessOpen] = useState(false);
   const router = useRouter();
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -130,18 +134,77 @@ export default function ProductionPreview() {
 
   const handlePrint = () => {
     window.print();
+    // After print dialog closes, ask if it was successful
+    setTimeout(() => {
+      setIsPrintSuccessOpen(true);
+    }, 1000);
   };
 
-  const handleConfirm = () => {
-    toast.success('Production labels confirmed locally');
-    // Note: No API call here ensures spreadsheet data is not affected
-    router.push('/production/all-products');
+  const handleConfirm = async () => {
+    try {
+      setIsSaving(true);
+      const visibleItems = items.filter(item => item.isVisible !== false);
+      const ids = visibleItems.map(item => Number(item.id) + 1); // Row number in sheet (index + 2 usually, but API id starts at 1)
+      
+      const response = await fetch('/api/production', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        toast.success('Labels printed and production updated successfully');
+        localStorage.removeItem('selectedProductionItems');
+        router.push('/production/all-products');
+      } else {
+        throw new Error(result.error || 'Failed to update sheet');
+      }
+    } catch (error: any) {
+      console.error('Confirm error:', error);
+      toast.error('Failed to sync with Google Sheet: ' + error.message);
+    } finally {
+      setIsSaving(false);
+      setIsPrintSuccessOpen(false);
+    }
   };
 
   if (items.length === 0) return null;
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50/50">
+      {/* Post-Print Confirmation Modal */}
+      {isPrintSuccessOpen && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6 print:hidden">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden max-w-sm w-full animate-in zoom-in duration-300">
+             <div className="p-8 text-center space-y-6">
+                <div className="mx-auto w-20 h-20 rounded-[2rem] bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
+                  <Printer className="w-10 h-10" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">Printed Successfully?</h3>
+                </div>
+                <div className="flex flex-col gap-3">
+                   <Button 
+                     onClick={handleConfirm}
+                     disabled={isSaving}
+                     className="rounded-2xl h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl shadow-indigo-100 uppercase tracking-widest disabled:opacity-50"
+                   >
+                     {isSaving ? 'Updating...' : 'Yes, Mark Done'}
+                   </Button>
+                   <Button 
+                     variant="ghost" 
+                     onClick={() => setIsPrintSuccessOpen(false)}
+                     className="rounded-xl h-12 text-slate-400 font-bold uppercase tracking-widest hover:bg-slate-50"
+                   >
+                     No, Go Back
+                   </Button>
+                </div>
+             </div>
+          </div>
+        </div>
+      )}
+
       {/* Top Header */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center justify-between print:hidden">
         <div className="flex items-center gap-4">
@@ -178,19 +241,11 @@ export default function ProductionPreview() {
             {isEditing ? 'Save Changes' : 'Edit Labels'}
           </Button>
           <Button 
-            variant="outline"
             onClick={handlePrint}
-            className="rounded-xl font-bold bg-white border-slate-200 shadow-sm"
+            className="rounded-xl font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-100 h-12 px-8 uppercase tracking-widest"
           >
             <Printer className="w-4 h-4 mr-2" />
-            Print
-          </Button>
-          <Button 
-            onClick={handleConfirm}
-            className="rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-100"
-          >
-            <CheckCircle2 className="w-4 h-4 mr-2" />
-            Confirm & Save
+            Run Print Job
           </Button>
         </div>
       </div>

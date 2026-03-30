@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
         const offset = (page - 1) * limit;
         const searchQuery = searchParams.get('q')?.toLowerCase().trim() || '';
         const forceRefresh = searchParams.get('refresh') === 'true';
+        const isHistory = searchParams.get('history') === 'true';
 
         // Append sheet name to the Apps Script URL
         const sheetUrl = `${APPS_SCRIPT_URL}${APPS_SCRIPT_URL.includes('?') ? '&' : '?'}sheet=Production Data`;
@@ -41,13 +42,18 @@ export async function GET(request: NextRequest) {
         };
 
         const mappedData = allData.map((item: any, index: number) => {
+            const doneVal = (getValue(item, 'Done') || '').toString().toLowerCase().trim();
+            const sNoVal = getValue(item, 'S NO') || getValue(item, 'SNO') || index + 1;
+            
             return {
                 id: index + 1,
-                sNo: getValue(item, 'S NO') || getValue(item, 'SNO') || index + 1,
+                sNo: sNoVal,
+                sNoNum: parseInt(sNoVal.toString().replace(/[^0-9]/g, '')) || 0,
                 productCode: getValue(item, 'ProductCode') || getValue(item, 'Product Code') || '',
                 productName: getValue(item, 'ProductName') || getValue(item, 'Product Name') || '',
                 godown: getValue(item, 'Godown') || '',
                 pendingQty: getValue(item, 'Production Pending qty') || getValue(item, 'Pending Qty') || 0,
+                done: doneVal === 'done' || doneVal === 'yes' || doneVal === 'true' || doneVal === '1',
                 
                 // Bundle types
                 bld: getValue(item, 'bld') || '',
@@ -68,10 +74,17 @@ export async function GET(request: NextRequest) {
             // 1. Skip rows that are empty or have no identifier
             if (!item.productCode && !item.productName) return false;
 
-            // 2. ONLY SHOW positive pending quantities (exclude negative/zero)
-            const rawQty = item.pendingQty?.toString() || '0';
-            const cleanQty = parseFloat(rawQty.replace(/[^-0-9.]/g, '')) || 0;
-            if (cleanQty <= 0) return false;
+            // 2. EXCLUDE/INCLUDE DONE items based on isHistory
+            if (isHistory) {
+                if (!item.done) return false;
+            } else {
+                if (item.done) return false;
+                
+                // ONLY SHOW positive pending quantities for active view
+                const rawQty = item.pendingQty?.toString() || '0';
+                const cleanQty = parseFloat(rawQty.replace(/[^-0-9.]/g, '')) || 0;
+                if (cleanQty <= 0) return false;
+            }
 
             // 3. APPLY Search Filter
             if (searchQuery) {
@@ -82,6 +95,9 @@ export async function GET(request: NextRequest) {
             }
             return true;
         });
+
+        // SORT DATA by S NO (Numeric)
+        filteredData.sort((a, b) => a.sNoNum - b.sNoNum);
 
         const total = filteredData.length;
         const paginatedData = filteredData.slice(offset, offset + limit);
@@ -98,5 +114,55 @@ export async function GET(request: NextRequest) {
     } catch (error: any) {
         console.error('Production Data API Error:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        if (!APPS_SCRIPT_URL) {
+            return NextResponse.json({ error: 'GOOGLE_SHEET_API_URL missing' }, { status: 500 });
+        }
+
+        const body = await request.json();
+        const { ids } = body; // Array of IDs (row numbers in the Sheet)
+
+        if (!ids || !Array.isArray(ids)) {
+            return NextResponse.json({ error: 'Invalid IDs provided' }, { status: 400 });
+        }
+
+        // Send update to Google Apps Script
+        // The Apps Script should expect a POST with { action: 'batchUpdate', sheet: '...', updates: [...] }
+        const response = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'batchUpdate',
+                sheet: 'Production Data',
+                column: 'Done',
+                value: 'Done',
+                ids: ids // These are the row numbers starting from 2
+            })
+        });
+
+        const resultRaw = await response.text();
+        let result: any;
+        
+        try {
+            result = JSON.parse(resultRaw);
+        } catch (e) {
+            console.error('Google Apps Script non-JSON response:', resultRaw);
+            throw new Error('Google Sheets API returned an invalid response. Please check your Apps Script configuration.');
+        }
+
+        if (result.error) {
+            throw new Error(result.error);
+        }
+
+        return NextResponse.json({ success: true, result });
+    } catch (error: any) {
+        console.error('Production Update API Error:', error);
+        return NextResponse.json({ 
+            error: error.message || 'Unknown server error during spreadsheet sync' 
+        }, { status: 500 });
     }
 }

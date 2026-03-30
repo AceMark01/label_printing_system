@@ -113,31 +113,43 @@ export default function MasterDataForm() {
       complete: (results) => {
         const data = results.data as any[];
         const mappedData = data.map(row => {
-          const eng = (
-            row.name_eng || row.item_name_eng || 
-            row.name || row.party || row.product || row.item || 
-            row['english name'] || row['party name'] || row['product name'] || ''
-          ).toString().trim();
+          // Normalize row keys to remove any special chars/spaces for deep matching
+          const getVal = (possibleKeys: string[]) => {
+            for (const key of possibleKeys) {
+              const normalizedKey = key.toLowerCase().trim();
+              if (row[normalizedKey] !== undefined && row[normalizedKey] !== null) return row[normalizedKey];
+              // Also check strictly joined version (e.g. "productname")
+              const joinedKey = normalizedKey.replace(/\s+/g, '');
+              if (row[joinedKey] !== undefined && row[joinedKey] !== null) return row[joinedKey];
+            }
+            return '';
+          };
+
+          const eng = getVal([
+            'name_eng', 'item_name_eng', 'name', 'party', 'product', 'item', 
+            'english name', 'party name', 'product name', 'item name', 'productname', 'itemname'
+          ]).toString().trim();
           
-          const hi = (
-            row.name_hi || row.item_name_hi || 
-            row.hindi || row.hi || row['hindi name'] || 
-            row['party in hindi'] || row['item in hindi'] || ''
-          ).toString().trim();
+          const hi = getVal([
+            'name_hi', 'item_name_hi', 'hindi', 'hi', 'hindi name', 
+            'party in hindi', 'item in hindi', 'name hindi', 'item hindi'
+          ]).toString().trim();
           
-          const od = (
-            row.name_od || row.item_name_od || 
-            row.odia || row.od || row.or || row.oriya || 
-            row['odia name'] || row['oriya name'] || row['party in oriya'] || 
-            row['item in oriya'] || row['party in odia'] || ''
-          ).toString().trim();
+          const od = getVal([
+            'name_od', 'item_name_od', 'odia', 'od', 'or', 'oriya', 
+            'odia name', 'oriya name', 'party in oriya', 'item in oriya', 
+            'party in odia', 'item in odia', 'name odia', 'name oriya'
+          ]).toString().trim();
 
           if (type === 'party') {
             return { name_eng: eng, name_hi: hi, name_od: od };
           } else {
             return { item_name_eng: eng, item_name_hi: hi, item_name_od: od };
           }
-        }).filter(item => (item.name_eng || item.item_name_eng || '').length >= 2);
+        }).filter(item => {
+          const mainVal = type === 'party' ? (item as any).name_eng : (item as any).item_name_eng;
+          return (mainVal || '').toString().trim().length >= 2;
+        });
 
         if (mappedData.length === 0) {
           toast.error('No valid data found. Ensure your CSV has a "name_eng" or "item_name_eng" column.');

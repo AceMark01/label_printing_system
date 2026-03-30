@@ -262,17 +262,33 @@ export default function ProductionPreview() {
 
       <style jsx global>{`
         @media print {
-          body {
-            background-color: white !important;
-            padding: 0 !important;
-            margin: 0 !important;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
           @page {
             size: A4;
             margin: 0;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            min-height: 297mm !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          body {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: flex-start !important;
+          }
+          .print-container {
+            width: 210mm !important;
+            margin: 0 auto !important;
+          }
+          .print\:hidden {
+            display: none !important;
+          }
+          * {
+             -webkit-print-color-adjust: exact !important;
+             print-color-adjust: exact !important;
           }
         }
       `}</style>

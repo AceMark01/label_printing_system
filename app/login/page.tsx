@@ -38,39 +38,39 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
       <Card className="w-full max-w-sm border border-slate-200 shadow-md bg-white rounded-xl overflow-hidden">
-        <CardHeader className="pt-10 pb-6 flex flex-col items-center text-center">
-          <div className="w-16 h-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shadow-lg mb-6 p-2 overflow-hidden">
+        <CardHeader className="pt-8 pb-4 flex flex-col items-center text-center">
+          <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex items-center justify-center shadow-lg mb-4 p-2 overflow-hidden transition-transform hover:scale-105">
             <img 
                src="/logo1.png" 
                alt="AceMark Logo" 
                className="w-full h-full object-contain"
             />
           </div>
-          <CardTitle className="text-2xl font-bold text-slate-800">Acemark Labeling</CardTitle>
-          <p className="text-slate-500 text-sm mt-1">Please enter your credentials</p>
+          <CardTitle className="text-xl font-black text-slate-900 tracking-tight">Acemark Labeling</CardTitle>
+          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1 opacity-70">Control Panel Access</p>
         </CardHeader>
 
-        <CardContent className="px-8 pb-8">
-          <form onSubmit={handleLogin} className="space-y-5">
-            <div className="space-y-1.5">
-              <label className="text-sm font-bold text-slate-700">Username</label>
+        <CardContent className="px-8 pb-6">
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Username</label>
               <Input 
                 placeholder="Enter username" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="h-11 border-slate-200 focus:border-indigo-500 rounded-lg"
+                className="h-10 text-sm border-slate-200 focus:border-indigo-500 rounded-lg bg-slate-50/50"
                 required
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-sm font-bold text-slate-700">Password</label>
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Password</label>
               <Input 
                 type="password"
                 placeholder="••••••••" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-11 border-slate-200 focus:border-indigo-500 rounded-lg"
+                className="h-10 text-sm border-slate-200 focus:border-indigo-500 rounded-lg bg-slate-50/50"
                 required
               />
             </div>
@@ -78,23 +78,23 @@ export default function LoginPage() {
             <Button 
               type="submit" 
               disabled={loading}
-              className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-all mt-2"
+              className="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-lg transition-all mt-2 shadow-lg shadow-indigo-100 uppercase text-xs tracking-widest"
             >
               {loading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                'Log In'
+                'Sign In'
               )}
             </Button>
           </form>
         </CardContent>
 
-        <CardFooter className="bg-slate-50 border-t border-slate-100 py-4 flex flex-col items-center gap-1">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        <CardFooter className="bg-slate-50/80 border-t border-slate-100 py-3 flex flex-col items-center gap-0.5">
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
                 Ace Labels v2.0
             </p>
-            <p className="text-[9px] font-medium text-slate-400/80 uppercase tracking-tighter">
-                Powered by Botivate
+            <p className="text-[8px] font-bold text-slate-400/60 uppercase tracking-tighter">
+                Secure Terminal
             </p>
         </CardFooter>
       </Card>

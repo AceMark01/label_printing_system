@@ -65,13 +65,19 @@ export async function GET(request: NextRequest) {
         });
 
         const filteredData = mappedData.filter((item: any) => {
-            // Skip rows that are empty or have no identifier
+            // 1. Skip rows that are empty or have no identifier
             if (!item.productCode && !item.productName) return false;
 
+            // 2. ONLY SHOW positive pending quantities (exclude negative/zero)
+            const rawQty = item.pendingQty?.toString() || '0';
+            const cleanQty = parseFloat(rawQty.replace(/[^-0-9.]/g, '')) || 0;
+            if (cleanQty <= 0) return false;
+
+            // 3. APPLY Search Filter
             if (searchQuery) {
-                const codeMatch = item.productCode.toString().toLowerCase().includes(searchQuery);
-                const nameMatch = item.productName.toString().toLowerCase().includes(searchQuery);
-                const godownMatch = item.godown.toString().toLowerCase().includes(searchQuery);
+                const codeMatch = (item.productCode || '').toString().toLowerCase().includes(searchQuery);
+                const nameMatch = (item.productName || '').toString().toLowerCase().includes(searchQuery);
+                const godownMatch = (item.godown || '').toString().toLowerCase().includes(searchQuery);
                 if (!codeMatch && !nameMatch && !godownMatch) return false;
             }
             return true;

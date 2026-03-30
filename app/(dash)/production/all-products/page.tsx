@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Box, X, Search, RefreshCw, Factory, Download, PlusCircle } from 'lucide-react';
+import { Loader2, Box, X, Search, RefreshCw, Factory, Download, PlusCircle, AlertCircle, Package } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -28,9 +28,11 @@ export default function ProductionAllProducts() {
       if (result.error) {
         setError(result.error);
       } else {
-        setData(result.data);
+        // Filter out negative or zero pending quantities
+        const filteredData = result.data.filter((item: any) => Number(item.pendingQty || 0) > 0);
+        setData(filteredData);
         setTotalPages(result.meta.totalPages);
-        setTotal(result.meta.total);
+        setTotal(filteredData.length); // Update total count to match filtered view
         setError(null);
       }
     } catch (err) {
@@ -88,208 +90,220 @@ export default function ProductionAllProducts() {
   };
 
   return (
-    <div className="flex flex-col gap-8 p-8 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-            <Factory className="w-8 h-8 text-indigo-600" />
-            All Production
-          </h1>
-          <p className="text-slate-500 font-bold mt-1">Select products to generate production labels.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button 
-            onClick={handleGenerateLabels}
-            disabled={selectedItems.size === 0}
-            className="h-12 rounded-xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 active:scale-95 transition-all"
-          >
-            <PlusCircle className="w-4 h-4 mr-2" />
-            Generate Labels ({selectedItems.size})
-          </Button>
+    <div className="flex flex-col gap-6 p-8 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-32">
+      {/* Search and Stats Section (Minimized) */}
+      <div className="flex flex-col lg:flex-row items-center gap-4">
+        <div className="w-fit bg-white border border-slate-200 p-3 rounded-2xl shadow-sm flex items-center gap-4 group hover:border-indigo-100 transition-colors">
+          <div className="flex flex-col">
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Queue</span>
+            <div className="flex items-baseline gap-1">
+               <span className="text-xl font-black text-slate-900 leading-none">{total}</span>
+               <span className="text-[9px] font-bold text-slate-400 uppercase">Items</span>
+            </div>
+          </div>
+          <div className="w-px h-8 bg-slate-100" />
           <Button 
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="h-12 w-12 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 shadow-sm flex items-center justify-center p-0 active:scale-90 transition-all"
+            className="h-9 w-9 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 flex items-center justify-center p-0 transition-all"
           >
-            <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin text-indigo-600")} />
+          </Button>
+        </div>
+
+        <div className="flex-1 bg-white border border-slate-200 p-1 rounded-2xl flex items-center group focus-within:border-indigo-200 transition-all shadow-sm">
+           <div className="pl-4 pr-3 text-slate-400">
+             <Search className="w-4 h-4" />
+           </div>
+           <input
+             type="text"
+             placeholder="Search product code, name or godown..."
+             value={searchQuery}
+             onChange={(e) => setSearchQuery(e.target.value)}
+             className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-900 placeholder:text-slate-300 h-10"
+           />
+           {searchQuery && (
+             <Button variant="ghost" onClick={() => setSearchQuery('')} className="mr-1 h-8 w-8 rounded-lg text-slate-400 p-0">
+               <X className="w-4 h-4" />
+             </Button>
+           )}
+        </div>
+
+        <div className={cn(
+             "items-center gap-4 bg-white border border-slate-200 p-1.5 rounded-2xl shadow-sm transition-all duration-500 overflow-hidden",
+             selectedItems.size > 0 ? "flex" : "hidden"
+          )}>
+          <div className="pl-3 pr-2 flex flex-col items-center">
+             <span className="text-[10px] font-black text-indigo-600 leading-none tabular-nums">{selectedItems.size}</span>
+             <span className="text-[8px] font-black text-slate-400 uppercase">Label Sets</span>
+          </div>
+          <Button 
+            onClick={handleGenerateLabels}
+            className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-[10px] h-9 px-6 shadow-lg shadow-indigo-100"
+          >
+            Generate Labels
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="p-6 rounded-[2rem] bg-white border border-slate-100 shadow-sm">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Items</p>
-          <p className="text-2xl font-black text-slate-900 leading-none">{total}</p>
-        </div>
-        <div className="p-6 rounded-[2rem] bg-white border border-slate-100 shadow-sm col-span-3">
-           <div className="relative group">
-              <div className={`absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors ${searchQuery ? 'text-indigo-500' : 'text-slate-400'}`}>
-                <Search className="h-5 w-5" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search by Product Code, Name or Godown..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-full pl-12 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
-              />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  <X className="h-4 h-4" />
-                </button>
-              )}
-           </div>
-        </div>
-      </div>
-
-      <Card className="border border-slate-200 shadow-sm rounded-3xl overflow-hidden bg-white">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[1000px]">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="px-6 py-5 text-center w-14">
+      {/* Main Table View */}
+      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-2xl shadow-slate-200/40 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
+            <thead>
+              <tr className="bg-indigo-600 text-white">
+                <th className="px-4 py-2.5 text-center w-16">
+                  <div className="flex items-center justify-center">
                     <input 
                        type="checkbox" 
-                       className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                       className="w-3.5 h-3.5 rounded border-white/30 bg-white/10 text-white focus:ring-white/50 cursor-pointer"
                        checked={data.length > 0 && selectedItems.size === data.length}
                        onChange={toggleSelectAll}
                     />
-                  </th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-20">S NO</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Code</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Product Name</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Godown</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Pending Qty</th>
-                  <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center uppercase">Bundle Information</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td className="px-6 py-6"><div className="w-4 h-4 bg-slate-100 rounded mx-auto" /></td>
-                      <td className="px-6 py-6"><div className="h-4 bg-slate-100 rounded-full w-8 mx-auto" /></td>
-                      <td className="px-6 py-6"><div className="h-4 bg-slate-100 rounded-full w-24" /></td>
-                      <td className="px-6 py-6"><div className="h-4 bg-slate-100 rounded-full w-48" /></td>
-                      <td className="px-6 py-6"><div className="h-4 bg-slate-100 rounded-full w-20" /></td>
-                      <td className="px-6 py-6"><div className="h-4 bg-slate-100 rounded-full w-12 mx-auto" /></td>
-                      <td className="px-6 py-6"><div className="h-4 bg-slate-100 rounded-full w-48 mx-auto" /></td>
-                    </tr>
-                  ))
-                ) : error ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-20 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-16 h-16 rounded-3xl bg-red-50 flex items-center justify-center text-red-600">
-                          <Box className="w-8 h-8" />
-                        </div>
-                        <div>
-                          <p className="text-lg font-black text-slate-900">Sheet Sync Failed</p>
-                          <p className="text-slate-500 font-bold">{error}</p>
-                        </div>
-                        <Button onClick={handleRefresh} variant="outline" className="mt-2 rounded-xl px-8 font-bold text-red-600 border-red-200 hover:bg-red-50">Retry Connection</Button>
-                      </div>
-                    </td>
+                  </div>
+                </th>
+                <th className="px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-100 text-center w-28 border-l border-white/10">Order S NO</th>
+                <th className="px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-100 text-left border-l border-white/10">Product / Code</th>
+                <th className="px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-100 text-left border-l border-white/10">Location (Godown)</th>
+                <th className="px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-100 text-center border-l border-white/10">Pending Qty</th>
+                <th className="px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] text-indigo-100 text-center border-l border-white/10">Bundle Breakup</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="px-4 py-3"><div className="w-3.5 h-3.5 bg-slate-100 rounded mx-auto" /></td>
+                    <td className="px-4 py-3"><div className="h-4 bg-slate-100 rounded w-10 mx-auto" /></td>
+                    <td className="px-4 py-3"><div className="space-y-1.5"><div className="h-2.5 bg-slate-100 rounded-full w-12" /><div className="h-4 bg-slate-100 rounded-full w-40" /></div></td>
+                    <td className="px-4 py-3"><div className="h-4 bg-slate-100 rounded-full w-16" /></td>
+                    <td className="px-4 py-3"><div className="h-7 bg-slate-100 rounded-full w-10 mx-auto" /></td>
+                    <td className="px-4 py-3"><div className="h-7 bg-slate-100 rounded-full w-24 mx-auto" /></td>
                   </tr>
-                ) : data.length > 0 ? (
-                  data.map((item) => (
-                    <tr key={item.id} className={cn(
-                        "hover:bg-slate-50/50 transition-colors group cursor-pointer",
-                        selectedItems.has(item.id) && "bg-indigo-50/20"
-                    )} onClick={() => toggleSelectItem(item.id)}>
-                      <td className="px-6 py-5 text-center" onClick={(e) => e.stopPropagation()}>
+                ))
+              ) : error ? (
+                <tr>
+                  <td colSpan={6} className="px-10 py-20 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 shadow-inner">
+                        <AlertCircle className="w-8 h-8" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-lg font-black text-slate-900">Sync Interrupted</p>
+                        <p className="text-slate-500 font-bold max-w-sm mx-auto text-[10px]">{error}</p>
+                      </div>
+                      <Button onClick={handleRefresh} className="rounded-xl h-10 px-6 font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xl shadow-rose-200 text-[10px] uppercase tracking-widest">Retry Fetch</Button>
+                    </div>
+                  </td>
+                </tr>
+              ) : data.length > 0 ? (
+                data.map((item) => (
+                  <tr key={item.id} className={cn(
+                      "group transition-all duration-300 cursor-pointer",
+                      selectedItems.has(item.id) ? "bg-indigo-50/60" : "hover:bg-slate-50/80"
+                  )} onClick={() => toggleSelectItem(item.id)}>
+                    <td className="px-4 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center">
                         <input 
                            type="checkbox" 
-                           className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                           className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-transform group-hover:scale-110"
                            checked={selectedItems.has(item.id)}
                            onChange={() => toggleSelectItem(item.id)}
                         />
-                      </td>
-                      <td className="px-6 py-5 text-sm font-black text-slate-400 text-center">{item.sNo}</td>
-                      <td className="px-6 py-5">
-                        <span className="inline-flex px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 text-xs font-black ring-1 ring-inset ring-indigo-700/10 uppercase tracking-tighter">
-                          {item.productCode}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5 text-sm font-bold text-slate-900">{item.productName}</td>
-                      <td className="px-6 py-5 text-sm font-bold text-slate-600">{item.godown}</td>
-                      <td className="px-6 py-5 text-center">
-                        <span className="text-sm font-black text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-100">
-                           {item.pendingQty}
-                        </span>
-                      </td>
-                      <td className="px-6 py-5">
-                         <div className="flex items-center justify-center gap-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                             <div className="flex flex-col items-center">
-                                <span className="text-slate-900 border-b border-slate-200 pb-0.5">{item.bld || 0}</span>
-                                <span>bld</span>
-                             </div>
-                             <div className="flex flex-col items-center">
-                                <span className="text-slate-900 border-b border-slate-200 pb-0.5">{item.crt || 0}</span>
-                                <span>CRT</span>
-                             </div>
-                             <div className="flex flex-col items-center">
-                                <span className="text-slate-900 border-b border-slate-200 pb-0.5">{item.smallCrt || 0}</span>
-                                <span>Small</span>
-                             </div>
-                         </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                   <tr>
-                    <td colSpan={7} className="px-6 py-32 text-center">
-                       <div className="flex flex-col items-center gap-3">
-                          <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center text-slate-200">
-                            <Box className="w-10 h-10" />
-                          </div>
-                          <p className="text-xl font-black text-slate-400">No Production Records Found</p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5">
+                       <p className="text-sm font-black text-slate-900 text-center tabular-nums">{item.sNo}</p>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <div className="space-y-0.5">
+                        <p className="text-[9px] font-black text-indigo-600 uppercase tracking-tight opacity-70">{item.productCode}</p>
+                        <p className="text-sm font-black text-slate-900 leading-tight">
+                          {item.productName}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0" />
+                        <span className="text-sm font-bold text-slate-700">{item.godown}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className="text-sm font-black text-slate-900 tabular-nums">
+                         {item.pendingQty}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                       <div className="flex items-center justify-center gap-4">
+                           <div className="flex flex-col items-center">
+                              <span className="text-sm font-black text-slate-900">{item.bld || 0}</span>
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">bld</span>
+                           </div>
+                           <div className="flex flex-col items-center">
+                              <span className="text-sm font-black text-slate-900">{item.crt || 0}</span>
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">CRT</span>
+                           </div>
+                           <div className="flex flex-col items-center">
+                              <span className="text-sm font-black text-slate-900">{item.smallCrt || 0}</span>
+                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Small</span>
+                           </div>
                        </div>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          
-          {!loading && !error && data.length > 0 && (
-            <div className="p-6 border-t border-slate-50 bg-slate-50/30 flex items-center justify-between">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                Showing {data.length} of {total} records
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === 1}
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  className="rounded-lg font-bold border-slate-200 text-slate-600 h-9"
-                >
-                  Previous
-                </Button>
-                <div className="flex items-center gap-1.5 px-4 font-black text-sm text-slate-900">
-                  <span className="text-indigo-600">{page}</span>
-                  <span className="text-slate-300">/</span>
-                  <span className="text-slate-500">{totalPages}</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page === totalPages}
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  className="rounded-lg font-bold border-slate-200 text-slate-600 h-9"
-                >
-                  Next
-                </Button>
+                ))
+              ) : (
+                 <tr>
+                  <td colSpan={6} className="px-10 py-48 text-center">
+                     <div className="flex flex-col items-center gap-6">
+                        <div className="w-32 h-32 rounded-[4rem] bg-slate-50 flex items-center justify-center text-slate-200">
+                          <Package className="w-16 h-16" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-3xl font-black text-slate-300">Work Queue Empty</p>
+                        </div>
+                     </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Pagination Professional */}
+        {!loading && !error && data.length > 0 && (
+          <div className="p-8 border-t border-slate-50 bg-slate-50/30 flex flex-col md:flex-row items-center justify-between gap-6">
+            <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
+              Showing <span className="text-slate-900">{data.length}</span> of <span className="text-slate-900">{total}</span> High-Priority Records
+            </p>
+            <div className="flex items-center gap-4 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page === 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                className="rounded-xl font-bold text-slate-400 hover:text-indigo-600 h-10 px-6 transition-all"
+              >
+                Previous
+              </Button>
+              <div className="flex items-center gap-2 px-6 font-black text-base border-x border-slate-50">
+                <span className="text-indigo-600 tabular-nums">{page}</span>
+                <span className="text-slate-200">/</span>
+                <span className="text-slate-400 tabular-nums">{totalPages}</span>
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={page === totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                className="rounded-xl font-bold text-slate-400 hover:text-indigo-600 h-10 px-6 transition-all"
+              >
+                Next
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-// ── In-process memory cache ──────────────────────────────────────────────────────
+// ── Keyed memory cache ───────────────────────────────────────────────────────────
 interface CacheEntry {
   data: any[];
   timestamp: number;
@@ -9,9 +9,10 @@ const CACHE_TTL_MS      = 5 * 60 * 1000;  // 5 min — serve fresh data
 const STALE_MAX_MS      = 30 * 60 * 1000; // 30 min — serve stale while refreshing
 const PREREFRESH_MS     = 60 * 1000;       // start background refresh 60s before expiry
 
-let memoryCache: CacheEntry | null = null;
-let pendingRequest: Promise<any[]> | null = null;
-let backgroundRefreshScheduled = false;
+// Storage keyed by URL to prevent data leakage between different sheets/APIs
+const memoryCacheMap = new Map<string, CacheEntry>();
+const pendingRequestsMap = new Map<string, Promise<any[]>>();
+const backgroundRefreshScheduledSet = new Set<string>();
 
 // ── Low-level fetch with ETag conditional request ────────────────────────────────
 async function fetchFromSource(
@@ -20,7 +21,6 @@ async function fetchFromSource(
 ): Promise<{ data: any[] | null; etag?: string }> {
   const headers: Record<string, string> = {};
   if (existingEtag) {
-    // 304 Not Modified → server sends no body, so we keep our copy
     headers['If-None-Match'] = existingEtag;
   }
 
@@ -60,94 +60,89 @@ async function fetchFromSource(
 
 // ── Background refresh (does NOT block any request) ──────────────────────────────
 function scheduleBackgroundRefresh(url: string, delayMs: number) {
-  if (backgroundRefreshScheduled) return;
-  backgroundRefreshScheduled = true;
+  if (backgroundRefreshScheduledSet.has(url)) return;
+  backgroundRefreshScheduledSet.add(url);
 
   setTimeout(async () => {
-    backgroundRefreshScheduled = false;
-    // Only refresh if the cache hasn't already been invalidated/refreshed elsewhere
-    if (!memoryCache) return;
+    backgroundRefreshScheduledSet.delete(url);
+    const cache = memoryCacheMap.get(url);
+    if (!cache) return;
+    
     try {
-      const { data, etag } = await fetchFromSource(url, memoryCache.etag);
+      const { data, etag } = await fetchFromSource(url, cache.etag);
       if (data !== null) {
-        memoryCache = { data, timestamp: Date.now(), etag };
+        memoryCacheMap.set(url, { data, timestamp: Date.now(), etag });
       } else {
-        // 304: bump timestamp so TTL resets without a full download
-        memoryCache = { ...memoryCache, timestamp: Date.now() };
+        memoryCacheMap.set(url, { ...cache, timestamp: Date.now() });
       }
       scheduleBackgroundRefresh(url, CACHE_TTL_MS - PREREFRESH_MS);
     } catch (e) {
-      // Background refresh failed — silently ignore, next foreground request will retry
-      backgroundRefreshScheduled = false;
+      // background fail is silent
     }
   }, delayMs);
 }
 
 // ── Main exported function ───────────────────────────────────────────────────────
-/**
- * Returns cached data with stale-while-revalidate semantics.
- *
- * Layer 1 – FRESH (< 5 min):          Return from memory instantly.
- * Layer 2 – STALE (5–30 min):         Return stale data instantly + trigger background refresh.
- * Layer 3 – VERY STALE / EMPTY cache: Await fresh fetch (user waits once).
- *
- * @param url           External API URL
- * @param forceRefresh  Bypass all caching (used by migrate route only)
- */
 export async function getCachedData(url: string, forceRefresh = false): Promise<any[]> {
   const now = Date.now();
-  const age = memoryCache ? now - memoryCache.timestamp : Infinity;
+  const cache = memoryCacheMap.get(url);
+  const age = cache ? now - cache.timestamp : Infinity;
 
-  // ── Layer 1: Fresh cache — serve immediately ──
-  if (!forceRefresh && memoryCache && age < CACHE_TTL_MS) {
-    // Schedule background pre-refresh when we're ~60s from expiry
+  // ── Layer 1: Fresh cache ──
+  if (!forceRefresh && cache && age < CACHE_TTL_MS) {
     const timeUntilExpiry = CACHE_TTL_MS - age;
     if (timeUntilExpiry < PREREFRESH_MS) {
       scheduleBackgroundRefresh(url, 0);
     }
-    return memoryCache.data;
+    return cache.data;
   }
 
-  // ── Layer 2: Stale but usable — return immediately + refresh in background ──
-  if (!forceRefresh && memoryCache && age < STALE_MAX_MS) {
-    scheduleBackgroundRefresh(url, 0); // start right away in background
-    return memoryCache.data;           // user gets data instantly, no wait
+  // ── Layer 2: Stale but usable ──
+  if (!forceRefresh && cache && age < STALE_MAX_MS) {
+    scheduleBackgroundRefresh(url, 0);
+    return cache.data;
   }
 
-  // ── Layer 3: No cache or forced or too old — user must wait ──
-  // De-duplicate: if another request is already fetching, piggyback on it
-  if (pendingRequest) return pendingRequest;
+  // ── Layer 3: No cache or forced ──
+  let pending = pendingRequestsMap.get(url);
+  if (pending) return pending;
 
-  pendingRequest = (async () => {
+  pending = (async () => {
     try {
-      const { data, etag } = await fetchFromSource(url, memoryCache?.etag);
+      const existingCache = memoryCacheMap.get(url);
+      const { data, etag } = await fetchFromSource(url, existingCache?.etag);
 
-      if (data === null) {
-        // 304 Not Modified — reset TTL
-        memoryCache = { data: memoryCache!.data, timestamp: Date.now(), etag };
+      let finalData: any[];
+      if (data === null && existingCache) {
+        finalData = existingCache.data;
+        memoryCacheMap.set(url, { data: finalData, timestamp: Date.now(), etag });
       } else {
-        memoryCache = { data, timestamp: Date.now(), etag };
+        finalData = data || [];
+        memoryCacheMap.set(url, { data: finalData, timestamp: Date.now(), etag });
       }
 
-      // Schedule next background refresh
       scheduleBackgroundRefresh(url, CACHE_TTL_MS - PREREFRESH_MS);
-
-      return memoryCache.data;
+      return finalData;
     } finally {
-      pendingRequest = null;
+      pendingRequestsMap.delete(url);
     }
   })();
 
-  return pendingRequest;
+  pendingRequestsMap.set(url, pending);
+  return pending;
 }
 
 /**
- * Invalidates the memory cache immediately.
- * Call after write operations (print tracking, master data) so the next
- * foreground request fetches fresh data.
+ * Invalidates the memory cache immediately for a specific URL or all URLs.
  */
-export function invalidateDataCache(): void {
-  memoryCache = null;
-  pendingRequest = null;
-  backgroundRefreshScheduled = false;
+export function invalidateDataCache(url?: string): void {
+  if (url) {
+    memoryCacheMap.delete(url);
+    pendingRequestsMap.delete(url);
+    backgroundRefreshScheduledSet.delete(url);
+  } else {
+    memoryCacheMap.clear();
+    pendingRequestsMap.clear();
+    backgroundRefreshScheduledSet.clear();
+  }
 }

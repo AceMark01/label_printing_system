@@ -4,8 +4,8 @@ import { supabase } from '@/lib/supabase';
 
 const APPS_SCRIPT_URL = process.env.GOOGLE_SHEET_API_URL || '';
 const NEW_API_URL = process.env.NEW_LEGACY_API_URL || 'http://eksai12.ddns.net:8786/ek_api/googleAutomation/ReadyForDeliveryV2.ashx';
-const USE_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_URL && 
-                    process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url';
+const USE_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url';
 
 const CITY_TRANSLATIONS: Record<string, { hi: string, od: string }> = {
     'kolkata': { hi: 'कोलकाता', od: 'କୋଲକାତା' },
@@ -57,62 +57,62 @@ export async function GET(request: NextRequest) {
         const includeProcessed = searchParams.get('includeProcessed') === 'true';
         const countOnly = searchParams.get('countOnly') === 'true';
 
-/*
-        // --- SUPABASE PATH ---
-        if (USE_SUPABASE) {
-            let query = supabase
-                .from('labels')
-                .select('*', { count: 'exact' });
-
-            if (!includeProcessed) {
-                query = query.eq('processed', false);
-            }
-
-            // Map UI filter keys to precise Postgres columns
-            if (filterCities.length > 0) query = query.in('city', filterCities);
-            if (filterParties.length > 0) query = query.in('account_name', filterParties);
-            if (filterItems.length > 0) query = query.in('product_name', filterItems);
-            if (filterTransporters.length > 0) query = query.in('transporter_name', filterTransporters);
-
-            if (searchQuery) {
-                query = query.or(`account_name.ilike.%${searchQuery}%,product_name.ilike.%${searchQuery}%`);
-            }
-
-            const { data, count, error } = await query
-                .order('created_at', { ascending: false })
-                .range(offset, offset + limit - 1);
-
-            if (error) throw error;
-
-            // Map Postgres row back to the exact interface the frontend expects (`Label`)
-            const mappedData = (data || []).map(item => ({
-                id: item.id,
-                city: item.city || '',
-                party: item.account_name || '',
-                item: item.product_name || '',
-                quantity: item.dispatch_qty || 0,
-                remark: item.remark || '',
-                bdlQty: item.dispatch_bdl_qty || '',
-                date: item.s_order_date || item.created_on || new Date(item.created_at).toISOString().split('T')[0],
-                // Fallbacks since translations are removed from DB schema
-                partyNames: { hi: '', od: '' },
-                itemNames: { hi: '', od: '' },
-                cityNames: { hi: '', od: '' },
-                transporter: item.transporter_name || '',
-                originalData: item
-            }));
-
-            return NextResponse.json({
-                data: mappedData,
-                meta: {
-                    total: count || 0,
-                    page,
-                    limit,
-                    totalPages: Math.ceil((count || 0) / limit)
+        /*
+                // --- SUPABASE PATH ---
+                if (USE_SUPABASE) {
+                    let query = supabase
+                        .from('labels')
+                        .select('*', { count: 'exact' });
+        
+                    if (!includeProcessed) {
+                        query = query.eq('processed', false);
+                    }
+        
+                    // Map UI filter keys to precise Postgres columns
+                    if (filterCities.length > 0) query = query.in('city', filterCities);
+                    if (filterParties.length > 0) query = query.in('account_name', filterParties);
+                    if (filterItems.length > 0) query = query.in('product_name', filterItems);
+                    if (filterTransporters.length > 0) query = query.in('transporter_name', filterTransporters);
+        
+                    if (searchQuery) {
+                        query = query.or(`account_name.ilike.%${searchQuery}%,product_name.ilike.%${searchQuery}%`);
+                    }
+        
+                    const { data, count, error } = await query
+                        .order('created_at', { ascending: false })
+                        .range(offset, offset + limit - 1);
+        
+                    if (error) throw error;
+        
+                    // Map Postgres row back to the exact interface the frontend expects (`Label`)
+                    const mappedData = (data || []).map(item => ({
+                        id: item.id,
+                        city: item.city || '',
+                        party: item.account_name || '',
+                        item: item.product_name || '',
+                        quantity: item.dispatch_qty || 0,
+                        remark: item.remark || '',
+                        bdlQty: item.dispatch_bdl_qty || '',
+                        date: item.s_order_date || item.created_on || new Date(item.created_at).toISOString().split('T')[0],
+                        // Fallbacks since translations are removed from DB schema
+                        partyNames: { hi: '', od: '' },
+                        itemNames: { hi: '', od: '' },
+                        cityNames: { hi: '', od: '' },
+                        transporter: item.transporter_name || '',
+                        originalData: item
+                    }));
+        
+                    return NextResponse.json({
+                        data: mappedData,
+                        meta: {
+                            total: count || 0,
+                            page,
+                            limit,
+                            totalPages: Math.ceil((count || 0) / limit)
+                        }
+                    });
                 }
-            });
-        }
-*/
+        */
 
         // --- EXTERNAL API FALLBACK ---
         // Fetch from the centralized legacy API
@@ -142,41 +142,41 @@ export async function GET(request: NextRequest) {
             supabase.from('labels_tracking').select('label_id').eq('status', 'printed'),
             supabase.from('labels').select('order_no')
         ]);
-        
+
         const printedIds = new Set((printedTracking || []).map(l => l.label_id));
         const printedOrderNos = new Set((printedHistory || []).map(l => l.order_no).filter(Boolean));
 
         const getValue = (obj: any, targetKey: string) => {
             if (!obj) return undefined;
             if (obj[targetKey] !== undefined) return obj[targetKey];
-            
+
             const lowerTarget = targetKey.toLowerCase();
             const keys = Object.keys(obj);
-            
+
             // Try case-insensitive exact match first
             const exactKey = keys.find(k => k.toLowerCase() === lowerTarget);
             if (exactKey) return obj[exactKey];
-            
+
             // Try removing spaces (fuzzy match)
             const cleanTarget = lowerTarget.replace(/\s+/g, '');
             const fuzzyKey = keys.find(k => k.toLowerCase().replace(/\s+/g, '') === cleanTarget);
             if (fuzzyKey) return obj[fuzzyKey];
-            
+
             // Field mapping for Quantity
             if (lowerTarget === 'quantity' || lowerTarget === 'dispatchqty' || lowerTarget === 'actualqty') {
                 return obj['DispatchQty'] || obj['ActualQty'] || obj['Qty'] || obj['quantity'];
             }
-            
+
             // Field mapping for Transporter
             if (lowerTarget === 'transporter' || lowerTarget === 'transportername' || lowerTarget === 'transportname') {
                 return obj['Transporter'] || obj['TransporterName'] || obj['TransportName'];
             }
-            
+
             // Field mapping for Godown
             if (lowerTarget === 'godown' || lowerTarget === 'godownname' || lowerTarget === 'gname') {
                 return obj['Godown'] || obj['GodownName'] || obj['GName'] || obj['godown'] || obj['GODOWN'];
             }
-            
+
             return undefined;
         };
 
@@ -221,9 +221,9 @@ export async function GET(request: NextRequest) {
 
         const filteredData = mappedData.filter((item: any) => {
             // Hide already printed labels unless specifically requested to show all
-            const isOrderAlreadyInHistory = printedOrderNos.has(item.originalData['OrderNo']) || 
-                                           printedOrderNos.has(item.originalData['SOrderNo']) ||
-                                           printedOrderNos.has(item.originalData['order_no']);
+            const isOrderAlreadyInHistory = printedOrderNos.has(item.originalData['OrderNo']) ||
+                printedOrderNos.has(item.originalData['SOrderNo']) ||
+                printedOrderNos.has(item.originalData['order_no']);
 
             if ((item.isPrinted || isOrderAlreadyInHistory) && !includeProcessed) return false;
 
@@ -263,7 +263,7 @@ export async function GET(request: NextRequest) {
                 totalPages: Math.ceil(total / limit)
             }
         });
-    } 
+    }
     catch (error: any) {
         console.error('Data Fetching API Error:', error);
         return NextResponse.json({

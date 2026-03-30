@@ -29,19 +29,19 @@ export async function GET(request: NextRequest) {
         const getValue = (obj: any, targetKey: string) => {
             if (!obj) return undefined;
             if (obj[targetKey] !== undefined) return obj[targetKey];
-            
+
             const lowerTarget = targetKey.toLowerCase();
             const keys = Object.keys(obj);
-            
+
             // Try case-insensitive exact match first
             const exactKey = keys.find(k => k.toLowerCase() === lowerTarget);
             if (exactKey) return obj[exactKey];
-            
+
             // Try removing spaces (fuzzy match)
             const cleanTarget = lowerTarget.replace(/\s+/g, '');
             const fuzzyKey = keys.find(k => k.toLowerCase().replace(/\s+/g, '') === cleanTarget);
             if (fuzzyKey) return obj[fuzzyKey];
-            
+
             // Field mapping for special cases
             if (lowerTarget === 'accountname' || lowerTarget === 'party') {
                 return obj['AccountName'] || obj['Party'] || obj['Account Name'] || obj['party'];
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
             if (lowerTarget === 'transporter' || lowerTarget === 'transportername' || lowerTarget === 'transportname') {
                 return obj['Transporter'] || obj['TransporterName'] || obj['TransportName'] || obj['transporter'];
             }
-            
+
             return undefined;
         };
 

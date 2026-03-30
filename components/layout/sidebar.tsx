@@ -9,11 +9,14 @@ import {
   PlusCircle, 
   Settings,
   ChevronRight,
+  ChevronDown,
   AlertTriangle,
-  LogOut
+  LogOut,
+  Factory
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
@@ -21,6 +24,14 @@ const navigation = [
   { name: 'Add Master', href: '/master', icon: PlusCircle },
   { name: 'Missing Data', href: '/missing', icon: AlertTriangle },
   { name: 'History', href: '/history', icon: History },
+  { 
+    name: 'Production', 
+    icon: Factory,
+    children: [
+      { name: 'All Production', href: '/production/all-products' },
+      { name: 'History', href: '/production/history' },
+    ]
+  },
 ];
 
 export function Sidebar() {
@@ -58,39 +69,9 @@ export function Sidebar() {
         </div>
         
         <nav className="flex-1 px-4 space-y-2">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  "group relative flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300",
-                  isActive 
-                    ? "bg-indigo-50/80 text-indigo-700 shadow-sm shadow-indigo-100/50" 
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:pl-5"
-                )}
-              >
-                {isActive && (
-                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-600 rounded-r-full animate-in fade-in slide-in-from-left-2" />
-                )}
-                <div className="flex items-center">
-                  <item.icon className={cn(
-                    "mr-3 h-4.5 w-4.5 transition-all duration-300 group-hover:scale-110",
-                    isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
-                  )} />
-                  <span className={cn("transition-all duration-300", isActive && "font-black tracking-tight")}>
-                    {item.name}
-                  </span>
-                </div>
-                {isActive ? (
-                  <ChevronRight className="h-3.5 w-3.5 text-indigo-400 animate-in fade-in slide-in-from-right-2" />
-                ) : (
-                  <ChevronRight className="h-3.5 w-3.5 text-slate-200 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0" />
-                )}
-              </Link>
-            );
-          })}
+          {navigation.map((item) => (
+            <SidebarItem key={item.name} item={item} pathname={pathname} />
+          ))}
         </nav>
 
         <div className="px-4 mt-auto pt-6 border-t border-slate-100">
@@ -125,5 +106,96 @@ export function Sidebar() {
         </div>
       </div>
     </div>
+  );
+}
+
+function SidebarItem({ item, pathname }: { item: any; pathname: string }) {
+  const hasChildren = !!item.children;
+  const isActive = item.href ? pathname === item.href : item.children?.some((child: any) => pathname === child.href);
+  const [isOpen, setIsOpen] = useState(isActive);
+
+  if (hasChildren) {
+    return (
+      <div className="space-y-1">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className={cn(
+            "group w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300",
+            isActive 
+              ? "bg-indigo-50/80 text-indigo-700 shadow-sm shadow-indigo-100/50" 
+              : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:pl-5"
+          )}
+        >
+          <div className="flex items-center">
+            <item.icon className={cn(
+              "mr-3 h-4.5 w-4.5 transition-all duration-300 group-hover:scale-110",
+              isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
+            )} />
+            <span className={cn("transition-all duration-300", isActive && "font-black tracking-tight")}>
+              {item.name}
+            </span>
+          </div>
+          {isOpen ? (
+            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+          )}
+        </button>
+        {isOpen && (
+          <div className="pl-12 space-y-1 mt-1 animate-in slide-in-from-top-2 duration-300">
+            {item.children?.map((child: any) => {
+              const isChildActive = pathname === child.href;
+              return (
+                <Link
+                  key={child.name}
+                  href={child.href}
+                  className={cn(
+                    "block py-2 text-sm font-bold transition-all duration-200",
+                    isChildActive 
+                      ? "text-indigo-600" 
+                      : "text-slate-400 hover:text-slate-600 hover:pl-1"
+                  )}
+                >
+                  <div className="flex items-center">
+                     {isChildActive && <div className="w-1.5 h-1.5 rounded-full bg-indigo-600 mr-2" />}
+                     {child.name}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={item.href!}
+      className={cn(
+        "group relative flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300",
+        isActive 
+          ? "bg-indigo-50/80 text-indigo-700 shadow-sm shadow-indigo-100/50" 
+          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:pl-5"
+      )}
+    >
+      {isActive && (
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-600 rounded-r-full animate-in fade-in slide-in-from-left-2" />
+      )}
+      <div className="flex items-center">
+        <item.icon className={cn(
+          "mr-3 h-4.5 w-4.5 transition-all duration-300 group-hover:scale-110",
+          isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
+        )} />
+        <span className={cn("transition-all duration-300", isActive && "font-black tracking-tight")}>
+          {item.name}
+        </span>
+      </div>
+      {isActive ? (
+        <ChevronRight className="h-3.5 w-3.5 text-indigo-400 animate-in fade-in slide-in-from-right-2" />
+      ) : (
+        <ChevronRight className="h-3.5 w-3.5 text-slate-200 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0" />
+      )}
+    </Link>
   );
 }

@@ -13,26 +13,21 @@ export default function ProductionAllProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const router = useRouter();
 
-  const fetchData = useCallback(async (p = 1, query = '', force = false) => {
+  const fetchData = useCallback(async (query = '', force = false) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/production?page=${p}&q=${encodeURIComponent(query)}${force ? '&refresh=true' : ''}`);
+      // Use logic to fetch all data at once with high limit
+      const res = await fetch(`/api/production?limit=5000&q=${encodeURIComponent(query)}${force ? '&refresh=true' : ''}`);
       const result = await res.json();
       if (result.error) {
         setError(result.error);
       } else {
-        // Filter out negative or zero pending quantities
         const filteredData = result.data.filter((item: any) => Number(item.pendingQty || 0) > 0);
         setData(filteredData);
-        setTotalPages(result.meta.totalPages);
-        setTotal(filteredData.length); // Update total count to match filtered view
         setError(null);
       }
     } catch (err) {
@@ -44,17 +39,10 @@ export default function ProductionAllProducts() {
     }
   }, []);
 
+  // One-time fetch (or when search query changes)
   useEffect(() => {
-    // Initial fetch with forced refresh to ensure fresh data after script updates
-    fetchData(page, searchQuery, true);
-
-    // Refresh data when window gains focus 
-    const handleFocus = () => {
-      fetchData(page, searchQuery, true);
-    };
-    window.addEventListener('focus', handleFocus);
-    return () => window.removeEventListener('focus', handleFocus);
-  }, [page, searchQuery, fetchData]);
+    fetchData(searchQuery, true);
+  }, [searchQuery, fetchData]);
 
   const toggleSelectAll = () => {
     if (selectedItems.size === data.length) {
@@ -86,18 +74,18 @@ export default function ProductionAllProducts() {
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    fetchData(page, searchQuery, true);
+    fetchData(searchQuery, true);
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-32">
+    <div className="flex flex-col gap-6 p-8 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-48">
       {/* Search and Stats Section (Frozen Top) */}
       <div className="sticky top-0 z-40 bg-slate-50/80 backdrop-blur-md pt-6 pb-4 -mt-8 mb-2 -mx-8 px-8 border-b border-slate-200/50 flex flex-col lg:flex-row items-center gap-4 transition-all">
         <div className="w-fit bg-white border border-slate-200 p-3 rounded-2xl shadow-sm flex items-center gap-4 group hover:border-indigo-100 transition-colors">
           <div className="flex flex-col">
             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Queue</span>
             <div className="flex items-baseline gap-1">
-               <span className="text-xl font-black text-slate-900 leading-none">{total}</span>
+               <span className="text-xl font-black text-slate-900 leading-none">{data.length}</span>
                <span className="text-[9px] font-bold text-slate-400 uppercase">Items</span>
             </div>
           </div>
@@ -146,8 +134,8 @@ export default function ProductionAllProducts() {
         </div>
       </div>
 
-      {/* Main Table View */}
-      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-2xl shadow-slate-200/40 overflow-hidden">
+      {/* Main Table View (Desktop) */}
+      <div className="hidden lg:block bg-white rounded-[2rem] border border-slate-200 shadow-2xl shadow-slate-200/40 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
@@ -231,7 +219,7 @@ export default function ProductionAllProducts() {
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       <span className="text-sm font-black text-slate-900 tabular-nums">
-                         {item.pendingQty}
+                         {Math.round(Number(item.pendingQty || 0))}
                       </span>
                     </td>
                     <td className="px-4 py-2.5">
@@ -269,38 +257,90 @@ export default function ProductionAllProducts() {
             </tbody>
           </table>
         </div>
-        
-        {/* Pagination Professional */}
-        {!loading && !error && data.length > 0 && (
-          <div className="p-8 border-t border-slate-50 bg-slate-50/30 flex flex-col md:flex-row items-center justify-between gap-6">
-            <p className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">
-              Showing <span className="text-slate-900">{data.length}</span> of <span className="text-slate-900">{total}</span> High-Priority Records
-            </p>
-            <div className="flex items-center gap-4 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm">
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page === 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="rounded-xl font-bold text-slate-400 hover:text-indigo-600 h-10 px-6 transition-all"
-              >
-                Previous
-              </Button>
-              <div className="flex items-center gap-2 px-6 font-black text-base border-x border-slate-50">
-                <span className="text-indigo-600 tabular-nums">{page}</span>
-                <span className="text-slate-200">/</span>
-                <span className="text-slate-400 tabular-nums">{totalPages}</span>
+      </div>
+
+      {/* Main Card View (Mobile) */}
+      <div className="lg:hidden flex flex-col gap-4">
+        {loading ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="bg-white p-6 rounded-3xl border border-slate-200 animate-pulse space-y-4">
+              <div className="flex justify-between">
+                <div className="w-24 h-4 bg-slate-100 rounded" />
+                <div className="w-8 h-8 bg-slate-100 rounded-full" />
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={page === totalPages}
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                className="rounded-xl font-bold text-slate-400 hover:text-indigo-600 h-10 px-6 transition-all"
-              >
-                Next
-              </Button>
+              <div className="h-6 bg-slate-100 rounded w-full" />
+              <div className="h-6 bg-slate-100 rounded w-3/4" />
+              <div className="grid grid-cols-3 gap-2">
+                <div className="h-12 bg-slate-100 rounded-xl" />
+                <div className="h-12 bg-slate-100 rounded-xl" />
+                <div className="h-12 bg-slate-100 rounded-xl" />
+              </div>
             </div>
+          ))
+        ) : error ? (
+           <div className="bg-white p-10 rounded-3xl border border-slate-200 text-center space-y-4">
+             <AlertCircle className="w-12 h-12 text-rose-500 mx-auto" />
+             <p className="text-slate-900 font-black">Something went wrong</p>
+             <Button onClick={handleRefresh} size="sm" className="bg-rose-600">Retry</Button>
+           </div>
+        ) : data.length > 0 ? (
+          data.map((item) => (
+            <div 
+              key={item.id} 
+              className={cn(
+                "bg-white p-5 rounded-3xl border transition-all duration-300 active:scale-[0.98]",
+                selectedItems.has(item.id) ? "border-indigo-500 bg-indigo-50/30" : "border-slate-200"
+              )}
+              onClick={() => toggleSelectItem(item.id)}
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{item.productCode}</p>
+                  <p className="text-sm font-black text-slate-800 leading-tight">{item.productName}</p>
+                </div>
+                <input 
+                   type="checkbox" 
+                   className="w-5 h-5 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                   checked={selectedItems.has(item.id)}
+                   readOnly
+                />
+              </div>
+
+              <div className="flex items-center gap-4 mb-4">
+                <div className="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Godown</p>
+                  <p className="text-xs font-bold text-slate-700">{item.godown}</p>
+                </div>
+                <div className="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Order SN</p>
+                  <p className="text-xs font-bold text-slate-700">{item.sNo}</p>
+                </div>
+                <div className="flex-1 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100 text-right">
+                  <p className="text-[8px] font-black text-indigo-400 uppercase tracking-widest leading-none mb-1">Pending</p>
+                  <p className="text-sm font-black text-indigo-700">{Math.round(Number(item.pendingQty || 0))}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-slate-50">
+                <div className="flex flex-col items-center p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="text-xs font-black text-slate-900">{item.bld || 0}</span>
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">bld</span>
+                </div>
+                <div className="flex flex-col items-center p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="text-xs font-black text-slate-900">{item.crt || 0}</span>
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">CRT</span>
+                </div>
+                <div className="flex flex-col items-center p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <span className="text-xs font-black text-slate-900">{item.smallCrt || 0}</span>
+                  <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Small</span>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="bg-white p-20 rounded-3xl border border-slate-200 text-center">
+            <Package className="w-12 h-12 text-slate-100 mx-auto mb-4" />
+            <p className="text-slate-400 font-black">No products found</p>
           </div>
         )}
       </div>

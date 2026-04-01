@@ -64,9 +64,7 @@ export default function ProductionPreview() {
           totalBundles: totalBundles,
           fieldVisibility: {
             productName: true,
-            sNo: true,
-            bundles: true,
-            godown: true
+            bundles: true
           }
         };
       });
@@ -119,7 +117,7 @@ export default function ProductionPreview() {
   const toggleFieldVisibility = (id: number, field: string) => {
     setItems(items.map(item => {
       if (item.id === id) {
-        const currentVis = item.fieldVisibility || { productName: true, sNo: true, bundles: true, godown: true };
+        const currentVis = item.fieldVisibility || { productName: true, bundles: true };
         return {
           ...item,
           fieldVisibility: {
@@ -205,59 +203,153 @@ export default function ProductionPreview() {
         </div>
       )}
 
-      {/* Top Header */}
-      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-8 py-4 flex items-center justify-between print:hidden">
-        <div className="flex items-center gap-4">
+      {/* Post-Print Confirmation Modal */}
+      {isPrintSuccessOpen && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6 print:hidden">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden max-w-sm w-full animate-in zoom-in duration-300">
+             <div className="p-8 text-center space-y-6">
+                <div className="mx-auto w-20 h-20 rounded-[2rem] bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
+                  <Printer className="w-10 h-10" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">Printed Successfully?</h3>
+                </div>
+                <div className="flex flex-col gap-3">
+                   <Button 
+                     onClick={handleConfirm}
+                     disabled={isSaving}
+                     className="rounded-2xl h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl shadow-indigo-100 uppercase tracking-widest disabled:opacity-50"
+                   >
+                     {isSaving ? 'Updating...' : 'Yes, Mark Done'}
+                   </Button>
+                   <Button 
+                     variant="ghost" 
+                     onClick={() => setIsPrintSuccessOpen(false)}
+                     className="rounded-xl h-12 text-slate-400 font-bold uppercase tracking-widest hover:bg-slate-50"
+                   >
+                     No, Go Back
+                   </Button>
+                </div>
+             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top Header (Mobile & Desktop) */}
+      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-3 md:py-4 flex items-center justify-between print:hidden">
+        <div className="flex items-center gap-2 md:gap-4">
           <Button 
             variant="ghost" 
             onClick={() => router.back()}
-            className="rounded-xl hover:bg-slate-100"
+            className="rounded-xl hover:bg-slate-100 h-10 w-10 p-0 md:w-auto md:px-4"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            <ArrowLeft className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">Back</span>
           </Button>
-          <div className="h-6 w-px bg-slate-200 mx-2" />
-          <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-              <Type className="w-5 h-5 text-indigo-600" />
-              Final Print
-            </h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Ready to print: {items.filter(i => i.isVisible !== false).length} items
-            </p>
-          </div>
+          <div className="h-6 w-px bg-slate-200 mx-1 md:mx-2" />
+          <h1 className="text-sm md:text-xl font-black text-slate-900 tracking-tight flex items-center gap-1 md:gap-2">
+            <Type className="w-4 h-4 md:w-5 md:h-5 text-indigo-600" />
+            <span className="hidden sm:inline">Final Print</span>
+            <span className="sm:hidden">Print</span>
+          </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <Button 
             variant="outline"
             onClick={() => setIsEditing(!isEditing)}
             className={cn(
-              "rounded-xl font-bold transition-all",
-              isEditing ? "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100" : "bg-white"
+              "rounded-xl font-bold transition-all h-10 md:h-12 px-3 md:px-6",
+              isEditing ? "bg-amber-50 border-amber-600 text-amber-600" : "bg-white border-slate-200 text-slate-600"
             )}
           >
-            <Edit3 className="w-4 h-4 mr-2" />
-            {isEditing ? 'Save Changes' : 'Edit Labels'}
+            <Edit3 className="w-4 h-4 md:mr-2" />
+            <span className="hidden md:inline">{isEditing ? 'Save' : 'Edit Labels'}</span>
+            <span className="md:hidden">{isEditing ? 'Save' : 'Edit'}</span>
           </Button>
           <Button 
             onClick={handlePrint}
-            className="rounded-xl font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-100 h-12 px-8 uppercase tracking-widest"
+            className="rounded-xl font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-100 h-10 md:h-12 px-4 md:px-8 uppercase tracking-widest text-[10px] md:text-sm"
           >
             <Printer className="w-4 h-4 mr-2" />
-            Run Print Job
+            Print
           </Button>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto w-full p-8 space-y-4">
-        {/* Preview Container */}
-        <div ref={printRef} className="space-y-4 print:space-y-0 print:p-0">
+      <div className="max-w-5xl mx-auto w-full p-4 md:p-8 space-y-8 pb-12">
+        {/* Mobile-Only Card View - Similar to all-products queue */}
+        <div className="lg:hidden flex flex-col gap-6 print:hidden">
+           {items.map((item) => (
+             <div 
+               key={item.id} 
+               className={cn(
+                 "bg-white p-6 rounded-[2.5rem] border-2 transition-all duration-300 shadow-sm",
+                 item.isVisible === false ? "opacity-30 grayscale border-slate-50" : "border-slate-100 shadow-indigo-50/20"
+               )}
+             >
+                <div className="flex items-start justify-between mb-6">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-indigo-50 text-indigo-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">{item.productCode}</span>
+                    </div>
+                    <p className="text-lg font-black text-slate-900 leading-tight uppercase">{item.productName}</p>
+                    <p className="text-md font-bold text-slate-500 leading-tight">{item.productNameHi}</p>
+                  </div>
+                  {isEditing && (
+                    <input 
+                       type="checkbox" 
+                       checked={item.isVisible !== false}
+                       onChange={() => toggleVisibility(item.id)}
+                       className="w-6 h-6 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100/50">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Total Bundles</p>
+                    <div className="flex items-baseline gap-2">
+                       <span className="text-4xl font-black text-slate-900 tabular-nums">{item.totalBundles}</span>
+                       <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{item.selectedBundle}</span>
+                    </div>
+                  </div>
+                  <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100/50">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Qty / {item.selectedBundle}</p>
+                    <span className="text-4xl font-black text-slate-900 tabular-nums">{item.divisor}</span>
+                  </div>
+                </div>
+
+                {isEditing && (
+                  <div className="pt-6 border-t border-slate-100 flex flex-col gap-4">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Quick Edit Bundle Type</p>
+                     <div className="flex gap-2">
+                        {['bld', 'CRT', 'SmallCRT'].map((type) => (
+                          <button
+                            key={type}
+                            onClick={() => handleBundleChange(item.id, type)}
+                            className={cn(
+                              "flex-1 h-10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all",
+                              item.selectedBundle === type ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "bg-white border border-slate-200 text-slate-400"
+                            )}
+                          >
+                            {type}
+                          </button>
+                        ))}
+                     </div>
+                  </div>
+                )}
+             </div>
+           ))}
+        </div>
+
+        {/* Print-Only / Desktop A4 Template */}
+        <div ref={printRef} className="hidden lg:flex flex-col gap-4 print:flex print:gap-0 print:p-0">
           {items.map((item, idx) => (
             <div
               key={item.id}
               className={cn(
-                "bg-white shadow-xl relative print:shadow-none print:border-0 overflow-hidden mx-auto transition-all",
+                "bg-white shadow-xl relative print:shadow-none print:border-0 overflow-hidden mx-auto transition-all origin-top sticker-preview",
                 item.isVisible === false ? "opacity-20 grayscale border-dashed border-slate-200 print:hidden mb-0 h-0" : "mb-8 print:mb-0"
               )}
               style={{
@@ -281,7 +373,7 @@ export default function ProductionPreview() {
                     onChange={() => toggleVisibility(item.id)}
                     className="w-5 h-5 rounded border-slate-300 text-indigo-600 cursor-pointer"
                   />
-                  <span className="text-xs font-black text-slate-600">Print this product</span>
+                  <span className="text-xs font-black text-slate-600">Print</span>
                 </div>
               )}
 
@@ -316,6 +408,13 @@ export default function ProductionPreview() {
       </div>
 
       <style jsx global>{`
+        @media (max-width: 1024px) {
+          .sticker-preview {
+            transform: scale(calc((100vw - 32px) / 794));
+            transform-origin: top;
+            margin-bottom: calc(-290mm * (1 - ((100vw - 32px) / 794))) !important;
+          }
+        }
         @media print {
           @page {
             size: A4;
@@ -352,18 +451,20 @@ export default function ProductionPreview() {
 }
 
 function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundleChange, getFontSize, toggleFieldVisibility }: any) {
-  const vis = item.fieldVisibility || { productName: true, sNo: true, bundles: true, godown: true };
+  const vis = item.fieldVisibility || { productName: true, bundles: true };
 
   return (
-    <div className="flex-1 flex flex-col justify-between p-6 md:p-8 overflow-hidden">
-      <div className="space-y-6">
-        {/* Header Area */}
+    <div className="flex-1 flex flex-col justify-between p-10 md:p-14 overflow-hidden bg-white">
+      {/* Content Area - Grouped at top/middle */}
+      <div className="flex flex-col gap-12 flex-1">
+        
+        {/* Header Area - Product Info */}
         <div className="flex justify-between items-start">
-          <div className={cn("space-y-4 flex-1 pr-6 transition-opacity", !vis.productName && "opacity-0 print:invisible")}>
+          <div className={cn("space-y-4 flex-1 pr-12 transition-opacity", !vis.productName && "opacity-0 print:invisible")}>
             <div className="flex items-center justify-between">
-              <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-2">
-                <Languages className="w-3.5 h-3.5" />
-                Product Specification / उत्पाद विवरण
+              <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.4em] flex items-center gap-2">
+                <Languages className="w-4 h-4 text-indigo-600" />
+                Specification / उत्पाद विवरण
               </p>
               {isEditing && (
                 <input 
@@ -389,69 +490,44 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
               </div>
             ) : (
               <div className="space-y-2">
-                <h2 className={cn("font-black text-black leading-tight uppercase tracking-tight", getFontSize(item.productName, "text-[42px]"))}>
+                <h2 className={cn("font-black text-black leading-tight uppercase tracking-tight", getFontSize(item.productName, "text-[48px]"))}>
                   {item.productName}
                 </h2>
-                <h2 className={cn("font-black text-slate-800 leading-tight", getFontSize(item.productNameHi, "text-[42px]"))}>
+                <h2 className={cn("font-black text-slate-800 leading-tight", getFontSize(item.productNameHi, "text-[40px]"))}>
                   {item.productNameHi}
                 </h2>
               </div>
             )}
           </div>
           <div className="text-right shrink-0">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Code</p>
-            <p className="text-2xl font-black text-black uppercase tracking-tighter bg-slate-100 px-3 py-1 rounded-lg">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Code</p>
+            <p className="text-3xl font-black text-black uppercase tracking-tighter bg-slate-50 px-5 py-3 rounded-2xl border-2 border-black">
               {item.productCode}
             </p>
           </div>
         </div>
 
-        <div className="h-0.5 bg-black w-full opacity-10" />
+        <div className="h-[2px] bg-black w-full opacity-10" />
 
-        {/* Details Grid */}
-        <div className="flex items-start justify-between">
-          <div className="space-y-6 flex-1 pr-8">
-            <div className={cn("space-y-1 transition-opacity", !vis.sNo && "opacity-0 print:invisible")}>
-              <div className="flex items-center gap-3">
-                <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em]">S NO / क्रमांक</p>
-                {isEditing && (
-                  <input 
-                    type="checkbox" 
-                    checked={vis.sNo} 
-                    onChange={() => toggleFieldVisibility(item.id, 'sNo')}
-                    className="w-4 h-4 print:hidden cursor-pointer"
-                  />
-                )}
-              </div>
-              <p className="text-3xl font-black text-black">{item.sNo}</p>
-            </div>
-            
+        {/* Details Grid - Perfectly Aligned */}
+        <div className="flex-1 flex items-center">
+          <div className="w-full flex items-start justify-between">
             <div className={cn("space-y-1 transition-opacity", !vis.bundles && "opacity-0 print:invisible")}>
-              <div className="flex items-center gap-3">
-                <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em]">Calculated Bundles / कुल बंडल</p>
-                {isEditing && (
-                  <input 
-                    type="checkbox" 
-                    checked={vis.bundles} 
-                    onChange={() => toggleFieldVisibility(item.id, 'bundles')}
-                    className="w-4 h-4 print:hidden cursor-pointer"
-                  />
-                )}
-              </div>
-              <div className="flex items-end gap-3 translate-y-1">
-                <p className="text-[56px] font-black text-black leading-none">{item.totalBundles}</p>
-                <div className="flex flex-col pb-2">
-                   <p className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">
+              <p className="text-[13px] font-black text-slate-400 uppercase tracking-[0.3em]">Total Bundles / कुल बंडल</p>
+              <div className="flex items-end gap-5">
+                <p className="text-[72px] font-black text-black leading-none tracking-tighter">{item.totalBundles}</p>
+                <div className="flex flex-col pb-3">
+                   <p className="text-[18px] font-black text-slate-400 uppercase tracking-widest leading-none">
                      Type: <span className="text-indigo-600 font-black">{item.selectedBundle}</span>
                    </p>
                    {isEditing && (
-                      <div className="print:hidden mt-1 px-1">
+                      <div className="print:hidden mt-3">
                         <select 
                           value={item.selectedBundle}
                           onChange={(e) => handleBundleChange(item.id, e.target.value)}
-                          className="text-[10px] bg-slate-100 border-none rounded p-1 font-bold cursor-pointer hover:bg-slate-200 transition-colors"
+                          className="text-[11px] bg-slate-100 border-none rounded p-2 font-black cursor-pointer hover:bg-slate-200 transition-colors"
                         >
-                           <option value="bld">bld</option>
+                           <option value="bld">Bld</option>
                            <option value="CRT">CRT</option>
                            <option value="SmallCRT">Small</option>
                         </select>
@@ -459,63 +535,23 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
                    )}
                 </div>
               </div>
-              <p className="text-[10px] font-bold text-slate-400 mt-1 italic">
-                {item.pendingQty} items • {item.divisor} per {item.selectedBundle}
-              </p>
             </div>
-          </div>
 
-          <div className="space-y-4 w-1/2">
-             <div className={cn("space-y-2 border-l border-slate-100 pl-8 overflow-hidden transition-opacity", !vis.godown && "opacity-0 print:invisible")}>
-               <div className="flex items-center gap-3">
-                  <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.2em]">Godown / गोदाम</p>
-                  {isEditing && (
-                    <input 
-                      type="checkbox" 
-                      checked={vis.godown} 
-                      onChange={() => toggleFieldVisibility(item.id, 'godown')}
-                      className="w-4 h-4 print:hidden cursor-pointer"
-                    />
-                  )}
-               </div>
-               {isEditing ? (
-                  <div className="space-y-2">
-                    <input 
-                      value={item.godown}
-                      onChange={(e) => handleEditChange(item.id, 'godown', e.target.value)}
-                      className="w-full text-lg font-black border-b border-slate-200 outline-none uppercase focus:border-indigo-600"
-                    />
-                    <input 
-                      value={item.godownHi}
-                      onChange={(e) => handleEditChange(item.id, 'godownHi', e.target.value)}
-                      className="w-full text-lg font-black border-b border-slate-200 outline-none focus:border-indigo-600"
-                    />
-                  </div>
-               ) : (
-                  <div className="space-y-1 overflow-hidden">
-                    <p className={cn("font-black text-black uppercase truncate", getFontSize(item.godown, "text-[32px]", 15))}>{item.godown}</p>
-                    <p className={cn("font-black text-slate-700 truncate", getFontSize(item.godownHi, "text-[32px]", 15))}>{item.godownHi}</p>
-                  </div>
-               )}
-             </div>
+            <div className="text-right space-y-3 pt-4 pr-2">
+               <p className="text-[13px] font-black text-slate-400 uppercase tracking-[0.3em]">Qty per {item.selectedBundle} / मात्रा प्रति {item.selectedBundle}  </p>
+               <p className="text-[56px] font-black text-slate-900 leading-none tracking-tighter">{item.divisor}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="pt-6 border-t border-slate-100 flex items-end justify-between">
-        <div className="space-y-1">
-           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Production Date</p>
-           <p className="text-lg font-bold tabular-nums text-slate-900 border-b-4 border-black inline-block">
-             {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}
-           </p>
-        </div>
-        <div className="flex items-center gap-6">
-           <div className="w-32 h-14 relative flex items-center justify-center">
-             <img src="/logo1.png" alt="AceMark" className="w-full h-full object-contain" />
-           </div>
+      {/* Footer Area - Logo at the very bottom left */}
+      <div className="mt-auto pt-8 border-t border-slate-100 flex items-end">
+        <div className="w-56 h-16 relative -ml-4">
+          <img src="/logo1.png" alt="AceMark" className="w-full h-full object-contain object-left" />
         </div>
       </div>
     </div>
   );
 }
+

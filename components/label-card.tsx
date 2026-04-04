@@ -96,14 +96,22 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
     return dynamicTranslations[lang]?.item || label.itemNames?.[lang] || label.item;
   };
 
+  const getDynamicFontSize = (text: string = '', baseSize: number = 28) => {
+    const len = text.length;
+    if (len > 40) return `text-[${Math.max(16, baseSize - 12)}px]`;
+    if (len > 25) return `text-[${Math.max(20, baseSize - 8)}px]`;
+    if (len > 15) return `text-[${Math.max(24, baseSize - 4)}px]`;
+    return `text-[${baseSize}px]`;
+  };
+
   const getCityName = (lang: Language) => {
     if (lang === 'en') return label.city;
     return dynamicTranslations[lang]?.city || label.cityNames?.[lang] || label.city;
   };
 
   return (
-    <div className="bg-white w-full rounded-[20px] shadow-xl overflow-hidden border border-gray-100/50 flex flex-col font-sans print:shadow-none print:border-none print:rounded-none">
-      <div className="p-8 flex flex-col gap-6">
+    <div className="bg-white w-full h-full rounded-[20px] shadow-xl overflow-hidden border border-gray-100/50 flex flex-col font-sans tracking-tight print:shadow-none print:border-none print:rounded-none">
+      <div className="px-8 pt-5 pb-2 flex flex-col justify-around flex-1 overflow-hidden">
         {activeLanguages.map((lang, idx) => {
           const t = labelTranslations[lang];
           const partyName = getPartyName(lang);
@@ -111,15 +119,15 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
 
           return (
             <div key={`${lang}-${idx}`} className={cn(
-              "flex flex-col gap-3",
-              idx === 0 && activeLanguages.length > 1 && "pb-6 border-b border-dotted border-gray-300"
+              "flex flex-col gap-2.5",
+              idx === 0 && activeLanguages.length > 1 && "pb-5 border-b border-dotted border-gray-300 mb-2.5"
             )}>
               {/* Party Name Row */}
               <div className="flex items-baseline gap-2">
-                <span className="text-gray-400 font-medium text-[20px]">
+                <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
                   {t.party}:
                 </span>
-                <span className="text-gray-900 font-black text-[24px]">
+                <span className={cn("text-gray-900 font-extrabold leading-tight", getDynamicFontSize(partyName, 28))}>
                   {partyName}
                 </span>
               </div>
@@ -133,10 +141,10 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                     </svg>
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-gray-400 font-medium text-[20px]">
+                    <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
                       {t.item}:
                     </span>
-                    <span className="text-gray-900 font-black text-[24px]">
+                    <span className={cn("text-gray-900 font-extrabold leading-tight", getDynamicFontSize(itemName, 28))}>
                       {itemName}
                     </span>
                   </div>
@@ -153,7 +161,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                     </svg>
                   </div>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-gray-400 font-medium text-[20px]">
+                    <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
                       {t.qty}:
                     </span>
                     {onQuantityChange ? (
@@ -161,10 +169,10 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                         type="text" 
                         value={label.quantity} 
                         onChange={(e) => onQuantityChange(label.id, e.target.value)}
-                        className="w-20 text-gray-900 font-black text-[32px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-auto"
+                        className="w-24 text-gray-900 font-extrabold text-[44px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-auto"
                       />
                     ) : (
-                      <span className="text-gray-900 font-black text-[32px]">
+                      <span className="text-gray-900 font-extrabold text-[44px]">
                         {label.quantity}
                       </span>
                     )}
@@ -172,8 +180,8 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                 </div>
 
                 {/* Bundle */}
-                <div className="flex items-baseline gap-2 border-l border-gray-100 pl-8">
-                  <span className="text-gray-400 font-medium text-[20px]">
+                <div className="flex items-baseline gap-1 border-l border-gray-200 pl-6 ml-2">
+                  <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
                     {t.bundles}:
                   </span>
                   <div className="relative">
@@ -182,23 +190,23 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                         type="text" 
                         value={label.bdlQty || '1'} 
                         onChange={(e) => onBundleChange(label.id, e.target.value)}
-                        className="w-16 text-gray-900 font-black text-[32px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-auto"
+                        className="w-16 text-gray-900 font-extrabold text-[44px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-16"
                       />
                     ) : (
-                      <span className="text-gray-900 font-black text-[32px]">
+                      <div className="min-w-[20px] text-gray-900 font-extrabold text-[44px] text-center px-1">
                         {label.bdlQty || '1'}
-                      </span>
+                      </div>
                     )}
-                    <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-200" />
+                    <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-100/50" />
                   </div>
                 </div>
 
                 {/* City */}
                 <div className="flex items-baseline gap-2 border-l border-gray-100 pl-8">
-                  <span className="text-gray-400 font-medium text-[20px]">
+                  <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
                     {t.city}:
                   </span>
-                  <span className="text-gray-900 font-black text-[28px]">
+                  <span className="text-gray-900 font-extrabold text-[32px]">
                     {getCityName(lang)}
                   </span>
                 </div>
@@ -209,15 +217,15 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-50/50 border-t border-gray-100 px-8 py-4 flex items-center justify-between print:bg-transparent">
+      <div className="bg-gray-50/50 border-t border-gray-100 px-8 py-2 flex items-center justify-between print:bg-transparent">
         <div className="flex items-center gap-2">
           <span className="text-gray-400 font-bold text-[14px]">DATE:</span>
           <span className="text-gray-500 font-bold text-[15px]">
             {new Date(label.date || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 opacity-40">
-          <span className="text-[18px] font-black tracking-[0.3em] text-gray-700 italic">A C E</span>
+        <div className="flex items-center gap-1.5">
+          <img src="/ace.png" alt="A C E" className="h-8 w-auto object-contain" />
         </div>
       </div>
     </div>

@@ -99,8 +99,8 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
     };
 
     return (
-        <div className="bg-white w-full rounded-xl shadow-md overflow-hidden border border-gray-100 flex flex-col font-sans h-full">
-            <div className="p-4 sm:p-5 flex flex-col gap-4 flex-1">
+        <div className="bg-white w-full rounded-xl shadow-md overflow-hidden border border-gray-100 flex flex-col font-sans h-full tracking-tight">
+            <div className="p-4 sm:p-5 flex flex-col gap-3 flex-1">
                 {activeLanguages.map((lang, idx) => {
                     const t = labelTranslations[lang];
                     const partyName = getPartyName(lang);
@@ -111,7 +111,7 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
                     return (
                         <div key={`${lang}-${idx}`} className={cn(
                             "flex flex-col gap-2",
-                            idx === 0 && activeLanguages.length > 1 && "pb-4 border-b border-dotted border-gray-300"
+                            idx === 0 && activeLanguages.length > 1 && "pb-3 border-b border-dotted border-gray-300"
                         )}>
                             {/* Party Name Row */}
                             <div className="flex items-baseline gap-1.5 overflow-hidden">
@@ -229,15 +229,15 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
             </div>
 
             {/* Footer */}
-            <div className="bg-gray-50/50 border-t border-gray-100 px-4 py-2 flex items-center justify-between">
+            <div className="bg-gray-50/50 border-t border-gray-100 px-4 py-1 flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                     <span className="text-gray-400 font-bold text-[10px]">DATE:</span>
                     <span className="text-gray-500 font-bold text-[11px]">
                         {new Date(label.date || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>
                 </div>
-                <div className="flex items-center gap-1.5 opacity-40">
-                    <span className="text-[12px] font-black tracking-[0.2em] text-gray-700 italic uppercase">Ace</span>
+                <div className="flex items-center gap-1.5">
+                    <img src="/ace.png" alt="A C E" className="h-6 w-auto object-contain" />
                 </div>
             </div>
         </div>

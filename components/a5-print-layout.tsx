@@ -25,7 +25,7 @@ export function A5PrintLayout({ labels, languages, fieldVisibility, onBundleChan
             height: '297mm',
             display: 'flex',
             flexDirection: 'column',
-            padding: '4mm 6mm',
+            padding: '3mm 4mm',
             boxSizing: 'border-box',
             pageBreakAfter: idx === labels.length - 1 ? 'avoid' : 'always',
             breakAfter: idx === labels.length - 1 ? 'avoid' : 'page',

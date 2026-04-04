@@ -20,6 +20,7 @@ const INITIAL_FILTERS: FilterState = {
   parties: [],
   items: [],
   transporters: [],
+  godowns: [],
   q: '',
   includeProcessed: false
 };
@@ -48,6 +49,7 @@ export default function OrdersPage() {
     parties: string[];
     items: string[];
     transporters: string[];
+    godowns: string[];
   } | null>(null);
 
   const [selectedLabels, setSelectedLabels] = useState<Set<string>>(new Set());
@@ -57,6 +59,7 @@ export default function OrdersPage() {
 
   const [previewOpen, setPreviewOpen] = useState(false);
   const [confirmPrintOpen, setConfirmPrintOpen] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   const printRef = useRef<HTMLDivElement>(null);
   const observerTarget = useRef<HTMLDivElement>(null);
@@ -349,10 +352,27 @@ export default function OrdersPage() {
         {/* Sticky Control Bar (Frozen Top) */}
         <div className="sticky top-0 z-40 bg-slate-50/80 backdrop-blur-md pt-6 pb-4 -mt-8 mb-4 -mx-8 px-8 border-b border-slate-200/50 space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-black text-slate-900 tracking-tight">Orders Master</h1>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Inventory Management</p>
+            <div className="flex items-center gap-4">
+              <div>
+                <h1 className="text-xl font-black text-slate-900 tracking-tight">Orders Master</h1>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Inventory Management</p>
+              </div>
+              
+              {/* Filter Toggle Icon */}
+              <Button
+                onClick={() => setShowFilters(!showFilters)}
+                variant="ghost"
+                size="icon"
+                className={cn(
+                  "w-10 h-10 rounded-xl transition-all duration-300",
+                  showFilters ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700" : "bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 shadow-sm"
+                )}
+                title="Toggle Filters"
+              >
+                {showFilters ? <X className="w-5 h-5 animate-in spin-in-90" /> : <Filter className="w-5 h-5 animate-in zoom-in-50" />}
+              </Button>
             </div>
+
             <div className="hidden lg:flex items-center gap-4">
               <div className="bg-white px-5 py-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
                 <div className="relative">
@@ -382,26 +402,33 @@ export default function OrdersPage() {
             </div>
           </div>
 
-          {/* Horizontal Filter Bar (part of sticky) */}
-          <FilterPanel
-            labels={labels}
-            selectedCities={draftFilters.cities}
-            selectedParties={draftFilters.parties}
-            selectedItems={draftFilters.items}
-            selectedTransporters={draftFilters.transporters}
-            searchQuery={draftFilters.q}
-            language="en"
-            onCitiesChange={(cities) => setDraftFilters(prev => ({ ...prev, cities }))}
-            onPartiesChange={(parties) => setDraftFilters(prev => ({ ...prev, parties }))}
-            onItemsChange={(items) => setDraftFilters(prev => ({ ...prev, items }))}
-            onTransportersChange={(transporters) => setDraftFilters(prev => ({ ...prev, transporters }))}
-            onSearchQueryChange={(q) => setDraftFilters(prev => ({ ...prev, q }))}
-            onClearFilters={handleClearFilters}
-            availableCities={availableFilters?.cities}
-            availableParties={availableFilters?.parties}
-            availableItems={availableFilters?.items}
-            availableTransporters={availableFilters?.transporters}
-          />
+          {/* Horizontal Filter Bar (Conditional) */}
+          {showFilters && (
+            <div className="animate-in slide-in-from-top-4 fade-in duration-300">
+              <FilterPanel
+                labels={labels}
+                selectedCities={draftFilters.cities}
+                selectedParties={draftFilters.parties}
+                selectedItems={draftFilters.items}
+                selectedTransporters={draftFilters.transporters}
+                selectedGodowns={draftFilters.godowns}
+                searchQuery={draftFilters.q}
+                language="en"
+                onCitiesChange={(cities) => setDraftFilters(prev => ({ ...prev, cities }))}
+                onPartiesChange={(parties) => setDraftFilters(prev => ({ ...prev, parties }))}
+                onItemsChange={(items) => setDraftFilters(prev => ({ ...prev, items }))}
+                onTransportersChange={(transporters) => setDraftFilters(prev => ({ ...prev, transporters }))}
+                onGodownsChange={(godowns) => setDraftFilters(prev => ({ ...prev, godowns }))}
+                onSearchQueryChange={(q) => setDraftFilters(prev => ({ ...prev, q }))}
+                onClearFilters={handleClearFilters}
+                availableCities={availableFilters?.cities}
+                availableParties={availableFilters?.parties}
+                availableItems={availableFilters?.items}
+                availableTransporters={availableFilters?.transporters}
+                availableGodowns={availableFilters?.godowns}
+              />
+            </div>
+          )}
         </div>
 
           {/* Full-Width Data Table */}

@@ -232,24 +232,53 @@ const MultiSelectDropdown = memo(({
   );
 });
 
+interface FilterPanelProps {
+  labels: LabelType[] | undefined;
+  selectedCities: string[];
+  selectedParties: string[];
+  selectedItems: string[];
+  selectedTransporters: string[];
+  selectedGodowns: string[];
+  searchQuery: string;
+  language: Language;
+  onCitiesChange: (cities: string[]) => void;
+  onPartiesChange: (parties: string[]) => void;
+  onItemsChange: (items: string[]) => void;
+  onTransportersChange: (transporters: string[]) => void;
+  onGodownsChange: (godowns: string[]) => void;
+  onSearchQueryChange: (query: string) => void;
+  onClearFilters: () => void;
+  availableCities?: string[];
+  availableParties?: string[];
+  availableItems?: string[];
+  availableTransporters?: string[];
+  availableGodowns?: string[];
+}
+
+/**
+ * Fast O(n) filter using a pre-compiled lowercase search term.
+ */
 export const FilterPanel = memo(function FilterPanel({
   labels = [],
-  selectedCities,
-  selectedParties,
-  selectedItems,
-  selectedTransporters,
-  searchQuery,
+  selectedCities = [],
+  selectedParties = [],
+  selectedItems = [],
+  selectedTransporters = [],
+  selectedGodowns = [],
+  searchQuery = '',
   language,
   onCitiesChange,
   onPartiesChange,
   onItemsChange,
   onTransportersChange,
+  onGodownsChange,
   onSearchQueryChange,
   onClearFilters,
-  availableCities,
-  availableParties,
-  availableItems,
-  availableTransporters,
+  availableCities = [],
+  availableParties = [],
+  availableItems = [],
+  availableTransporters = [],
+  availableGodowns = [],
 }: FilterPanelProps) {
   const safeLabels = labels || [];
 
@@ -305,16 +334,25 @@ export const FilterPanel = memo(function FilterPanel({
     [safeLabels, selectedCities, selectedParties, selectedItems, availableTransporters]
   );
 
+  const godowns = useMemo(
+    () => 
+      availableGodowns || [
+        ...new Set(safeLabels.map((l) => l.godown || 'MAIN'))
+      ].sort(),
+    [safeLabels, availableGodowns]
+  );
+
   const hasActiveFilters =
     selectedCities.length > 0 ||
     selectedParties.length > 0 ||
     selectedItems.length > 0 ||
     selectedTransporters.length > 0 ||
+    selectedGodowns.length > 0 ||
     !!searchQuery;
 
   return (
     <div className="w-full bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 overflow-hidden">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-6">
         {/* Search */}
         <div className="flex flex-col gap-1.5 min-w-0">
           <Label
@@ -332,7 +370,7 @@ export const FilterPanel = memo(function FilterPanel({
             />
             <Input
               id="search-input"
-              placeholder="Search party or items..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => onSearchQueryChange(e.target.value)}
               className={cn(
@@ -380,7 +418,15 @@ export const FilterPanel = memo(function FilterPanel({
           options={transporters}
           selectedValues={selectedTransporters}
           onValuesChange={onTransportersChange}
-          placeholder="Any Transporter"
+          placeholder="Any Transport"
+        />
+
+        <MultiSelectDropdown
+          label="Godowns"
+          options={godowns}
+          selectedValues={selectedGodowns}
+          onValuesChange={onGodownsChange}
+          placeholder="All Godowns"
         />
 
         {/* Clear filters — last column */}
@@ -400,7 +446,7 @@ export const FilterPanel = memo(function FilterPanel({
             )}
           >
             <X className="w-4 h-4 mr-2" />
-            Clear Filters
+            Clear
           </Button>
         </div>
       </div>

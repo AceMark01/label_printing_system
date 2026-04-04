@@ -3,7 +3,7 @@ import { getCachedData } from '@/lib/data-cache';
 import { supabase } from '@/lib/supabase';
 
 const APPS_SCRIPT_URL = process.env.GOOGLE_SHEET_API_URL || '';
-const NEW_API_URL = process.env.NEW_LEGACY_API_URL || 'http://eksai12.ddns.net:8786/ek_api/googleAutomation/ReadyForDeliveryV2.ashx';
+const NEW_API_URL = process.env.NEW_LEGACY_API_URL || 'http://eksai12.ddns.net:8786/ek_api/googleAutomation/LabelPrinting.ashx';
 
 export async function GET(request: NextRequest) {
     try {
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
 
         // 3. Keep existing logic to scan *New* items from current orders (to pick up items not in master yet)
         allData.forEach((item: any) => {
-            const rawParty = (item['AccountName'] || item['Party'] || '').toString().trim();
+            const rawParty = (item['PartyName'] || item['AccountName'] || item['Party'] || '').toString().trim();
             const rawProduct = (item['ProductName'] || item['Item'] || '').toString().trim();
 
             if (!rawParty || !rawProduct) return;
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
                     english: rawParty,
                     hindi: '',
                     odia: '',
-                    orderNo: item['OrderNo'] || item['SOrderNo'] || 'ORDER'
+                    orderNo: item['SOrderNoString'] || item['OrderNo'] || item['SOrderNo'] || 'ORDER'
                 });
                 seenParties.add(partyKey);
             }
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
                     english: rawProduct,
                     hindi: '',
                     odia: '',
-                    orderNo: item['OrderNo'] || item['SOrderNo'] || 'ORDER'
+                    orderNo: item['SOrderNoString'] || item['OrderNo'] || item['SOrderNo'] || 'ORDER'
                 });
                 seenProducts.add(productKey);
             }

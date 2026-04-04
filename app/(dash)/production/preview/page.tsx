@@ -4,14 +4,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-  Printer, 
-  ArrowLeft, 
-  Download, 
-  CheckCircle2, 
-  Settings2, 
-  Type, 
-  Languages, 
+import {
+  Printer,
+  ArrowLeft,
+  Download,
+  CheckCircle2,
+  Settings2,
+  Type,
+  Languages,
   Layers,
   Edit3,
   X,
@@ -39,11 +39,11 @@ export default function ProductionPreview() {
         const crt = parseFloat(item.crt) || 0;
         const scrt = parseFloat(item.smallCrt) || 0;
         const pending = parseFloat(item.pendingQty) || 0;
-        
+
         // Find which bundle type has the largest base value to set as default
         let initialBundle = 'bld';
         let initialDivisor = bld;
-        
+
         if (crt > initialDivisor) {
           initialBundle = 'CRT';
           initialDivisor = crt;
@@ -81,10 +81,10 @@ export default function ProductionPreview() {
         if (bundleType === 'bld') divisor = parseFloat(item.bld) || 0;
         if (bundleType === 'CRT') divisor = parseFloat(item.crt) || 0;
         if (bundleType === 'SmallCRT') divisor = parseFloat(item.smallCrt) || 0;
-        
+
         const pending = parseFloat(item.pendingQty) || 0;
         const totalBundles = divisor > 0 ? Math.floor(pending / divisor) : 0;
-        
+
         return { ...item, selectedBundle: bundleType, divisor, totalBundles };
       }
       return item;
@@ -143,7 +143,7 @@ export default function ProductionPreview() {
       setIsSaving(true);
       const visibleItems = items.filter(item => item.isVisible !== false);
       const ids = visibleItems.map(item => Number(item.id) + 1); // Row number in sheet (index + 2 usually, but API id starts at 1)
-      
+
       const response = await fetch('/api/production', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -175,30 +175,30 @@ export default function ProductionPreview() {
       {isPrintSuccessOpen && (
         <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6 print:hidden">
           <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden max-w-sm w-full animate-in zoom-in duration-300">
-             <div className="p-8 text-center space-y-6">
-                <div className="mx-auto w-20 h-20 rounded-[2rem] bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
-                  <Printer className="w-10 h-10" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">Printed Successfully?</h3>
-                </div>
-                <div className="flex flex-col gap-3">
-                   <Button 
-                     onClick={handleConfirm}
-                     disabled={isSaving}
-                     className="rounded-2xl h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl shadow-indigo-100 uppercase tracking-widest disabled:opacity-50"
-                   >
-                     {isSaving ? 'Updating...' : 'Yes, Mark Done'}
-                   </Button>
-                   <Button 
-                     variant="ghost" 
-                     onClick={() => setIsPrintSuccessOpen(false)}
-                     className="rounded-xl h-12 text-slate-400 font-bold uppercase tracking-widest hover:bg-slate-50"
-                   >
-                     No, Go Back
-                   </Button>
-                </div>
-             </div>
+            <div className="p-8 text-center space-y-6">
+              <div className="mx-auto w-20 h-20 rounded-[2rem] bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
+                <Printer className="w-10 h-10" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Printed Successfully?</h3>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button
+                  onClick={handleConfirm}
+                  disabled={isSaving}
+                  className="rounded-2xl h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl shadow-indigo-100 uppercase tracking-widest disabled:opacity-50"
+                >
+                  {isSaving ? 'Updating...' : 'Yes, Mark Done'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsPrintSuccessOpen(false)}
+                  className="rounded-xl h-12 text-slate-400 font-bold uppercase tracking-widest hover:bg-slate-50"
+                >
+                  No, Go Back
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -207,30 +207,30 @@ export default function ProductionPreview() {
       {isPrintSuccessOpen && (
         <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6 print:hidden">
           <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden max-w-sm w-full animate-in zoom-in duration-300">
-             <div className="p-8 text-center space-y-6">
-                <div className="mx-auto w-20 h-20 rounded-[2rem] bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
-                  <Printer className="w-10 h-10" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">Printed Successfully?</h3>
-                </div>
-                <div className="flex flex-col gap-3">
-                   <Button 
-                     onClick={handleConfirm}
-                     disabled={isSaving}
-                     className="rounded-2xl h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl shadow-indigo-100 uppercase tracking-widest disabled:opacity-50"
-                   >
-                     {isSaving ? 'Updating...' : 'Yes, Mark Done'}
-                   </Button>
-                   <Button 
-                     variant="ghost" 
-                     onClick={() => setIsPrintSuccessOpen(false)}
-                     className="rounded-xl h-12 text-slate-400 font-bold uppercase tracking-widest hover:bg-slate-50"
-                   >
-                     No, Go Back
-                   </Button>
-                </div>
-             </div>
+            <div className="p-8 text-center space-y-6">
+              <div className="mx-auto w-20 h-20 rounded-[2rem] bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
+                <Printer className="w-10 h-10" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Printed Successfully?</h3>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Button
+                  onClick={handleConfirm}
+                  disabled={isSaving}
+                  className="rounded-2xl h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl shadow-indigo-100 uppercase tracking-widest disabled:opacity-50"
+                >
+                  {isSaving ? 'Updating...' : 'Yes, Mark Done'}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setIsPrintSuccessOpen(false)}
+                  className="rounded-xl h-12 text-slate-400 font-bold uppercase tracking-widest hover:bg-slate-50"
+                >
+                  No, Go Back
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -238,8 +238,8 @@ export default function ProductionPreview() {
       {/* Top Header (Mobile & Desktop) */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-3 md:py-4 flex items-center justify-between print:hidden">
         <div className="flex items-center gap-2 md:gap-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => router.back()}
             className="rounded-xl hover:bg-slate-100 h-10 w-10 p-0 md:w-auto md:px-4"
           >
@@ -255,7 +255,7 @@ export default function ProductionPreview() {
         </div>
 
         <div className="flex items-center gap-2 md:gap-3">
-          <Button 
+          <Button
             variant="outline"
             onClick={() => setIsEditing(!isEditing)}
             className={cn(
@@ -267,7 +267,7 @@ export default function ProductionPreview() {
             <span className="hidden md:inline">{isEditing ? 'Save' : 'Edit Labels'}</span>
             <span className="md:hidden">{isEditing ? 'Save' : 'Edit'}</span>
           </Button>
-          <Button 
+          <Button
             onClick={handlePrint}
             className="rounded-xl font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-100 h-10 md:h-12 px-4 md:px-8 uppercase tracking-widest text-[10px] md:text-sm"
           >
@@ -280,67 +280,67 @@ export default function ProductionPreview() {
       <div className="max-w-5xl mx-auto w-full p-4 md:p-8 space-y-8 pb-12">
         {/* Mobile-Only Card View - Similar to all-products queue */}
         <div className="lg:hidden flex flex-col gap-6 print:hidden">
-           {items.map((item) => (
-             <div 
-               key={item.id} 
-               className={cn(
-                 "bg-white p-6 rounded-[2.5rem] border-2 transition-all duration-300 shadow-sm",
-                 item.isVisible === false ? "opacity-30 grayscale border-slate-50" : "border-slate-100 shadow-indigo-50/20"
-               )}
-             >
-                <div className="flex items-start justify-between mb-6">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="bg-indigo-50 text-indigo-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">{item.productCode}</span>
-                    </div>
-                    <p className="text-lg font-black text-slate-900 leading-tight uppercase">{item.productName}</p>
-                    <p className="text-md font-bold text-slate-500 leading-tight">{item.productNameHi}</p>
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className={cn(
+                "bg-white p-6 rounded-[2.5rem] border-2 transition-all duration-300 shadow-sm",
+                item.isVisible === false ? "opacity-30 grayscale border-slate-50" : "border-slate-100 shadow-indigo-50/20"
+              )}
+            >
+              <div className="flex items-start justify-between mb-6">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-indigo-50 text-indigo-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest">{item.productCode}</span>
                   </div>
-                  {isEditing && (
-                    <input 
-                       type="checkbox" 
-                       checked={item.isVisible !== false}
-                       onChange={() => toggleVisibility(item.id)}
-                       className="w-6 h-6 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                  )}
+                  <p className="text-lg font-black text-slate-900 leading-tight uppercase">{item.productName}</p>
+                  <p className="text-md font-bold text-slate-500 leading-tight">{item.productNameHi}</p>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100/50">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Total Bundles</p>
-                    <div className="flex items-baseline gap-2">
-                       <span className="text-4xl font-black text-slate-900 tabular-nums">{item.totalBundles}</span>
-                       <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{item.selectedBundle}</span>
-                    </div>
-                  </div>
-                  <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100/50">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Qty / {item.selectedBundle}</p>
-                    <span className="text-4xl font-black text-slate-900 tabular-nums">{item.divisor}</span>
-                  </div>
-                </div>
-
                 {isEditing && (
-                  <div className="pt-6 border-t border-slate-100 flex flex-col gap-4">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Quick Edit Bundle Type</p>
-                     <div className="flex gap-2">
-                        {['bld', 'CRT', 'SmallCRT'].map((type) => (
-                          <button
-                            key={type}
-                            onClick={() => handleBundleChange(item.id, type)}
-                            className={cn(
-                              "flex-1 h-10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all",
-                              item.selectedBundle === type ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "bg-white border border-slate-200 text-slate-400"
-                            )}
-                          >
-                            {type}
-                          </button>
-                        ))}
-                     </div>
-                  </div>
+                  <input
+                    type="checkbox"
+                    checked={item.isVisible !== false}
+                    onChange={() => toggleVisibility(item.id)}
+                    className="w-6 h-6 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  />
                 )}
-             </div>
-           ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100/50">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Total Bundles</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-black text-slate-900 tabular-nums">{item.totalBundles}</span>
+                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{item.selectedBundle}</span>
+                  </div>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100/50">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Qty / {item.selectedBundle}</p>
+                  <span className="text-4xl font-black text-slate-900 tabular-nums">{item.divisor}</span>
+                </div>
+              </div>
+
+              {isEditing && (
+                <div className="pt-6 border-t border-slate-100 flex flex-col gap-4">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Quick Edit Bundle Type</p>
+                  <div className="flex gap-2">
+                    {['bld', 'CRT', 'SmallCRT'].map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => handleBundleChange(item.id, type)}
+                        className={cn(
+                          "flex-1 h-10 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all",
+                          item.selectedBundle === type ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "bg-white border border-slate-200 text-slate-400"
+                        )}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
         {/* Print-Only / Desktop A4 Template */}
@@ -367,8 +367,8 @@ export default function ProductionPreview() {
               {/* Entire Copy Toggle - Edit mode only */}
               {isEditing && (
                 <div className="absolute top-4 left-6 z-10 print:hidden flex items-center gap-3 bg-white/90 backdrop-blur p-2 rounded-lg shadow-sm border border-slate-200">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     checked={item.isVisible !== false}
                     onChange={() => toggleVisibility(item.id)}
                     className="w-5 h-5 rounded border-slate-300 text-indigo-600 cursor-pointer"
@@ -399,7 +399,7 @@ export default function ProductionPreview() {
                 style={{ height: '142mm', boxSizing: 'border-box' }}
               >
                 <div className="w-full h-full border-2 border-slate-900 rounded-lg overflow-hidden flex flex-col">
-                   <ProductionLabelContent item={item} isEditing={isEditing} handleEditChange={handleEditChange} handleBundleChange={handleBundleChange} getFontSize={getFontSize} toggleFieldVisibility={toggleFieldVisibility} />
+                  <ProductionLabelContent item={item} isEditing={isEditing} handleEditChange={handleEditChange} handleBundleChange={handleBundleChange} getFontSize={getFontSize} toggleFieldVisibility={toggleFieldVisibility} />
                 </div>
               </div>
             </div>
@@ -452,106 +452,157 @@ export default function ProductionPreview() {
 
 function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundleChange, getFontSize, toggleFieldVisibility }: any) {
   const vis = item.fieldVisibility || { productName: true, bundles: true };
+  const [dynamicHiName, setDynamicHiName] = useState<string>('');
+
+  useEffect(() => {
+    const isMissing = !item.productNameHi || item.productNameHi.trim() === '' || item.productNameHi.toLowerCase() === item.productName.toLowerCase();
+    
+    if (isMissing && item.productName) {
+      const fetchTranslation = async () => {
+        try {
+          const res = await fetch('/api/translate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: item.productName, target: 'hi' })
+          });
+          const data = await res.json();
+          if (data.translatedText) {
+            setDynamicHiName(data.translatedText);
+          }
+        } catch (e) {
+          console.error("Failed to translate production product name", e);
+        }
+      };
+      fetchTranslation();
+    }
+  }, [item.productName, item.productNameHi]);
+
+  const productNameHi = dynamicHiName || item.productNameHi || item.productName;
 
   return (
-    <div className="flex-1 flex flex-col justify-between p-10 md:p-14 overflow-hidden bg-white">
-      {/* Content Area - Grouped at top/middle */}
-      <div className="flex flex-col gap-12 flex-1">
-        
-        {/* Header Area - Product Info */}
-        <div className="flex justify-between items-start">
-          <div className={cn("space-y-4 flex-1 pr-12 transition-opacity", !vis.productName && "opacity-0 print:invisible")}>
-            <div className="flex items-center justify-between">
-              <p className="text-[12px] font-black text-slate-400 uppercase tracking-[0.4em] flex items-center gap-2">
-                <Languages className="w-4 h-4 text-indigo-600" />
-                Specification / उत्पाद विवरण
-              </p>
-              {isEditing && (
-                <input 
-                  type="checkbox" 
-                  checked={vis.productName} 
-                  onChange={() => toggleFieldVisibility(item.id, 'productName')}
-                  className="w-4 h-4 print:hidden cursor-pointer"
-                />
-              )}
+    <div className="flex-1 flex flex-col justify-between p-10 md:p-14 overflow-hidden bg-white relative">
+      <div className="flex flex-col gap-10 flex-1">
+        {/* Product Section */}
+        <div className={cn("flex flex-col gap-4 transition-opacity", !vis.productName && "opacity-0 print:invisible")}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 print:hidden">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <span className="text-gray-400 font-medium text-[24px]">उत्पाद विवरण:</span>
             </div>
+            {isEditing && (
+              <input
+                type="checkbox"
+                checked={vis.productName}
+                onChange={() => toggleFieldVisibility(item.id, 'productName')}
+                className="w-5 h-5 print:hidden cursor-pointer"
+              />
+            )}
+            <div className="flex flex-col items-end">
+              <span className="text-gray-400 font-bold text-[14px] uppercase tracking-widest">Product Code</span>
+              <span className="text-gray-900 font-black text-[32px] leading-none">{item.productCode}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
             {isEditing ? (
-              <div className="space-y-3">
-                <input 
+              <div className="space-y-4">
+                <input
                   value={item.productName}
                   onChange={(e) => handleEditChange(item.id, 'productName', e.target.value)}
-                  className="w-full text-xl font-black border-b-2 border-slate-200 outline-none pb-1 uppercase focus:border-indigo-600"
+                  className="w-full text-[40px] font-black border-b-2 border-gray-100 outline-none pb-2 uppercase focus:border-blue-600"
                 />
-                <input 
-                  value={item.productNameHi}
+                <input
+                  value={productNameHi}
                   onChange={(e) => handleEditChange(item.id, 'productNameHi', e.target.value)}
-                  className="w-full text-xl font-black border-b-2 border-slate-200 outline-none pb-1 focus:border-indigo-600"
+                  className="w-full text-[32px] font-black border-b-2 border-gray-100 outline-none pb-2 focus:border-blue-600"
                 />
               </div>
             ) : (
-              <div className="space-y-2">
-                <h2 className={cn("font-black text-black leading-tight uppercase tracking-tight", getFontSize(item.productName, "text-[48px]"))}>
+              <div className="space-y-1">
+                <h2 className={cn("font-black text-gray-900 leading-tight uppercase tracking-tight", getFontSize(item.productName, "text-[56px]"))}>
                   {item.productName}
                 </h2>
-                <h2 className={cn("font-black text-slate-800 leading-tight", getFontSize(item.productNameHi, "text-[40px]"))}>
-                  {item.productNameHi}
+                <h2 className={cn("font-black text-gray-700 leading-tight", getFontSize(productNameHi, "text-[40px]"))}>
+                  {productNameHi}
                 </h2>
               </div>
             )}
           </div>
-          <div className="text-right shrink-0">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Code</p>
-            <p className="text-3xl font-black text-black uppercase tracking-tighter bg-slate-50 px-5 py-3 rounded-2xl border-2 border-black">
-              {item.productCode}
-            </p>
-          </div>
         </div>
 
-        <div className="h-[2px] bg-black w-full opacity-10" />
+        <div className="border-b border-dotted border-gray-300 w-full" />
 
-        {/* Details Grid - Perfectly Aligned */}
-        <div className="flex-1 flex items-center">
-          <div className="w-full flex items-start justify-between">
-            <div className={cn("space-y-1 transition-opacity", !vis.bundles && "opacity-0 print:invisible")}>
-              <p className="text-[13px] font-black text-slate-400 uppercase tracking-[0.3em]">Total Bundles / कुल बंडल</p>
-              <div className="flex items-end gap-5">
-                <p className="text-[72px] font-black text-black leading-none tracking-tighter">{item.totalBundles}</p>
-                <div className="flex flex-col pb-3">
-                   <p className="text-[18px] font-black text-slate-400 uppercase tracking-widest leading-none">
-                     Type: <span className="text-indigo-600 font-black">{item.selectedBundle}</span>
-                   </p>
-                   {isEditing && (
-                      <div className="print:hidden mt-3">
-                        <select 
-                          value={item.selectedBundle}
-                          onChange={(e) => handleBundleChange(item.id, e.target.value)}
-                          className="text-[11px] bg-slate-100 border-none rounded p-2 font-black cursor-pointer hover:bg-slate-200 transition-colors"
-                        >
-                           <option value="bld">Bld</option>
-                           <option value="CRT">CRT</option>
-                           <option value="SmallCRT">Small</option>
-                        </select>
-                      </div>
-                   )}
-                </div>
+        {/* Quantities Section */}
+        <div className={cn("flex flex-col gap-6 transition-opacity", !vis.bundles && "opacity-0 print:invisible")}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 print:hidden">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               </div>
+              <span className="text-gray-400 font-medium text-[24px]">कुल बंडल:</span>
+            </div>
+            {isEditing && (
+              <input
+                type="checkbox"
+                checked={vis.bundles}
+                onChange={() => toggleFieldVisibility(item.id, 'bundles')}
+                className="w-5 h-5 print:hidden cursor-pointer"
+              />
+            )}
+          </div>
+
+          <div className="flex items-end gap-12">
+            <div className="relative">
+              <span className="text-[96px] font-black text-gray-900 leading-none tracking-tighter">
+                {item.totalBundles}
+              </span>
+              <div className="absolute -bottom-2 left-0 right-0 h-1.5 bg-blue-200" />
             </div>
 
-            <div className="text-right space-y-3 pt-4 pr-2">
-               <p className="text-[13px] font-black text-slate-400 uppercase tracking-[0.3em]">Qty per {item.selectedBundle} / मात्रा प्रति {item.selectedBundle}  </p>
-               <p className="text-[56px] font-black text-slate-900 leading-none tracking-tighter">{item.divisor}</p>
+            <div className="flex flex-col gap-1 pb-2">
+              <span className="text-gray-400 font-bold text-[16px] uppercase tracking-widest">Type: {item.selectedBundle}</span>
+              <span className="text-gray-400 font-bold text-[16px] uppercase tracking-widest">Qty: {item.divisor} per {item.selectedBundle}</span>
+              {isEditing && (
+                <select
+                  value={item.selectedBundle}
+                  onChange={(e) => handleBundleChange(item.id, e.target.value)}
+                  className="mt-2 text-[14px] bg-gray-50 border border-gray-200 rounded-lg p-2 font-black cursor-pointer hover:bg-gray-100 print:hidden"
+                >
+                  <option value="bld">Bld</option>
+                  <option value="CRT">CRT</option>
+                  <option value="SmallCRT">Small</option>
+                </select>
+              )}
+            </div>
+
+            <div className="flex-1" />
+
+            <div className="flex flex-col items-end pb-2">
+              <span className="text-gray-400 font-bold text-[14px] uppercase tracking-widest">GODOWN</span>
+              <span className="text-gray-900 font-black text-[32px]">{item.godown}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer Area - Logo at the very bottom left */}
-      <div className="mt-auto pt-8 border-t border-slate-100 flex items-end">
-        <div className="w-56 h-16 relative -ml-4">
-          <img src="/logo1.png" alt="AceMark" className="w-full h-full object-contain object-left" />
+      {/* Footer Area */}
+      <div className="mt-auto pt-8 border-t border-gray-100 flex items-center justify-between print:bg-transparent">
+        <div className="flex items-center gap-3">
+          <span className="text-gray-400 font-black text-[16px] uppercase tracking-widest">DATE:</span>
+          <span className="text-gray-500 font-bold text-[18px]">
+            {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 opacity-40">
+          <span className="text-[22px] font-black tracking-[0.3em] text-gray-700 italic">A C E</span>
         </div>
       </div>
     </div>
   );
 }
-

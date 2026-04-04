@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         };
 
         allData.forEach((item: any, index: number) => {
-            const orderNo = getValue(item, 'OrderNo') || getValue(item, 'SOrderNo') || `item-${index}`;
+            const orderNo = getValue(item, 'SOrderNoString') || getValue(item, 'SOrderNo') || getValue(item, 'OrderNo') || `item-${index}`;
             const id = `${orderNo}-${index}`;
 
             // Skip processed labels if not included
@@ -66,13 +66,13 @@ export async function GET(request: NextRequest) {
             const city = getValue(item, 'City');
             if (city) cities.add(city.toString().trim());
 
-            const party = getValue(item, 'AccountName') || getValue(item, 'Party');
+            const party = getValue(item, 'PartyName') || getValue(item, 'AccountName') || getValue(item, 'Party');
             if (party) parties.add(party.toString().trim());
 
-            const prod = getValue(item, 'ProductName') || getValue(item, 'Item');
+            const prod = getValue(item, 'ProductName') || getValue(item, 'Product Name') || getValue(item, 'Item');
             if (prod) items.add(prod.toString().trim());
 
-            const transporter = getValue(item, 'Transporter') || getValue(item, 'TransportName');
+            const transporter = getValue(item, 'Transport') || getValue(item, 'Transporter') || getValue(item, 'TransportName');
             if (transporter) transporters.add(transporter.toString().trim());
 
             const godown = getValue(item, 'Godown') || getValue(item, 'GodownName') || getValue(item, 'GName');

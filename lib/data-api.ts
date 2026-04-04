@@ -15,6 +15,7 @@ export interface TicTakFilters {
     parties: string[];
     items: string[];
     transporters: string[];
+    godowns: string[];
 }
 
 /**

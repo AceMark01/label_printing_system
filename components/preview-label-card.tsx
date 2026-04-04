@@ -1,7 +1,5 @@
-'use client';
-
-import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { cn } from "@/lib/utils";
 import type { Label, Language } from '@/lib/types';
 
 interface PreviewLabelCardProps {
@@ -10,6 +8,7 @@ interface PreviewLabelCardProps {
     fieldVisibility?: Partial<Record<Language, { product: boolean, quantity: boolean }>>;
     onToggleField?: (lang: Language, field: 'product' | 'quantity') => void;
     onUpdateBundle?: (labelId: string, value: string) => void;
+    onUpdateQuantity?: (labelId: string, value: string) => void;
 }
 
 const labelTranslations: Record<Language, Record<string, string>> = {
@@ -17,7 +16,8 @@ const labelTranslations: Record<Language, Record<string, string>> = {
         party: 'Party Name',
         item: 'Product',
         qty: 'Quantity',
-        city: 'City'
+        city: 'City',
+        bundles: 'Bundles'
     },
     hi: {
         party: 'पार्टी नाम',
@@ -35,127 +35,209 @@ const labelTranslations: Record<Language, Record<string, string>> = {
     }
 };
 
-export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleField, onUpdateBundle }: PreviewLabelCardProps) {
-    const sortedLanguages = Array.from(languages).sort((a, b) => {
-        if (a === 'hi') return -1;
-        if (b === 'hi') return 1;
-        return a.localeCompare(b);
-    });
+export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleField, onUpdateBundle, onUpdateQuantity }: PreviewLabelCardProps) {
+    // Sort by fixed order so they don't flip when clicking: Hindi (hi) -> Odia (od) -> English (en)
+    const preferredOrder: Language[] = ['hi', 'od', 'en'];
+    const activeLanguages = [...languages]
+        .sort((a, b) => preferredOrder.indexOf(a) - preferredOrder.indexOf(b))
+        .slice(0, 2);
+    
+    if (activeLanguages.length === 0) activeLanguages.push('hi', 'od');
+    const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, Record<string, string>>>({});
 
+    useEffect(() => {
+        activeLanguages.forEach(async (lang) => {
+            if (lang === 'en') return;
 
-    const getFontSize = (text: string, baseSize: string, limit: number = 20) => {
-        if (!text) return baseSize;
-        const isMulti = sortedLanguages.length > 1;
-        // Adjusted thresholds and sizes for better space utilization
-        if (text.length > limit * 2.5) return isMulti ? 'text-[8px] sm:text-[10px]' : 'text-[12px] sm:text-sm';
-        if (text.length > limit * 1.8) return isMulti ? 'text-[10px] sm:text-xs' : 'text-base sm:text-xl';
-        if (text.length > limit) return isMulti ? 'text-xs sm:text-base' : 'text-xl sm:text-3xl';
-        return baseSize;
+            const fieldsToTranslate = [
+                { key: 'party', text: label.party, existing: label.partyNames?.[lang] },
+                { key: 'item', text: label.item, existing: label.itemNames?.[lang] },
+                { key: 'city', text: label.city, existing: label.cityNames?.[lang] }
+            ];
+
+            fieldsToTranslate.forEach(async (field) => {
+                const isMissing = !field.existing || field.existing.trim() === '' || field.existing.toLowerCase() === field.text.toLowerCase();
+
+                if (isMissing && field.text) {
+                    try {
+                        const res = await fetch('/api/translate', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ text: field.text, target: lang })
+                        });
+                        const data = await res.json();
+                        if (data.translatedText) {
+                            setDynamicTranslations(prev => ({
+                                ...prev,
+                                [lang]: {
+                                    ...(prev[lang] || {}),
+                                    [field.key]: data.translatedText
+                                }
+                            }));
+                        }
+                    } catch (e) {
+                        console.error(`Failed to dynamically translate ${field.key}`, e);
+                    }
+                }
+            });
+        });
+    }, [label.party, label.item, label.city, label.partyNames, label.itemNames, label.cityNames, activeLanguages.join(',')]);
+
+    const getPartyName = (lang: Language) => {
+        if (lang === 'en') return label.party;
+        return dynamicTranslations[lang]?.party || label.partyNames?.[lang] || label.party;
     };
 
-    const getPartyName = (lang: Language) => lang === 'en' ? label.party : (label.partyNames?.[lang] || label.party);
-    const getItemName = (lang: Language) => lang === 'en' ? label.item : (label.itemNames?.[lang] || label.item);
-    const getCityName = (lang: Language) => lang === 'en' ? label.city : (label.cityNames?.[lang] || label.city);
+    const getItemName = (lang: Language) => {
+        if (lang === 'en') return label.item;
+        return dynamicTranslations[lang]?.item || label.itemNames?.[lang] || label.item;
+    };
 
-    const isMulti = sortedLanguages.length > 1;
+    const getCityName = (lang: Language) => {
+        if (lang === 'en') return label.city;
+        return dynamicTranslations[lang]?.city || label.cityNames?.[lang] || label.city;
+    };
 
     return (
-        <div className="relative bg-white w-full h-full flex flex-col font-sans border border-gray-200 shadow-sm rounded-lg overflow-hidden">
-            <div className={`flex-1 ${isMulti ? 'p-1.5 sm:p-3' : 'p-3 sm:p-5'} flex flex-col justify-center bg-white overflow-hidden`}>
-                <div className={`w-full ${isMulti ? 'space-y-1 sm:space-y-2' : 'space-y-4 sm:space-y-6'}`}>
-                    {sortedLanguages.map((lang, idx) => {
-                        const t = labelTranslations[lang];
-                        const isLast = idx === sortedLanguages.length - 1;
-                        const partyName = getPartyName(lang);
-                        const itemName = getItemName(lang);
-                        const isHindi = lang === 'hi';
-                        const isProductVisible = fieldVisibility?.[lang]?.product !== false;
-                        const isQuantityVisible = fieldVisibility?.[lang]?.quantity !== false;
-                        const isReduced = !isProductVisible && !isQuantityVisible;
+        <div className="bg-white w-full rounded-xl shadow-md overflow-hidden border border-gray-100 flex flex-col font-sans h-full">
+            <div className="p-4 sm:p-5 flex flex-col gap-4 flex-1">
+                {activeLanguages.map((lang, idx) => {
+                    const t = labelTranslations[lang];
+                    const partyName = getPartyName(lang);
+                    const itemName = getItemName(lang);
+                    const isProductVisible = fieldVisibility?.[lang]?.product !== false;
+                    const isQuantityVisible = fieldVisibility?.[lang]?.quantity !== false;
 
-                        return (
-                            <div key={lang} className={`${!isLast && isMulti ? (isHindi ? 'pb-2 sm:pb-3' : 'pb-1 sm:pb-2') + ' border-b border-dashed border-gray-100' : !isLast ? 'pb-8 border-b border-dashed' : ''} ${isReduced ? 'space-y-3 sm:space-y-4' : 'space-y-1'}`}>
-                                <div className={isReduced ? 'space-y-4' : 'space-y-1'}>
-                                    <p className="leading-tight truncate sm:whitespace-normal">
-                                        <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-base sm:text-lg' : 'text-sm sm:text-base') : (isReduced ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-xs')) : 'text-sm sm:text-base'} font-bold text-gray-400 uppercase tracking-widest`}>{t.party}: </span>
-                                        <span className={`font-black text-gray-900 ${getFontSize(partyName, isMulti ? (isHindi ? (isReduced ? 'text-xl sm:text-3xl' : 'text-lg sm:text-2xl') : (isReduced ? 'text-lg sm:text-2xl' : 'text-base sm:text-xl')) : (isReduced ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl'), 20)}`}>
-                                            {partyName}
-                                        </span>
-                                    </p>
-                                    <div className="flex items-start gap-2">
-                                        {onToggleField && (
-                                            <input
-                                                type="checkbox"
-                                                checked={isProductVisible}
-                                                onChange={() => onToggleField(lang, 'product')}
-                                                className="mt-1 w-4 h-4 cursor-pointer"
-                                            />
-                                        )}
+                    return (
+                        <div key={`${lang}-${idx}`} className={cn(
+                            "flex flex-col gap-2",
+                            idx === 0 && activeLanguages.length > 1 && "pb-4 border-b border-dotted border-gray-300"
+                        )}>
+                            {/* Party Name Row */}
+                            <div className="flex items-baseline gap-1.5 overflow-hidden">
+                                <span className="text-gray-400 font-medium text-[14px] shrink-0">
+                                    {t.party}:
+                                </span>
+                                <span className="text-gray-900 font-black text-[16px] truncate">
+                                    {partyName}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <button 
+                                    onClick={() => onToggleField?.(lang, 'product')}
+                                    className="shrink-0 transition-transform active:scale-95"
+                                >
+                                    <div className={cn(
+                                        "w-5 h-5 rounded flex items-center justify-center transition-colors",
+                                        isProductVisible ? "bg-blue-600" : "bg-gray-200"
+                                    )}>
                                         {isProductVisible && (
-                                            <p className="leading-tight truncate sm:whitespace-normal mb-1 sm:mb-2 text-grey-400">
-                                                <span className={`${isMulti ? (isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-lg'} font-bold text-gray-400 uppercase tracking-widest`}>{t.item}: </span>
-                                                <span className={`font-bold ${getFontSize(itemName, isMulti ? (isHindi ? 'text-sm sm:text-xl' : 'text-xs sm:text-lg') : 'text-xl sm:text-2xl', 30)}`}>
-                                                    {itemName}
-                                                </span>
-                                            </p>
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                                                <polyline points="20 6 9 17 4 12" />
+                                            </svg>
                                         )}
                                     </div>
-                                </div>
-                                <div className={`flex items-center ${isMulti ? (isReduced ? 'gap-4 pt-2' : 'gap-1 pt-0') : (isReduced ? 'gap-8 pt-6' : 'gap-4 pt-4')}`}>
-                                {isProductVisible && (
-                                    <div className="flex items-center gap-2">
-                                        {onToggleField && (
-                                            <input
-                                                type="checkbox"
-                                                checked={isQuantityVisible}
-                                                onChange={() => onToggleField(lang, 'quantity')}
-                                                className="w-4 h-4 cursor-pointer"
-                                            />
-                                        )}
-                                        {isQuantityVisible && (
-                                            <div className="flex items-center gap-2 text-grey-400">
-                                                <span className={`${isMulti ? (isHindi ? 'text-sm sm:text-base' : 'text-[10px] sm:text-xs') : 'text-lg'} font-bold text-gray-400 uppercase tracking-widest`}>{t.qty}: </span>
-                                                <span className={`${isMulti ? (isHindi ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl') : 'text-3xl sm:text-4xl'} font-black`}>{label.quantity}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                                    {label.bdlQty !== undefined && (
-                                        <div className={`flex items-center gap-2 ${isMulti ? 'pl-2' : 'pl-4'} ${isQuantityVisible ? 'border-l border-gray-100' : ''}`}>
-                                            <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-base sm:text-lg' : 'text-sm sm:text-base') : (isReduced ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-xs')) : (isReduced ? 'text-lg' : 'text-sm sm:text-base')} font-bold text-gray-400 uppercase tracking-widest`}>{t.bundles}: </span>
-                                            {onUpdateBundle ? (
-                                                <input
-                                                    type="number"
-                                                    value={label.bdlQty}
-                                                    onChange={(e) => onUpdateBundle(label.id, e.target.value)}
-                                                    className={`${isMulti ? (isHindi ? (isReduced ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl') : (isReduced ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl')) : (isReduced ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl')} font-black text-gray-700 ${isMulti ? 'w-12' : 'w-24'} bg-transparent border-b-2 border-blue-200 focus:border-blue-500 outline-none hover:bg-blue-50/50 transition-colors p-0 text-center`}
-                                                />
-                                            ) : (
-                                                <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl') : (isReduced ? 'text-xl sm:text-2xl' : 'text-lg sm:text-xl')) : (isReduced ? 'text-4xl sm:text-5xl' : 'text-3xl sm:text-4xl')} font-black text-gray-700`}>{label.bdlQty}</span>
-                                            )}
-                                        </div>
-                                    )}
-                                    <div className={`flex items-center gap-2 ${isMulti ? 'pl-2' : 'pl-4'} ${(isQuantityVisible || label.bdlQty !== undefined) ? 'border-l' : ''}`}>
-                                        <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-base sm:text-lg' : 'text-sm sm:text-base') : (isReduced ? 'text-xs sm:text-sm' : 'text-[10px] sm:text-xs')) : (isReduced ? 'text-lg' : 'text-sm sm:text-base')} font-bold text-gray-400 uppercase tracking-widest`}>{t.city}: </span>
-                                        <span className={`${isMulti ? (isHindi ? (isReduced ? 'text-lg sm:text-xl' : 'text-base sm:text-lg') : (isReduced ? 'text-lg sm:text-xl' : 'text-base sm:text-lg')) : (isReduced ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl')} font-black text-gray-800 uppercase`}>{getCityName(lang)}</span>
-                                    </div>
+                                </button>
+                                <div className="flex items-baseline gap-1.5 overflow-hidden">
+                                    <span className="text-gray-400 font-medium text-[14px] shrink-0">
+                                        {t.item}:
+                                    </span>
+                                    <span className={cn(
+                                        "font-black text-[16px] truncate",
+                                        isProductVisible ? "text-gray-800" : "text-gray-300"
+                                    )}>
+                                        {itemName}
+                                    </span>
                                 </div>
                             </div>
-                        );
-                    })}
-                </div>
+
+                            {/* Qty, Bundle, City Row */}
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                {/* Quantity */}
+                                <div className="flex items-center gap-2">
+                                    <button 
+                                        onClick={() => onToggleField?.(lang, 'quantity')}
+                                        className="shrink-0 transition-transform active:scale-95"
+                                    >
+                                        <div className={cn(
+                                            "w-5 h-5 rounded flex items-center justify-center transition-colors",
+                                            isQuantityVisible ? "bg-blue-600" : "bg-gray-200"
+                                        )}>
+                                            {isQuantityVisible && (
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                                                    <polyline points="20 6 9 17 4 12" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                    </button>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-gray-400 font-medium text-[14px]">
+                                            {t.qty}:
+                                        </span>
+                                        <span className={cn(
+                                            "font-black text-[20px]",
+                                            isQuantityVisible ? "text-gray-900" : "text-gray-300"
+                                        )}>
+                                            {onUpdateQuantity ? (
+                                                <input
+                                                    type="text"
+                                                    value={label.quantity}
+                                                    onChange={(e) => onUpdateQuantity(label.id, e.target.value)}
+                                                    className="w-12 text-center bg-transparent border-none p-0 focus:ring-0 font-black"
+                                                />
+                                            ) : label.quantity}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Bundle */}
+                                <div className="flex items-baseline gap-1.5 border-l border-gray-100 pl-4">
+                                    <span className="text-gray-400 font-medium text-[14px]">
+                                        {t.bundles}:
+                                    </span>
+                                    <div className="relative">
+                                        {onUpdateBundle ? (
+                                            <input 
+                                                type="text" 
+                                                value={label.bdlQty || '1'} 
+                                                onChange={(e) => onUpdateBundle(label.id, e.target.value)}
+                                                className="w-10 text-gray-900 font-black text-[20px] bg-transparent border-none p-0 focus:ring-0 text-center"
+                                            />
+                                        ) : (
+                                            <span className="text-gray-900 font-black text-[20px]">
+                                                {label.bdlQty || '1'}
+                                            </span>
+                                        )}
+                                        <div className="absolute -bottom-0.5 left-0 right-0 h-0.5 bg-blue-200" />
+                                    </div>
+                                </div>
+
+                                {/* City */}
+                                <div className="flex items-baseline gap-1.5 border-l border-gray-100 pl-4">
+                                    <span className="text-gray-400 font-medium text-[14px]">
+                                        {t.city}:
+                                    </span>
+                                    <span className="text-gray-900 font-black text-[18px] uppercase">
+                                        {getCityName(lang)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
 
-            <div className="h-8 bg-gray-50 border-t border-gray-200 flex items-center justify-between px-4 text-gray-400">
-                <div className="flex items-baseline gap-1">
-                    <span className="text-[7px] font-black uppercase tracking-widest">DATE:</span>
-                    <span className="text-[10px] font-bold tabular-nums">
+            {/* Footer */}
+            <div className="bg-gray-50/50 border-t border-gray-100 px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-gray-400 font-bold text-[10px]">DATE:</span>
+                    <span className="text-gray-500 font-bold text-[11px]">
                         {new Date(label.date || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="w-12 h-0.5 bg-gray-200" />
-                    <p className="text-[10px] font-black tracking-[0.3em] italic uppercase">Ace</p>
+                <div className="flex items-center gap-1.5 opacity-40">
+                    <span className="text-[12px] font-black tracking-[0.2em] text-gray-700 italic uppercase">Ace</span>
                 </div>
             </div>
         </div>

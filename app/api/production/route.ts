@@ -19,32 +19,32 @@ export async function GET(request: NextRequest) {
 
         // Append sheet name to the Apps Script URL
         const sheetUrl = `${APPS_SCRIPT_URL}${APPS_SCRIPT_URL.includes('?') ? '&' : '?'}sheet=Production Data`;
-        
+
         const allData = await getCachedData(sheetUrl, forceRefresh);
 
         const getValue = (obj: any, targetKey: string) => {
             if (!obj) return undefined;
             if (obj[targetKey] !== undefined) return obj[targetKey];
-            
+
             const lowerTarget = targetKey.toLowerCase();
             const keys = Object.keys(obj);
-            
+
             // Try case-insensitive exact match
             const exactKey = keys.find(k => k.toLowerCase() === lowerTarget);
             if (exactKey) return obj[exactKey];
-            
+
             // Try removing spaces
             const cleanTarget = lowerTarget.replace(/\s+/g, '');
             const fuzzyKey = keys.find(k => k.toLowerCase().replace(/\s+/g, '') === cleanTarget);
             if (fuzzyKey) return obj[fuzzyKey];
-            
+
             return undefined;
         };
 
         const mappedData = allData.map((item: any, index: number) => {
             const doneVal = (getValue(item, 'Done') || '').toString().toLowerCase().trim();
             const sNoVal = getValue(item, 'S NO') || getValue(item, 'SNO') || index + 1;
-            
+
             return {
                 id: index + 1,
                 sNo: sNoVal,
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
                 godown: getValue(item, 'Godown') || '',
                 pendingQty: getValue(item, 'Production Pending qty') || getValue(item, 'Pending Qty') || 0,
                 done: doneVal === 'done' || doneVal === 'yes' || doneVal === 'true' || doneVal === '1',
-                
+
                 // Bundle types
                 bld: getValue(item, 'bld') || '',
                 crt: getValue(item, 'CRT') || '',
@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
                 if (!item.done) return false;
             } else {
                 if (item.done) return false;
-                
+
                 // ONLY SHOW positive pending quantities for active view
                 const rawQty = item.pendingQty?.toString() || '0';
                 const cleanQty = parseFloat(rawQty.replace(/[^-0-9.]/g, '')) || 0;
@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
 
         const resultRaw = await response.text();
         let result: any;
-        
+
         try {
             result = JSON.parse(resultRaw);
         } catch (e) {
@@ -161,8 +161,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, result });
     } catch (error: any) {
         console.error('Production Update API Error:', error);
-        return NextResponse.json({ 
-            error: error.message || 'Unknown server error during spreadsheet sync' 
+        return NextResponse.json({
+            error: error.message || 'Unknown server error during spreadsheet sync'
         }, { status: 500 });
     }
 }

@@ -64,8 +64,8 @@ export default function ProductionAllProducts() {
 
   const handleGenerateLabels = () => {
     if (selectedItems.size === 0) {
-       toast.error('Please select at least one product');
-       return;
+      toast.error('Please select at least one product');
+      return;
     }
     const selectedData = data.filter(item => selectedItems.has(item.id));
     localStorage.setItem('selectedProductionItems', JSON.stringify(selectedData));
@@ -85,12 +85,12 @@ export default function ProductionAllProducts() {
           <div className="flex flex-col">
             <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Queue</span>
             <div className="flex items-baseline gap-1">
-               <span className="text-xl font-black text-slate-900 leading-none">{data.length}</span>
-               <span className="text-[9px] font-bold text-slate-400 uppercase">Items</span>
+              <span className="text-xl font-black text-slate-900 leading-none">{data.length}</span>
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Items</span>
             </div>
           </div>
           <div className="w-px h-8 bg-slate-100" />
-          <Button 
+          <Button
             onClick={handleRefresh}
             disabled={isRefreshing}
             className="h-9 w-9 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-600 flex items-center justify-center p-0 transition-all"
@@ -100,32 +100,32 @@ export default function ProductionAllProducts() {
         </div>
 
         <div className="flex-1 bg-white border border-slate-200 p-1 rounded-2xl flex items-center group focus-within:border-indigo-200 transition-all shadow-sm">
-           <div className="pl-4 pr-3 text-slate-400">
-             <Search className="w-4 h-4" />
-           </div>
-           <input
-             type="text"
-             placeholder="Search product code, name or godown..."
-             value={searchQuery}
-             onChange={(e) => setSearchQuery(e.target.value)}
-             className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-900 placeholder:text-slate-300 h-10"
-           />
-           {searchQuery && (
-             <Button variant="ghost" onClick={() => setSearchQuery('')} className="mr-1 h-8 w-8 rounded-lg text-slate-400 p-0">
-               <X className="w-4 h-4" />
-             </Button>
-           )}
+          <div className="pl-4 pr-3 text-slate-400">
+            <Search className="w-4 h-4" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search product code, name or godown..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold text-slate-900 placeholder:text-slate-300 h-10"
+          />
+          {searchQuery && (
+            <Button variant="ghost" onClick={() => setSearchQuery('')} className="mr-1 h-8 w-8 rounded-lg text-slate-400 p-0">
+              <X className="w-4 h-4" />
+            </Button>
+          )}
         </div>
 
         <div className={cn(
-             "items-center gap-4 bg-white border border-slate-200 p-1.5 rounded-2xl shadow-sm transition-all duration-500 overflow-hidden",
-             selectedItems.size > 0 ? "flex" : "hidden"
-          )}>
+          "items-center gap-4 bg-white border border-slate-200 p-1.5 rounded-2xl shadow-sm transition-all duration-500 overflow-hidden",
+          selectedItems.size > 0 ? "flex" : "hidden"
+        )}>
           <div className="pl-3 pr-2 flex flex-col items-center">
-             <span className="text-[10px] font-black text-indigo-600 leading-none tabular-nums">{selectedItems.size}</span>
-             <span className="text-[8px] font-black text-slate-400 uppercase">Label Sets</span>
+            <span className="text-[10px] font-black text-indigo-600 leading-none tabular-nums">{selectedItems.size}</span>
+            <span className="text-[8px] font-black text-slate-400 uppercase">Label Sets</span>
           </div>
-          <Button 
+          <Button
             onClick={handleGenerateLabels}
             className="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase tracking-widest text-[10px] h-9 px-6 shadow-lg shadow-indigo-100"
           >
@@ -142,11 +142,11 @@ export default function ProductionAllProducts() {
               <tr className="bg-indigo-600 text-white">
                 <th className="px-4 py-2.5 text-center w-16">
                   <div className="flex items-center justify-center">
-                    <input 
-                       type="checkbox" 
-                       className="w-3.5 h-3.5 rounded border-white/30 bg-white/10 text-white focus:ring-white/50 cursor-pointer"
-                       checked={data.length > 0 && selectedItems.size === data.length}
-                       onChange={toggleSelectAll}
+                    <input
+                      type="checkbox"
+                      className="w-3.5 h-3.5 rounded border-white/30 bg-white/10 text-white focus:ring-white/50 cursor-pointer"
+                      checked={data.length > 0 && selectedItems.size === data.length}
+                      onChange={toggleSelectAll}
                     />
                   </div>
                 </th>
@@ -187,21 +187,21 @@ export default function ProductionAllProducts() {
               ) : data.length > 0 ? (
                 data.map((item) => (
                   <tr key={item.id} className={cn(
-                      "group transition-all duration-300 cursor-pointer",
-                      selectedItems.has(item.id) ? "bg-indigo-50/60" : "hover:bg-slate-50/80"
+                    "group transition-all duration-300 cursor-pointer",
+                    selectedItems.has(item.id) ? "bg-indigo-50/60" : "hover:bg-slate-50/80"
                   )} onClick={() => toggleSelectItem(item.id)}>
                     <td className="px-4 py-2.5 text-center" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-center">
-                        <input 
-                           type="checkbox" 
-                           className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-transform group-hover:scale-110"
-                           checked={selectedItems.has(item.id)}
-                           onChange={() => toggleSelectItem(item.id)}
+                        <input
+                          type="checkbox"
+                          className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer transition-transform group-hover:scale-110"
+                          checked={selectedItems.has(item.id)}
+                          onChange={() => toggleSelectItem(item.id)}
                         />
                       </div>
                     </td>
                     <td className="px-4 py-2.5">
-                       <p className="text-sm font-black text-slate-900 text-center tabular-nums">{item.sNo}</p>
+                      <p className="text-sm font-black text-slate-900 text-center tabular-nums">{item.sNo}</p>
                     </td>
                     <td className="px-4 py-2.5">
                       <div className="space-y-0.5">
@@ -219,38 +219,38 @@ export default function ProductionAllProducts() {
                     </td>
                     <td className="px-4 py-2.5 text-center">
                       <span className="text-sm font-black text-slate-900 tabular-nums">
-                         {Math.round(Number(item.pendingQty || 0))}
+                        {Math.round(Number(item.pendingQty || 0))}
                       </span>
                     </td>
                     <td className="px-4 py-2.5">
-                       <div className="flex items-center justify-center gap-4">
-                           <div className="flex flex-col items-center">
-                              <span className="text-sm font-black text-slate-900">{item.bld || 0}</span>
-                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">bld</span>
-                           </div>
-                           <div className="flex flex-col items-center">
-                              <span className="text-sm font-black text-slate-900">{item.crt || 0}</span>
-                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">CRT</span>
-                           </div>
-                           <div className="flex flex-col items-center">
-                              <span className="text-sm font-black text-slate-900">{item.smallCrt || 0}</span>
-                              <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Small</span>
-                           </div>
-                       </div>
+                      <div className="flex items-center justify-center gap-4">
+                        <div className="flex flex-col items-center">
+                          <span className="text-sm font-black text-slate-900">{item.bld || 0}</span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">bld</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-sm font-black text-slate-900">{item.crt || 0}</span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">CRT</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                          <span className="text-sm font-black text-slate-900">{item.smallCrt || 0}</span>
+                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Small</span>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ))
               ) : (
-                 <tr>
+                <tr>
                   <td colSpan={6} className="px-10 py-48 text-center">
-                     <div className="flex flex-col items-center gap-6">
-                        <div className="w-32 h-32 rounded-[4rem] bg-slate-50 flex items-center justify-center text-slate-200">
-                          <Package className="w-16 h-16" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-3xl font-black text-slate-300">Work Queue Empty</p>
-                        </div>
-                     </div>
+                    <div className="flex flex-col items-center gap-6">
+                      <div className="w-32 h-32 rounded-[4rem] bg-slate-50 flex items-center justify-center text-slate-200">
+                        <Package className="w-16 h-16" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-3xl font-black text-slate-300">Work Queue Empty</p>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               )}
@@ -278,15 +278,15 @@ export default function ProductionAllProducts() {
             </div>
           ))
         ) : error ? (
-           <div className="bg-white p-10 rounded-3xl border border-slate-200 text-center space-y-4">
-             <AlertCircle className="w-12 h-12 text-rose-500 mx-auto" />
-             <p className="text-slate-900 font-black">Something went wrong</p>
-             <Button onClick={handleRefresh} size="sm" className="bg-rose-600">Retry</Button>
-           </div>
+          <div className="bg-white p-10 rounded-3xl border border-slate-200 text-center space-y-4">
+            <AlertCircle className="w-12 h-12 text-rose-500 mx-auto" />
+            <p className="text-slate-900 font-black">Something went wrong</p>
+            <Button onClick={handleRefresh} size="sm" className="bg-rose-600">Retry</Button>
+          </div>
         ) : data.length > 0 ? (
           data.map((item) => (
-            <div 
-              key={item.id} 
+            <div
+              key={item.id}
               className={cn(
                 "bg-white p-5 rounded-3xl border transition-all duration-300 active:scale-[0.98]",
                 selectedItems.has(item.id) ? "border-indigo-500 bg-indigo-50/30" : "border-slate-200"
@@ -298,11 +298,11 @@ export default function ProductionAllProducts() {
                   <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{item.productCode}</p>
                   <p className="text-sm font-black text-slate-800 leading-tight">{item.productName}</p>
                 </div>
-                <input 
-                   type="checkbox" 
-                   className="w-5 h-5 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                   checked={selectedItems.has(item.id)}
-                   readOnly
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 rounded-lg border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  checked={selectedItems.has(item.id)}
+                  readOnly
                 />
               </div>
 

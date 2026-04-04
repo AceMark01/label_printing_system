@@ -3,7 +3,7 @@ import { getCachedData } from '@/lib/data-cache';
 import { supabase } from '@/lib/supabase';
 
 const APPS_SCRIPT_URL = process.env.GOOGLE_SHEET_API_URL || '';
-const NEW_API_URL = process.env.NEW_LEGACY_API_URL || 'http://eksai12.ddns.net:8786/ek_api/googleAutomation/ReadyForDeliveryV2.ashx';
+const NEW_API_URL = process.env.NEW_LEGACY_API_URL || 'http://eksai12.ddns.net:8786/ek_api/googleAutomation/LabelPrinting.ashx';
 const USE_SUPABASE = process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.NEXT_PUBLIC_SUPABASE_URL !== 'your_supabase_project_url';
 
@@ -123,18 +123,14 @@ export async function GET(request: NextRequest) {
         }
 
         // --- MASTER DATA CROSS-REFERENCE ---
-        // Fetch all parties and products to use for translation mapping
-        // This is more efficient for batch processing than individual queries
         const [{ data: masterParties }, { data: masterProducts }] = await Promise.all([
             supabase.from('parties').select('*'),
             supabase.from('products').select('*')
         ]);
 
-        // Create fast lookup maps
         const partyMap = new Map((masterParties || []).map(p => [(p.name_eng || '').toLowerCase().trim(), p]));
         const productMap = new Map((masterProducts || []).map(p => [(p.item_name_eng || p.name_eng || '').toLowerCase().trim(), p]));
 
-        // Fetch already printed labels from both tracking and history tables
         const [
             { data: printedTracking },
             { data: printedHistory }
@@ -153,50 +149,40 @@ export async function GET(request: NextRequest) {
             const lowerTarget = targetKey.toLowerCase();
             const keys = Object.keys(obj);
 
-            // Try case-insensitive exact match first
             const exactKey = keys.find(k => k.toLowerCase() === lowerTarget);
             if (exactKey) return obj[exactKey];
 
-            // Try removing spaces (fuzzy match)
             const cleanTarget = lowerTarget.replace(/\s+/g, '');
             const fuzzyKey = keys.find(k => k.toLowerCase().replace(/\s+/g, '') === cleanTarget);
             if (fuzzyKey) return obj[fuzzyKey];
-
-            // Field mapping for Quantity
-            if (lowerTarget === 'quantity' || lowerTarget === 'dispatchqty' || lowerTarget === 'actualqty') {
-                return obj['DispatchQty'] || obj['ActualQty'] || obj['Qty'] || obj['quantity'];
-            }
-
-            // Field mapping for Transporter
-            if (lowerTarget === 'transporter' || lowerTarget === 'transportername' || lowerTarget === 'transportname') {
-                return obj['Transporter'] || obj['TransporterName'] || obj['TransportName'];
-            }
-
-            // Field mapping for Godown
-            if (lowerTarget === 'godown' || lowerTarget === 'godownname' || lowerTarget === 'gname') {
-                return obj['Godown'] || obj['GodownName'] || obj['GName'] || obj['godown'] || obj['GODOWN'];
-            }
 
             return undefined;
         };
 
         const mappedData = allData.map((item: any, index: number) => {
-            const orderNo = getValue(item, 'OrderNo') || getValue(item, 'SOrderNo') || `item-${index}`;
-            const id = `${orderNo}-${index}`;
-            const englishParty = (getValue(item, 'AccountName') || getValue(item, 'Party') || '').toString().trim();
+            const rawOrderNo = getValue(item, 'SOrderNoString') || getValue(item, 'SOrderNo') || getValue(item, 'OrderNo') || `item-${index}`;
+            const id = `${rawOrderNo}-${index}`;
+
+            const englishParty = (getValue(item, 'PartyName') || getValue(item, 'AccountName') || getValue(item, 'Party') || '').toString().trim();
             const englishProduct = (getValue(item, 'ProductName') || getValue(item, 'Item') || '').toString().trim();
             const englishCity = (getValue(item, 'City') || '').toString().trim();
 
             const masterParty = partyMap.get(englishParty.toLowerCase());
             const masterProduct = productMap.get(englishProduct.toLowerCase());
 
+            // PENDING QUANTITY logic: Prefer 'Balance' if present (new API), then 'DispatchQty', else use QTY
+            const pendingQty = parseFloat((getValue(item, 'Balance') || getValue(item, 'DispatchQty') || getValue(item, 'QTY') || '0').toString().replace(/[^-0-9.]/g, '')) || 0;
+            const totalQty = parseFloat((getValue(item, 'QTY') || '0').toString().replace(/[^-0-9.]/g, '')) || 0;
+
             return {
                 id,
+                orderRef: rawOrderNo,
                 city: englishCity,
                 party: englishParty,
                 item: englishProduct,
-                quantity: parseInt(getValue(item, 'DispatchQty')) || 0,
-                remark: getValue(item, 'Remark') || '',
+                quantity: Math.round(pendingQty),
+                totalQty: Math.round(totalQty),
+                remark: getValue(item, 'Remarks') || getValue(item, 'Remark') || '',
                 bdlQty: getValue(item, 'DispatchBdlQty') || '',
                 date: getValue(item, 'SOrderDate') || getValue(item, 'CreatedOn') || new Date().toISOString().split('T')[0],
                 partyNames: {
@@ -211,7 +197,7 @@ export async function GET(request: NextRequest) {
                     hi: getValue(item, 'City in Hindi') || masterParty?.city_hi || (englishCity && CITY_TRANSLATIONS[englishCity.toLowerCase().trim()] ? CITY_TRANSLATIONS[englishCity.toLowerCase().trim()]?.hi : '') || englishCity,
                     od: getValue(item, 'City in oriya') || masterParty?.city_od || (englishCity && CITY_TRANSLATIONS[englishCity.toLowerCase().trim()] ? CITY_TRANSLATIONS[englishCity.toLowerCase().trim()]?.od : '') || englishCity,
                 },
-                transporter: getValue(item, 'Transporter') || getValue(item, 'TransportName') || '',
+                transporter: getValue(item, 'Transport') || getValue(item, 'Transporter') || getValue(item, 'TransportName') || '',
                 godown: (getValue(item, 'Godown') || getValue(item, 'GodownName') || getValue(item, 'GName') || '').toString().trim(),
                 pdf: getValue(item, 'PDF Link') || '',
                 originalData: item,

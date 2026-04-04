@@ -4,6 +4,7 @@ export interface LabelNames {
 
 export interface Label {
   id: string;
+  orderRef?: string;
   city: string;
   party: string;
   partyNames?: LabelNames;
@@ -11,6 +12,7 @@ export interface Label {
   itemNames?: LabelNames;
   cityNames?: LabelNames;
   quantity: number;
+  totalQty?: number;
   remark?: string;
   bdlQty?: string | number;
   date?: string;
@@ -27,6 +29,7 @@ export interface FilterState {
   parties: string[];
   items: string[];
   transporters: string[];
+  godowns: string[];
   q: string;
   includeProcessed: boolean;
 }

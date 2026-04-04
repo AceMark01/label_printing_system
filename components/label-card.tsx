@@ -169,6 +169,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                       </span>
                     )}
                   </div>
+                  
                 </div>
 
                 {/* Bundle */}

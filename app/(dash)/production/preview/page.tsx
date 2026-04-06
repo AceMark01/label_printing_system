@@ -118,12 +118,21 @@ export default function ProductionPreview() {
     setItems(items.map(item => {
       if (item.id === id) {
         const currentVis = item.fieldVisibility || { productName: true, bundles: true };
+        const nextValue = !currentVis[field];
+
+        const newVis = {
+          ...currentVis,
+          [field]: nextValue
+        };
+
+        // If product name is hidden, also hide bundles by default
+        if (field === 'productName' && nextValue === false) {
+          newVis.bundles = false;
+        }
+
         return {
           ...item,
-          fieldVisibility: {
-            ...currentVis,
-            [field]: !currentVis[field]
-          }
+          fieldVisibility: newVis
         };
       }
       return item;
@@ -456,7 +465,7 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
 
   useEffect(() => {
     const isMissing = !item.productNameHi || item.productNameHi.trim() === '' || item.productNameHi.toLowerCase() === item.productName.toLowerCase();
-    
+
     if (isMissing && item.productName) {
       const fetchTranslation = async () => {
         try {
@@ -483,24 +492,26 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
     <div className="flex-1 flex flex-col justify-between p-10 md:p-14 overflow-hidden bg-white relative">
       <div className="flex flex-col gap-10 flex-1">
         {/* Product Section */}
-        <div className={cn("flex flex-col gap-4 transition-opacity", !vis.productName && "opacity-0 print:invisible")}>
+        <div className={cn("flex flex-col gap-4 transition-opacity", !vis.productName && "opacity-20 print:invisible")}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 print:hidden">
-                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
+              <button
+                onClick={() => isEditing && toggleFieldVisibility(item.id, 'productName')}
+                disabled={!isEditing}
+                className={cn(
+                  "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all",
+                  vis.productName ? "bg-blue-600" : "bg-gray-200",
+                  !isEditing && "cursor-default"
+                )}
+              >
+                {vis.productName && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
               <span className="text-gray-400 font-medium text-[24px]">उत्पाद विवरण:</span>
             </div>
-            {isEditing && (
-              <input
-                type="checkbox"
-                checked={vis.productName}
-                onChange={() => toggleFieldVisibility(item.id, 'productName')}
-                className="w-5 h-5 print:hidden cursor-pointer"
-              />
-            )}
             <div className="flex flex-col items-end">
               <span className="text-gray-400 font-bold text-[14px] uppercase tracking-widest">Product Code</span>
               <span className="text-gray-900 font-black text-[32px] leading-none">{item.productCode}</span>
@@ -537,32 +548,34 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
         <div className="border-b border-dotted border-gray-300 w-full" />
 
         {/* Quantities Section */}
-        <div className={cn("flex flex-col gap-6 transition-opacity", !vis.bundles && "opacity-0 print:invisible")}>
+        <div className={cn("flex flex-col gap-6 transition-opacity", !vis.bundles && "opacity-20 print:invisible")}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 print:hidden">
-                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
+              <button
+                onClick={() => isEditing && toggleFieldVisibility(item.id, 'bundles')}
+                disabled={!isEditing}
+                className={cn(
+                  "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all",
+                  vis.bundles ? "bg-blue-600" : "bg-gray-200",
+                  !isEditing && "cursor-default"
+                )}
+              >
+                {vis.bundles && (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                )}
+              </button>
               <span className="text-gray-400 font-medium text-[24px]">कुल बंडल:</span>
             </div>
-            {isEditing && (
-              <input
-                type="checkbox"
-                checked={vis.bundles}
-                onChange={() => toggleFieldVisibility(item.id, 'bundles')}
-                className="w-5 h-5 print:hidden cursor-pointer"
-              />
-            )}
           </div>
 
-          <div className="flex items-end gap-12">
+          <div className="flex items-end gap-6">
             <div className="relative">
-              <span className="text-[96px] font-black text-gray-900 leading-none tracking-tighter">
+              <span className="text-[72px] font-black text-gray-900 leading-none tracking-tighter tabular-nums">
                 {item.totalBundles}
               </span>
-              <div className="absolute -bottom-2 left-0 right-0 h-1.5 bg-blue-200" />
+              <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-blue-200" />
             </div>
 
             <div className="flex flex-col gap-1 pb-2">

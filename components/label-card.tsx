@@ -43,14 +43,14 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
   const activeLanguages = [...languages]
     .sort((a, b) => preferredOrder.indexOf(a) - preferredOrder.indexOf(b))
     .slice(0, 2);
-  
+
   if (activeLanguages.length === 0) activeLanguages.push('hi', 'od');
   const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, Record<string, string>>>({});
 
   useEffect(() => {
     activeLanguages.forEach(async (lang) => {
       if (lang === 'en') return;
-      
+
       const fieldsToTranslate = [
         { key: 'party', text: label.party, existing: label.partyNames?.[lang] },
         { key: 'item', text: label.item, existing: label.itemNames?.[lang] },
@@ -60,7 +60,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
       fieldsToTranslate.forEach(async (field) => {
         // Translate if no translation exists or if it exactly matches English (case-insensitive)
         const isMissing = !field.existing || field.existing.trim() === '' || field.existing.toLowerCase() === field.text.toLowerCase();
-        
+
         if (isMissing && field.text) {
           try {
             const res = await fetch('/api/translate', {
@@ -90,7 +90,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
     if (lang === 'en') return label.party;
     return dynamicTranslations[lang]?.party || label.partyNames?.[lang] || label.party;
   };
-  
+
   const getItemName = (lang: Language) => {
     if (lang === 'en') return label.item;
     return dynamicTranslations[lang]?.item || label.itemNames?.[lang] || label.item;
@@ -135,12 +135,21 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
               {/* Product Row */}
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 flex-1">
-                  <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center shrink-0 print:hidden">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                  <div className="flex items-baseline gap-2">
+                  <button
+                    onClick={() => onVisibilityChange?.(label.id, 'product', !fieldVisibility?.[lang]?.product, lang)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all active:scale-90"
+                    style={{ backgroundColor: fieldVisibility?.[lang]?.product !== false ? '#2563eb' : '#e5e7eb' }}
+                  >
+                    {fieldVisibility?.[lang]?.product !== false && (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </button>
+                  <div className={cn(
+                    "flex items-baseline gap-2 transition-opacity duration-200",
+                    fieldVisibility?.[lang]?.product === false && "opacity-20 print:invisible"
+                  )}>
                     <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
                       {t.item}:
                     </span>
@@ -152,36 +161,45 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
               </div>
 
               {/* Qty, Bundle, City Row */}
-              <div className="flex items-center gap-8">
+              <div className="flex items-center gap-4">
                 {/* Quantity */}
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center shrink-0 print:hidden">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>
-                  <div className="flex items-baseline gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <button 
+                    onClick={() => onVisibilityChange?.(label.id, 'quantity', !fieldVisibility?.[lang]?.quantity, lang)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all active:scale-90"
+                    style={{ backgroundColor: fieldVisibility?.[lang]?.quantity !== false ? '#2563eb' : '#e5e7eb' }}
+                  >
+                    {fieldVisibility?.[lang]?.quantity !== false && (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </button>
+                  <div className={cn(
+                    "flex items-baseline gap-1.5 transition-opacity duration-200",
+                    fieldVisibility?.[lang]?.quantity === false && "opacity-20 print:invisible"
+                  )}>
                     <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
                       {t.qty}:
                     </span>
-                    {onQuantityChange ? (
-                      <input 
-                        type="text" 
-                        value={label.quantity} 
-                        onChange={(e) => onQuantityChange(label.id, e.target.value)}
-                        className="w-24 text-gray-900 font-extrabold text-[44px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-auto"
-                      />
-                    ) : (
-                      <span className="text-gray-900 font-extrabold text-[44px]">
-                        {label.quantity}
-                      </span>
-                    )}
+                    <div className="text-gray-900 font-extrabold text-[44px] tabular-nums tracking-tight">
+                      {onQuantityChange ? (
+                        <input 
+                          type="text" 
+                          value={label.quantity} 
+                          onChange={(e) => onQuantityChange(label.id, e.target.value)}
+                          className="w-auto min-w-[60px] text-gray-900 font-extrabold text-[44px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-auto tabular-nums tracking-tight"
+                          style={{ width: `${Math.max(2, label.quantity?.toString().length || 1)}ch` }}
+                        />
+                      ) : (
+                        label.quantity
+                      )}
+                    </div>
                   </div>
-                  
                 </div>
 
                 {/* Bundle */}
-                <div className="flex items-baseline gap-1 border-l border-gray-200 pl-6 ml-2">
+                <div className="flex items-baseline gap-1 border-l border-gray-200 pl-4">
                   <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
                     {t.bundles}:
                   </span>
@@ -191,10 +209,11 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                         type="text" 
                         value={label.bdlQty || '1'} 
                         onChange={(e) => onBundleChange(label.id, e.target.value)}
-                        className="w-16 text-gray-900 font-extrabold text-[44px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-16"
+                        className="w-auto min-w-[40px] text-gray-900 font-extrabold text-[44px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-16 tabular-nums tracking-tight"
+                        style={{ width: `${Math.max(1, (label.bdlQty || '1').toString().length)}ch` }}
                       />
                     ) : (
-                      <div className="min-w-[20px] text-gray-900 font-extrabold text-[44px] text-center px-1">
+                      <div className="min-w-[20px] text-gray-900 font-extrabold text-[44px] text-center px-1 tabular-nums tracking-tight">
                         {label.bdlQty || '1'}
                       </div>
                     )}

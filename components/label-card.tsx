@@ -127,7 +127,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                 <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
                   {t.party}:
                 </span>
-                <span className={cn("text-gray-900 font-extrabold leading-tight", getDynamicFontSize(partyName, 28))}>
+                <span className={cn("text-gray-900 font-extrabold leading-tight", getDynamicFontSize(partyName, 44))}>
                   {partyName}
                 </span>
               </div>
@@ -153,7 +153,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                     <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
                       {t.item}:
                     </span>
-                    <span className={cn("text-gray-900 font-extrabold leading-tight", getDynamicFontSize(itemName, 28))}>
+                    <span className={cn("text-gray-900 font-extrabold leading-tight", getDynamicFontSize(itemName, 44))}>
                       {itemName}
                     </span>
                   </div>
@@ -226,7 +226,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                   <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
                     {t.city}:
                   </span>
-                  <span className="text-gray-900 font-extrabold text-[32px]">
+                  <span className="text-gray-900 font-extrabold text-[24px]">
                     {getCityName(lang)}
                   </span>
                 </div>
@@ -237,15 +237,9 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-50/50 border-t border-gray-100 px-8 py-2 flex items-center justify-between print:bg-transparent">
-        <div className="flex items-center gap-2">
-          <span className="text-gray-400 font-bold text-[14px]">DATE:</span>
-          <span className="text-gray-500 font-bold text-[15px]">
-            {new Date(label.date || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-          </span>
-        </div>
+      <div className="bg-gray-50/50 border-t border-gray-100 px-8 py-2 flex items-center justify-end print:bg-transparent">
         <div className="flex items-center gap-1.5">
-          <img src="/ace.png" alt="A C E" className="h-8 w-auto object-contain" />
+          <img src="/ace.png" alt="Logo" className="h-10 w-auto object-contain" />
         </div>
       </div>
     </div>

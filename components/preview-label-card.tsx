@@ -118,7 +118,7 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
                                 <span className="text-gray-400 font-medium text-[14px] shrink-0">
                                     {t.party}:
                                 </span>
-                                <span className="text-gray-900 font-black text-[16px] truncate">
+                                <span className="text-gray-900 font-black text-[20px] truncate">
                                     {partyName}
                                 </span>
                             </div>
@@ -144,7 +144,7 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
                                         {t.item}:
                                     </span>
                                     <span className={cn(
-                                        "font-black text-[16px] truncate",
+                                        "font-black text-[20px] truncate",
                                         isProductVisible ? "text-gray-800" : "text-gray-300"
                                     )}>
                                         {itemName}
@@ -218,7 +218,7 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
                                     <span className="text-gray-400 font-medium text-[14px]">
                                         {t.city}:
                                     </span>
-                                    <span className="text-gray-900 font-black text-[18px] uppercase">
+                                    <span className="text-gray-900 font-black text-[14px] uppercase whitespace-nowrap">
                                         {getCityName(lang)}
                                     </span>
                                 </div>

@@ -183,9 +183,11 @@ export default function MasterDataForm() {
     document.body.removeChild(link);
   };
 
+  const [activeTab, setActiveTab] = useState('party');
+
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-5 duration-500 pb-20 px-2 max-w-6xl mx-auto">
-      <Tabs defaultValue="party" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-100 pb-6 mb-10">
             <TabsList className="bg-slate-100 p-1 rounded-xl h-11 w-full lg:w-auto">
                 <TabsTrigger value="party" className="rounded-lg px-8 font-bold data-[state=active]:bg-white data-[state=active]:text-indigo-700 data-[state=active]:shadow-sm transition-all flex items-center gap-2 flex-1 lg:flex-none">
@@ -202,8 +204,7 @@ export default function MasterDataForm() {
                 <Button 
                     variant="outline" 
                     onClick={() => {
-                        const activeTab = document.querySelector('[data-state="active"][role="tab"]')?.getAttribute('value') as any;
-                        downloadSampleCsv(activeTab || 'party');
+                        downloadSampleCsv(activeTab as any);
                     }}
                     className="h-11 px-5 rounded-xl font-bold border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm flex items-center gap-2"
                 >
@@ -218,8 +219,7 @@ export default function MasterDataForm() {
                         id="csv-upload"
                         className="absolute inset-0 opacity-0 cursor-pointer z-10"
                         onChange={(e) => {
-                            const activeTab = document.querySelector('[data-state="active"][role="tab"]')?.getAttribute('value') as any;
-                            handleCsvUpload(activeTab || 'party', e);
+                            handleCsvUpload(activeTab as any, e);
                         }}
                     />
                     <Button className="h-11 px-6 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold shadow-lg shadow-slate-900/10 flex items-center gap-2 transition-all">

@@ -212,38 +212,6 @@ export default function ProductionPreview() {
         </div>
       )}
 
-      {/* Post-Print Confirmation Modal */}
-      {isPrintSuccessOpen && (
-        <div className="fixed inset-0 z-[100] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6 print:hidden">
-          <div className="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden max-w-sm w-full animate-in zoom-in duration-300">
-            <div className="p-8 text-center space-y-6">
-              <div className="mx-auto w-20 h-20 rounded-[2rem] bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
-                <Printer className="w-10 h-10" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-2xl font-black text-slate-900 tracking-tight">Printed Successfully?</h3>
-              </div>
-              <div className="flex flex-col gap-3">
-                <Button
-                  onClick={handleConfirm}
-                  disabled={isSaving}
-                  className="rounded-2xl h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl shadow-indigo-100 uppercase tracking-widest disabled:opacity-50"
-                >
-                  {isSaving ? 'Updating...' : 'Yes, Mark Done'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => setIsPrintSuccessOpen(false)}
-                  className="rounded-xl h-12 text-slate-400 font-bold uppercase tracking-widest hover:bg-slate-50"
-                >
-                  No, Go Back
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Top Header (Mobile & Desktop) */}
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-3 md:py-4 flex items-center justify-between print:hidden">
         <div className="flex items-center gap-2 md:gap-4">
@@ -287,7 +255,7 @@ export default function ProductionPreview() {
       </div>
 
       <div className="max-w-5xl mx-auto w-full p-4 md:p-8 space-y-8 pb-12">
-        {/* Mobile-Only Card View - Similar to all-products queue */}
+        {/* Mobile-Only Card View */}
         <div className="lg:hidden flex flex-col gap-6 print:hidden">
           {items.map((item) => (
             <div
@@ -373,7 +341,6 @@ export default function ProductionPreview() {
                 backgroundColor: 'white'
               }}
             >
-              {/* Entire Copy Toggle - Edit mode only */}
               {isEditing && (
                 <div className="absolute top-4 left-6 z-10 print:hidden flex items-center gap-3 bg-white/90 backdrop-blur p-2 rounded-lg shadow-sm border border-slate-200">
                   <input
@@ -605,15 +572,9 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
       </div>
 
       {/* Footer Area */}
-      <div className="mt-auto pt-8 border-t border-gray-100 flex items-center justify-between print:bg-transparent">
-        <div className="flex items-center gap-3">
-          <span className="text-gray-400 font-black text-[16px] uppercase tracking-widest">DATE:</span>
-          <span className="text-gray-500 font-bold text-[18px]">
-            {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5 opacity-40">
-          <span className="text-[22px] font-black tracking-[0.3em] text-gray-700 italic">A C E</span>
+      <div className="mt-auto pt-8 border-t border-gray-100 flex items-center justify-end print:bg-transparent">
+        <div className="flex items-center gap-1.5">
+          <img src="/ace.png" alt="A C E" className="h-10 w-auto object-contain" />
         </div>
       </div>
     </div>

@@ -41,16 +41,23 @@ export async function GET(request: NextRequest) {
             return undefined;
         };
 
+        // Fetch Master Data
+        const { data: masterProducts } = await import('@/lib/supabase').then(m => m.supabase.from('products').select('*'));
+        const productMap = new Map((masterProducts || []).map(p => [(p.item_name_eng || p.name_eng || '').toLowerCase().trim(), p]));
+
         const mappedData = allData.map((item: any, index: number) => {
             const doneVal = (getValue(item, 'Done') || '').toString().toLowerCase().trim();
             const sNoVal = getValue(item, 'S NO') || getValue(item, 'SNO') || index + 1;
+
+            const englishProduct = (getValue(item, 'ProductName') || getValue(item, 'Product Name') || '').toString().trim();
+            const masterProduct = productMap.get(englishProduct.toLowerCase());
 
             return {
                 id: index + 1,
                 sNo: sNoVal,
                 sNoNum: parseInt(sNoVal.toString().replace(/[^0-9]/g, '')) || 0,
                 productCode: getValue(item, 'ProductCode') || getValue(item, 'Product Code') || '',
-                productName: getValue(item, 'ProductName') || getValue(item, 'Product Name') || '',
+                productName: englishProduct,
                 godown: getValue(item, 'Godown') || '',
                 pendingQty: getValue(item, 'Production Pending qty') || getValue(item, 'Pending Qty') || 0,
                 done: doneVal === 'done' || doneVal === 'yes' || doneVal === 'true' || doneVal === '1',
@@ -61,8 +68,8 @@ export async function GET(request: NextRequest) {
                 smallCrt: getValue(item, 'SmallCRT') || getValue(item, 'Small CRT') || '',
 
                 // Translation support
-                productNameHi: getValue(item, 'Item In hindi') || getValue(item, 'Product Name Hindi') || '',
-                productNameOd: getValue(item, 'Item In oriya') || getValue(item, 'Product Name Oriya') || '',
+                productNameHi: masterProduct?.item_name_hi || masterProduct?.name_hi || getValue(item, 'Item In hindi') || getValue(item, 'Product Name Hindi') || englishProduct,
+                productNameOd: masterProduct?.item_name_od || masterProduct?.name_od || getValue(item, 'Item In oriya') || getValue(item, 'Product Name Oriya') || englishProduct,
                 godownHi: getValue(item, 'Godown in hindi') || getValue(item, 'Godown Hindi') || '',
                 godownOd: getValue(item, 'Godown in oriya') || getValue(item, 'Godown Oriya') || '',
 

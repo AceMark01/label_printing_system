@@ -385,7 +385,7 @@ export default function ProductionPreview() {
                 style={{ height: '135mm', boxSizing: 'border-box' }}
               >
                 <div className="w-full h-full border-2 border-slate-900 rounded-lg overflow-hidden flex flex-col">
-                  <ProductionLabelContent item={item} isEditing={isEditing} handleEditChange={handleEditChange} handleBundleChange={handleBundleChange} getFontSize={getFontSize} toggleFieldVisibility={toggleFieldVisibility} />
+                  <ProductionLabelContent item={item} isEditing={false} handleEditChange={handleEditChange} handleBundleChange={handleBundleChange} getFontSize={getFontSize} toggleFieldVisibility={toggleFieldVisibility} />
                 </div>
               </div>
             </div>
@@ -466,8 +466,8 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
   const productNameHi = dynamicHiName || item.productNameHi || item.productName;
 
   return (
-    <div className="flex-1 flex flex-col justify-between p-10 md:p-14 overflow-hidden bg-white relative">
-      <div className="flex flex-col gap-10 flex-1">
+    <div className="flex-1 flex flex-col justify-between p-6 md:p-8 overflow-hidden bg-white relative">
+      <div className="flex flex-col gap-6 flex-1">
         {/* Product Section */}
         <div className={cn("flex flex-col gap-4 transition-opacity", !vis.productName && "opacity-20 print:invisible")}>
           <div className="flex items-center justify-between">
@@ -476,45 +476,45 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
                 onClick={() => isEditing && toggleFieldVisibility(item.id, 'productName')}
                 disabled={!isEditing}
                 className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all",
+                  "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all",
                   vis.productName ? "bg-blue-600" : "bg-gray-200",
                   !isEditing && "cursor-default"
                 )}
               >
                 {vis.productName && (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 )}
               </button>
-              <span className="text-gray-400 font-medium text-[24px]">उत्पाद विवरण:</span>
+              <span className="text-gray-400 font-medium text-[20px] md:text-[22px]">उत्पाद विवरण:</span>
             </div>
             <div className="flex flex-col items-end">
-              <span className="text-gray-400 font-bold text-[14px] uppercase tracking-widest">Product Code</span>
-              <span className="text-gray-900 font-black text-[32px] leading-none">{item.productCode}</span>
+              <span className="text-gray-400 font-bold text-[12px] md:text-[14px] uppercase tracking-widest leading-none">Product Code</span>
+              <span className="text-gray-900 font-black text-[28px] md:text-[32px] leading-tight mt-1">{item.productCode}</span>
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 md:space-y-3">
             {isEditing ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <input
                   value={item.productName}
                   onChange={(e) => handleEditChange(item.id, 'productName', e.target.value)}
-                  className="w-full text-[40px] font-black border-b-2 border-gray-100 outline-none pb-2 uppercase focus:border-blue-600"
+                  className="w-full text-[36px] md:text-[40px] font-black border-b-2 border-gray-100 outline-none pb-1 uppercase focus:border-blue-600"
                 />
                 <input
                   value={productNameHi}
                   onChange={(e) => handleEditChange(item.id, 'productNameHi', e.target.value)}
-                  className="w-full text-[32px] font-black border-b-2 border-gray-100 outline-none pb-2 focus:border-blue-600"
+                  className="w-full text-[28px] md:text-[32px] font-black border-b-2 border-gray-100 outline-none pb-1 focus:border-blue-600"
                 />
               </div>
             ) : (
               <div className="space-y-1">
-                <h2 className={cn("font-black text-gray-900 leading-tight uppercase tracking-tight", getFontSize(item.productName, "text-[56px]"))}>
+                <h2 className={cn("font-black text-gray-900 leading-tight uppercase tracking-tight", getFontSize(item.productName, "text-[52px]"))}>
                   {item.productName}
                 </h2>
-                <h2 className={cn("font-black text-gray-700 leading-tight", getFontSize(productNameHi, "text-[40px]"))}>
+                <h2 className={cn("font-black text-gray-700 leading-tight", getFontSize(productNameHi, "text-[36px]"))}>
                   {productNameHi}
                 </h2>
               </div>
@@ -532,22 +532,22 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
                 onClick={() => isEditing && toggleFieldVisibility(item.id, 'bundles')}
                 disabled={!isEditing}
                 className={cn(
-                  "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all",
+                  "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all",
                   vis.bundles ? "bg-blue-600" : "bg-gray-200",
                   !isEditing && "cursor-default"
                 )}
               >
                 {vis.bundles && (
-                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 )}
               </button>
-              <span className="text-gray-400 font-medium text-[24px]">कुल बंडल:</span>
+              <span className="text-gray-400 font-medium text-[20px] md:text-[22px]">कुल बंडल:</span>
             </div>
           </div>
 
-          <div className="flex items-end gap-6">
+          <div className="flex items-end gap-6 md:gap-8">
             <div className="relative">
               <span className="text-[72px] font-black text-gray-900 leading-none tracking-tighter tabular-nums">
                 {item.totalBundles}
@@ -555,14 +555,14 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
               <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-blue-200" />
             </div>
 
-            <div className="flex flex-col gap-1 pb-2">
-              <span className="text-gray-400 font-bold text-[16px] uppercase tracking-widest">Type: {item.selectedBundle}</span>
-              <span className="text-gray-400 font-bold text-[16px] uppercase tracking-widest">Qty: {item.divisor} per {item.selectedBundle}</span>
+            <div className="flex flex-col gap-1 pb-1">
+              <span className="text-gray-400 font-bold text-[14px] uppercase tracking-widest leading-none">Type: {item.selectedBundle}</span>
+              <span className="text-gray-400 font-bold text-[14px] uppercase tracking-widest leading-none mt-1.5">Qty: {item.divisor} per {item.selectedBundle}</span>
               {isEditing && (
                 <select
                   value={item.selectedBundle}
                   onChange={(e) => handleBundleChange(item.id, e.target.value)}
-                  className="mt-2 text-[14px] bg-gray-50 border border-gray-200 rounded-lg p-2 font-black cursor-pointer hover:bg-gray-100 print:hidden"
+                  className="mt-1.5 text-[12px] bg-gray-50 border border-gray-200 rounded-lg p-1.5 font-black cursor-pointer hover:bg-gray-100 print:hidden"
                 >
                   <option value="bld">Bld</option>
                   <option value="CRT">CRT</option>
@@ -573,18 +573,18 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
 
             <div className="flex-1" />
 
-            <div className="flex flex-col items-end pb-2">
-              <span className="text-gray-400 font-bold text-[14px] uppercase tracking-widest">GODOWN</span>
-              <span className="text-gray-900 font-black text-[32px]">{item.godown}</span>
+            <div className="flex flex-col items-end pb-1">
+              <span className="text-gray-400 font-bold text-[12px] md:text-[14px] uppercase tracking-widest leading-none">GODOWN</span>
+              <span className="text-gray-900 font-black text-[28px] md:text-[32px] leading-none mt-1.5">{item.godown}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Footer Area */}
-      <div className="mt-auto pt-8 border-t border-gray-100 flex items-center justify-end print:bg-transparent">
+      {/* Footer Area Area */}
+      <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-end print:bg-transparent">
         <div className="flex items-center gap-1.5">
-          <img src="/ace.png" alt="A C E" className="h-10 w-auto object-contain" />
+          <img src="/ace.png" alt="A C E" className="h-7 w-auto object-contain" />
         </div>
       </div>
     </div>

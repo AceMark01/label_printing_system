@@ -41,7 +41,7 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
     const activeLanguages = [...languages]
         .sort((a, b) => preferredOrder.indexOf(a) - preferredOrder.indexOf(b))
         .slice(0, 2);
-    
+
     if (activeLanguages.length === 0) activeLanguages.push('hi', 'od');
     const [dynamicTranslations, setDynamicTranslations] = useState<Record<string, Record<string, string>>>({});
 
@@ -98,6 +98,17 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
         return dynamicTranslations[lang]?.city || label.cityNames?.[lang] || label.city;
     };
 
+    const getDynamicFontSize = (text: string = '', baseSize: number = 18) => {
+        const len = text.length;
+        // Start shrinking at 25 chars to prevent line wrapping for names like the spiral notebook
+        if (len > 90) return `text-[${Math.max(11, baseSize - 7)}px]`;
+        if (len > 70) return `text-[${Math.max(13, baseSize - 5)}px]`;
+        if (len > 50) return `text-[${Math.max(15, baseSize - 3)}px]`;
+        if (len > 35) return `text-[${Math.max(16, baseSize - 2)}px]`;
+        if (len > 25) return `text-[${Math.max(17, baseSize - 1)}px]`;
+        return `text-[${baseSize}px]`;
+    };
+
     return (
         <div className="bg-white w-full rounded-xl shadow-md overflow-hidden border border-gray-100 flex flex-col font-sans h-full tracking-tight">
             <div className="p-4 sm:p-5 flex flex-col gap-3 flex-1">
@@ -118,13 +129,13 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
                                 <span className="text-gray-400 font-medium text-[14px] shrink-0">
                                     {t.party}:
                                 </span>
-                                <span className="text-gray-900 font-black text-[20px] truncate">
+                                <span className={cn("text-gray-900 font-extrabold leading-tight", getDynamicFontSize(partyName, 18))}>
                                     {partyName}
                                 </span>
                             </div>
 
                             <div className="flex items-center gap-2">
-                                <button 
+                                <button
                                     onClick={() => onToggleField?.(lang, 'product')}
                                     className="shrink-0 transition-transform active:scale-95"
                                 >
@@ -144,8 +155,9 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
                                         {t.item}:
                                     </span>
                                     <span className={cn(
-                                        "font-black text-[20px] truncate",
-                                        isProductVisible ? "text-gray-800" : "text-gray-300"
+                                        "font-black leading-tight",
+                                        isProductVisible ? "text-gray-800" : "text-gray-300",
+                                        getDynamicFontSize(itemName, 18)
                                     )}>
                                         {itemName}
                                     </span>
@@ -156,7 +168,7 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                                 {/* Quantity */}
                                 <div className="flex items-center gap-2">
-                                    <button 
+                                    <button
                                         onClick={() => onToggleField?.(lang, 'quantity')}
                                         className="shrink-0 transition-transform active:scale-95"
                                     >
@@ -198,9 +210,9 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
                                     </span>
                                     <div className="relative">
                                         {onUpdateBundle ? (
-                                            <input 
-                                                type="text" 
-                                                value={label.bdlQty || '1'} 
+                                            <input
+                                                type="text"
+                                                value={label.bdlQty || '1'}
                                                 onChange={(e) => onUpdateBundle(label.id, e.target.value)}
                                                 className="w-10 text-gray-900 font-black text-[20px] bg-transparent border-none p-0 focus:ring-0 text-center"
                                             />
@@ -231,12 +243,13 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
             {/* Footer */}
             <div className="bg-gray-50/50 border-t border-gray-100 px-4 py-1 flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400 font-bold text-[10px]">DATE:</span>
-                    <span className="text-gray-500 font-bold text-[11px]">
-                        {new Date(label.date || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    <span className="text-gray-500 font-bold text-[12px]">DATE:</span>
+                    <span className="text-gray-600 font-bold text-[13px]">
+                        {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-3 flex-1 justify-end">
+                    <div className="h-[1px] bg-gray-200 flex-1 max-w-[60px]" />
                     <img src="/ace.png" alt="A C E" className="h-6 w-auto object-contain" />
                 </div>
             </div>

@@ -41,9 +41,9 @@ export function A5PrintLayout({ labels, languages, fieldVisibility, onBundleChan
             style={{ height: '138mm', boxSizing: 'border-box' }}
           >
             <div className="w-full h-full border border-gray-100 rounded-lg overflow-hidden shadow-sm print:shadow-none print:border-2 print:border-black">
-              <LabelCard 
-                label={label} 
-                languages={languages} 
+              <LabelCard
+                label={label}
+                languages={languages}
                 fieldVisibility={fieldVisibility?.[label.id]}
                 onBundleChange={onBundleChange}
                 onVisibilityChange={onVisibilityChange}
@@ -62,9 +62,9 @@ export function A5PrintLayout({ labels, languages, fieldVisibility, onBundleChan
             style={{ height: '138mm', boxSizing: 'border-box' }}
           >
             <div className="w-full h-full border border-gray-100 rounded-lg overflow-hidden shadow-sm print:shadow-none print:border-2 print:border-black">
-              <LabelCard 
-                label={label} 
-                languages={languages} 
+              <LabelCard
+                label={label}
+                languages={languages}
                 fieldVisibility={fieldVisibility?.[label.id]}
                 onBundleChange={onBundleChange}
                 onVisibilityChange={onVisibilityChange}

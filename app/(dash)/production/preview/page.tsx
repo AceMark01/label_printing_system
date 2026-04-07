@@ -93,10 +93,13 @@ export default function ProductionPreview() {
 
   const getFontSize = (text: string, baseSize: string, limit: number = 20) => {
     if (!text) return baseSize;
-    if (text.length > limit * 2.5) return 'text-[16px]';
-    if (text.length > limit * 2) return 'text-[18px]';
-    if (text.length > limit * 1.5) return 'text-[24px]';
-    if (text.length > limit) return 'text-[32px]';
+    const len = text.length;
+    if (len > limit * 3) return 'text-[14px]';
+    if (len > limit * 2.5) return 'text-[16px]';
+    if (len > limit * 2) return 'text-[20px]';
+    if (len > limit * 1.5) return 'text-[28px]';
+    if (len > limit * 1.2) return 'text-[36px]';
+    if (len > limit) return 'text-[44px]';
     return baseSize;
   };
 
@@ -153,10 +156,17 @@ export default function ProductionPreview() {
       const visibleItems = items.filter(item => item.isVisible !== false);
       const ids = visibleItems.map(item => Number(item.id) + 1); // Row number in sheet (index + 2 usually, but API id starts at 1)
 
+      const userData = localStorage.getItem('user');
+      const user = userData ? JSON.parse(userData) : { name: 'Unknown System' };
+
       const response = await fetch('/api/production', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids })
+        body: JSON.stringify({ 
+          ids,
+          printed_by: user.name,
+          print_time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+        })
       });
 
       const result = await response.json();
@@ -356,7 +366,7 @@ export default function ProductionPreview() {
               {/* Top Copy */}
               <div
                 className="w-full relative flex flex-col items-center justify-center overflow-hidden"
-                style={{ height: '142mm', boxSizing: 'border-box' }}
+                style={{ height: '135mm', boxSizing: 'border-box' }}
               >
                 <div className="w-full h-full border-2 border-slate-900 rounded-lg overflow-hidden flex flex-col uppercase">
                   <ProductionLabelContent item={item} isEditing={isEditing} handleEditChange={handleEditChange} handleBundleChange={handleBundleChange} getFontSize={getFontSize} toggleFieldVisibility={toggleFieldVisibility} />
@@ -364,15 +374,15 @@ export default function ProductionPreview() {
               </div>
 
               {/* Separation Line */}
-              <div className="flex-1 w-full flex items-center justify-center relative min-h-[2mm]">
+              <div className="flex-1 w-full flex items-center justify-center relative min-h-[15mm]">
                 <div className="w-full border-b border-dashed border-slate-400 print:border-slate-800"></div>
-                <div className="absolute right-0 text-[8px] font-black uppercase text-slate-300 pr-4 print:hidden">Cut Here</div>
+                <div className="absolute right-0 text-[8px] font-black uppercase text-slate-300 pr-4">Cut Here</div>
               </div>
 
               {/* Bottom Copy */}
               <div
                 className="w-full relative flex flex-col items-center justify-center overflow-hidden"
-                style={{ height: '142mm', boxSizing: 'border-box' }}
+                style={{ height: '135mm', boxSizing: 'border-box' }}
               >
                 <div className="w-full h-full border-2 border-slate-900 rounded-lg overflow-hidden flex flex-col">
                   <ProductionLabelContent item={item} isEditing={isEditing} handleEditChange={handleEditChange} handleBundleChange={handleBundleChange} getFontSize={getFontSize} toggleFieldVisibility={toggleFieldVisibility} />

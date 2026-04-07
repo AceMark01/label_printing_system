@@ -11,7 +11,9 @@ import {
   ExternalLink,
   ChevronRight,
   Package,
-  Loader2
+  Loader2,
+  User,
+  CheckCircle2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -268,15 +270,15 @@ export default function HistoryPage() {
             </DialogHeader>
           </div>
           
-          <div className="p-6 md:p-8 bg-white grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 md:gap-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
-            <InfoBlock label="Order Number" value={selectedItem?.order_no} icon={<FileText className="w-4 h-4" />} />
+            <div className="p-6 md:p-8 bg-white grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 md:gap-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <InfoBlock label="Order Number" value={selectedItem?.s_order_no_string || selectedItem?.order_no} icon={<FileText className="w-4 h-4" />} />
             <InfoBlock label="City / Region" value={selectedItem?.city} icon={<ExternalLink className="w-4 h-4" />} />
             <InfoBlock label="Product Item" value={selectedItem?.product_name} icon={<Package className="w-4 h-4" />} />
             <InfoBlock label="Actual Quantity" value={selectedItem?.actual_qty} icon={<ChevronRight className="w-4 h-4" />} />
-            <InfoBlock label="Dispatch Bundle" value={selectedItem?.dispatch_bdl_qty} icon={<ChevronRight className="w-4 h-4" />} />
-            <InfoBlock label="Employee Name" value={selectedItem?.employee_name} icon={<ChevronRight className="w-4 h-4" />} />
             <InfoBlock label="Transporter" value={selectedItem?.transporter_name} icon={<Loader2 className="w-4 h-4" />} />
-            <InfoBlock label="Printed On" value={selectedItem?.created_at ? new Date(selectedItem.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A'} icon={<Calendar className="w-4 h-4" />} />
+            <InfoBlock label="Printed By" value={selectedItem?.printed_by} icon={<User className="w-4 h-4 text-emerald-500" />} />
+            <InfoBlock label="Status" value={selectedItem?.processed ? 'Processed' : 'Draft'} icon={<CheckCircle2 className="w-4 h-4 text-emerald-500" />} />
+            <InfoBlock label="Printed On" value={selectedItem?.print_time || (selectedItem?.created_at ? new Date(selectedItem.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A')} icon={<Calendar className="w-4 h-4" />} />
             
             {selectedItem?.remark && (
               <div className="col-span-1 md:col-span-2 pt-4 border-t border-slate-50">

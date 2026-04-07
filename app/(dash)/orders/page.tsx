@@ -247,12 +247,17 @@ export default function OrdersPage() {
   const handleConfirmPrintSuccess = async () => {
     if (selectedLabels.size > 0) {
       try {
+        const userData = localStorage.getItem('user');
+        const user = userData ? JSON.parse(userData) : { name: 'Unknown User' };
+        
         await fetch('/api/master', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             type: 'track_printed',
             data: {
+              printed_by: user.name,
+              print_time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
               labels: selectedLabelDetails.map(l => ({
                 id: l.id,
                 orderNo: l.originalData?.OrderNo || l.originalData?.SOrderNo || l.id.split('-')[0],

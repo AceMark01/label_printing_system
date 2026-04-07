@@ -96,11 +96,14 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
     return dynamicTranslations[lang]?.item || label.itemNames?.[lang] || label.item;
   };
 
-  const getDynamicFontSize = (text: string = '', baseSize: number = 28) => {
+  const getDynamicFontSize = (text: string = '', baseSize: number = 40) => {
     const len = text.length;
-    if (len > 40) return `text-[${Math.max(16, baseSize - 12)}px]`;
-    if (len > 25) return `text-[${Math.max(20, baseSize - 8)}px]`;
-    if (len > 15) return `text-[${Math.max(24, baseSize - 4)}px]`;
+    // Shrink a bit earlier (35 chars) to prevent line wrapping/overflow on print labels
+    if (len > 110) return `text-[${Math.max(18, baseSize - 22)}px]`;
+    if (len > 90) return `text-[${Math.max(24, baseSize - 16)}px]`;
+    if (len > 70) return `text-[${Math.max(30, baseSize - 10)}px]`;
+    if (len > 50) return `text-[${Math.max(34, baseSize - 6)}px]`;
+    if (len > 35) return `text-[${Math.max(37, baseSize - 3)}px]`;
     return `text-[${baseSize}px]`;
   };
 
@@ -111,7 +114,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
 
   return (
     <div className="bg-white w-full h-full rounded-[20px] shadow-xl overflow-hidden border border-gray-100/50 flex flex-col font-sans tracking-tight print:shadow-none print:border-none print:rounded-none">
-      <div className="px-8 pt-5 pb-2 flex flex-col justify-around flex-1 overflow-hidden">
+      <div className="px-8 pt-5 pb-5 flex flex-col justify-around flex-1 overflow-hidden">
         {activeLanguages.map((lang, idx) => {
           const t = labelTranslations[lang];
           const partyName = getPartyName(lang);
@@ -124,10 +127,10 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
             )}>
               {/* Party Name Row */}
               <div className="flex items-baseline gap-2">
-                <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
+                <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap">
                   {t.party}:
                 </span>
-                <span className={cn("text-gray-900 font-extrabold leading-tight", getDynamicFontSize(partyName, 44))}>
+                <span className={cn("text-gray-900 font-extrabold leading-tight", getDynamicFontSize(partyName, 40))}>
                   {partyName}
                 </span>
               </div>
@@ -150,10 +153,10 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                     "flex items-baseline gap-2 transition-opacity duration-200",
                     fieldVisibility?.[lang]?.product === false && "opacity-20 print:invisible"
                   )}>
-                    <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
+                    <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap">
                       {t.item}:
                     </span>
-                    <span className={cn("text-gray-900 font-extrabold leading-tight", getDynamicFontSize(itemName, 44))}>
+                    <span className={cn("text-gray-900 font-extrabold leading-tight", getDynamicFontSize(itemName, 40))}>
                       {itemName}
                     </span>
                   </div>
@@ -164,7 +167,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
               <div className="flex items-center gap-4">
                 {/* Quantity */}
                 <div className="flex items-center gap-2 min-w-0">
-                  <button 
+                  <button
                     onClick={() => onVisibilityChange?.(label.id, 'quantity', !fieldVisibility?.[lang]?.quantity, lang)}
                     className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all active:scale-90"
                     style={{ backgroundColor: fieldVisibility?.[lang]?.quantity !== false ? '#2563eb' : '#e5e7eb' }}
@@ -179,16 +182,16 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                     "flex items-baseline gap-1.5 transition-opacity duration-200",
                     fieldVisibility?.[lang]?.quantity === false && "opacity-20 print:invisible"
                   )}>
-                    <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
+                    <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap">
                       {t.qty}:
                     </span>
-                    <div className="text-gray-900 font-extrabold text-[44px] tabular-nums tracking-tight">
+                    <div className="text-gray-900 font-extrabold text-[40px] tabular-nums tracking-tight">
                       {onQuantityChange ? (
-                        <input 
-                          type="text" 
-                          value={label.quantity} 
+                        <input
+                          type="text"
+                          value={label.quantity}
                           onChange={(e) => onQuantityChange(label.id, e.target.value)}
-                          className="w-auto min-w-[60px] text-gray-900 font-extrabold text-[44px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-auto tabular-nums tracking-tight"
+                          className="w-auto min-w-[60px] text-gray-900 font-extrabold text-[40px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-auto tabular-nums tracking-tight"
                           style={{ width: `${Math.max(2, label.quantity?.toString().length || 1)}ch` }}
                         />
                       ) : (
@@ -200,20 +203,20 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
 
                 {/* Bundle */}
                 <div className="flex items-baseline gap-1 border-l border-gray-200 pl-4">
-                  <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
+                  <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap">
                     {t.bundles}:
                   </span>
                   <div className="relative">
                     {onBundleChange ? (
-                      <input 
-                        type="text" 
-                        value={label.bdlQty || '1'} 
+                      <input
+                        type="text"
+                        value={label.bdlQty || '1'}
                         onChange={(e) => onBundleChange(label.id, e.target.value)}
-                        className="w-auto min-w-[40px] text-gray-900 font-extrabold text-[44px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-16 tabular-nums tracking-tight"
+                        className="w-auto min-w-[40px] text-gray-900 font-extrabold text-[40px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-16 tabular-nums tracking-tight"
                         style={{ width: `${Math.max(1, (label.bdlQty || '1').toString().length)}ch` }}
                       />
                     ) : (
-                      <div className="min-w-[20px] text-gray-900 font-extrabold text-[44px] text-center px-1 tabular-nums tracking-tight">
+                      <div className="min-w-[20px] text-gray-900 font-extrabold text-[40px] text-center px-1 tabular-nums tracking-tight">
                         {label.bdlQty || '1'}
                       </div>
                     )}
@@ -223,7 +226,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
 
                 {/* City */}
                 <div className="flex items-baseline gap-2 border-l border-gray-100 pl-8">
-                  <span className="text-gray-400 font-semibold text-[22px] whitespace-nowrap">
+                  <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap">
                     {t.city}:
                   </span>
                   <span className="text-gray-900 font-extrabold text-[24px]">
@@ -237,8 +240,15 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-50/50 border-t border-gray-100 px-8 py-2 flex items-center justify-end print:bg-transparent">
-        <div className="flex items-center gap-1.5">
+      <div className="bg-gray-50/50 border-t border-gray-100 px-8 py-2 flex items-center justify-between print:bg-transparent min-h-[48px]">
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-gray-500 font-bold text-[12px]">DATE:</span>
+          <span className="text-gray-600 font-bold text-[13px]">
+            {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+          </span>
+        </div>
+        <div className="flex items-center gap-3 flex-1 justify-end ml-4">
+          <div className="h-[1px] bg-gray-200 flex-1 max-w-[100px]" />
           <img src="/ace.png" alt="Logo" className="h-10 w-auto object-contain" />
         </div>
       </div>

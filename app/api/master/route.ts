@@ -104,12 +104,12 @@ export async function POST(request: NextRequest) {
         }
 
         if (type === 'track_printed') {
-            const { labels: labelData, pdf } = data;
+            const { labels: labelData, printed_by, print_time } = data;
             if (!labelData || !Array.isArray(labelData)) {
                 return NextResponse.json({ error: 'labels array is required' }, { status: 400 });
             }
 
-            // 1. Mark them as printed in our tracking table
+            // 1. Mark them as printed in our tracking table (optional fallback)
             const trackingInserts = labelData.map(label => ({
                 label_id: label.id,
                 status: 'printed',
@@ -120,37 +120,33 @@ export async function POST(request: NextRequest) {
                 .from('labels_tracking')
                 .upsert(trackingInserts, { onConflict: 'label_id' });
 
-            if (trackingError) console.error('Labels Tracking Sync Error:', trackingError);
+            if (trackingError) console.warn('Tracking Sync Warn:', trackingError.message);
 
-            // 2. Insert FULL data into the main labels history table
+            // 2. Insert into the main labels table exactly matching the provided schema
             const fullInserts = labelData.map(label => ({
-                order_no: String(label.orderNo || ''),
-                s_order_no_string: String(label.sOrderNoString || ''),
-                s_order_date: label.sOrderDate ? String(label.sOrderDate) : null,
-                created_on: label.createdOn ? String(label.createdOn) : null,
+                s_order_no_string: String(label.sOrderNoString || label.id.split('-')[0] || ''),
+                s_order_date: label.sOrderDate ? new Date(label.sOrderDate).toISOString() : null,
+                created_on: label.createdOn ? new Date(label.createdOn).toISOString() : null,
                 product_name: String(label.itemName || ''),
                 account_name: String(label.party || ''),
-                remark: String(label.remark || ''),
-                actual_qty: Number(label.qty) || 0,
-                dispatch_qty: Number(label.dispatchQty) || 0,
-                dispatch_bdl_qty: String(label.bdlQty || ''),
-                s_order_no: String(label.sOrderNo || ''),
-                s_order_detail_id: String(label.sOrderDetailId || ''),
-                s_order_id: String(label.sOrderId || ''),
-                employee_name: String(label.employeeName || ''),
                 city: String(label.city || ''),
                 transporter_name: String(label.transporter || ''),
+                remark: String(label.remark || ''),
+                actual_qty: Number(label.totalQty || label.qty || 0),
+                dispatch_qty: Number(label.qty || 0),
                 processed: true,
-                original_data: label,
-                pdf: 'done'
+                pdf: label.pdf || 'done',
+                print_time: print_time ? new Date(print_time).toISOString() : new Date().toISOString(),
+                printed_by: String(printed_by || 'System')
             }));
 
-            const { error: historyError } = await supabase
+            const { data: result, error: historyError } = await supabase
                 .from('labels')
-                .insert(fullInserts);
+                .insert(fullInserts)
+                .select();
 
             if (historyError) {
-                console.error('Labels Full History Insert Error:', historyError);
+                console.error('Labels Full History Error:', historyError);
                 throw historyError;
             }
 

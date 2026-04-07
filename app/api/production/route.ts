@@ -131,23 +131,25 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { ids } = body; // Array of IDs (row numbers in the Sheet)
+        const { ids, printed_by, print_time } = body; // Array of IDs and metadata
 
         if (!ids || !Array.isArray(ids)) {
             return NextResponse.json({ error: 'Invalid IDs provided' }, { status: 400 });
         }
 
         // Send update to Google Apps Script
-        // The Apps Script should expect a POST with { action: 'batchUpdate', sheet: '...', updates: [...] }
         const response = await fetch(APPS_SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'batchUpdate',
                 sheet: 'Production Data',
-                column: 'Done',
-                value: 'Done',
-                ids: ids // These are the row numbers starting from 2
+                updates: ids.map(id => ({
+                  id,
+                  Done: 'Done',
+                  printed_by: printed_by || 'System',
+                  print_time: print_time || new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+                }))
             })
         });
 

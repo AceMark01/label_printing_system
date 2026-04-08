@@ -241,13 +241,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
 
       {/* Footer */}
       <div className="bg-gray-50/50 border-t border-gray-100 px-8 py-2 flex items-center justify-between print:bg-transparent min-h-[48px]">
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-gray-500 font-bold text-[12px]">DATE:</span>
-          <span className="text-gray-600 font-bold text-[13px]">
-            {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-          </span>
-        </div>
-        <div className="flex items-center gap-3 flex-1 justify-end ml-4">
+        <div className="flex items-center gap-3 flex-1 justify-end">
           <div className="h-[1px] bg-gray-200 flex-1 max-w-[100px]" />
           <img src="/ace.png" alt="Logo" className="h-10 w-auto object-contain" />
         </div>

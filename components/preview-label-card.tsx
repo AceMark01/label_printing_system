@@ -242,12 +242,6 @@ export function PreviewLabelCard({ label, languages, fieldVisibility, onToggleFi
 
             {/* Footer */}
             <div className="bg-gray-50/50 border-t border-gray-100 px-4 py-1 flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                    <span className="text-gray-500 font-bold text-[12px]">DATE:</span>
-                    <span className="text-gray-600 font-bold text-[13px]">
-                        {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </span>
-                </div>
                 <div className="flex items-center gap-3 flex-1 justify-end">
                     <div className="h-[1px] bg-gray-200 flex-1 max-w-[60px]" />
                     <img src="/ace.png" alt="A C E" className="h-6 w-auto object-contain" />

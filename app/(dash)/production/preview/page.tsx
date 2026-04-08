@@ -162,7 +162,7 @@ export default function ProductionPreview() {
       const response = await fetch('/api/production', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           ids,
           printed_by: user.name,
           print_time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })

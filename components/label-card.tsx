@@ -99,14 +99,14 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
   const getDynamicFontSize = (text: string = '', baseSize: number = 40) => {
     const len = text.length;
     // Shrink more aggressively for very long strings to prevent overflow
-    if (len > 120) return `text-[${Math.max(12, baseSize - 26)}px]`;
-    if (len > 100) return `text-[${Math.max(16, baseSize - 20)}px]`;
-    if (len > 80) return `text-[${Math.max(20, baseSize - 16)}px]`;
-    if (len > 60) return `text-[${Math.max(24, baseSize - 12)}px]`;
-    if (len > 45) return `text-[${Math.max(28, baseSize - 8)}px]`;
-    if (len > 35) return `text-[${Math.max(32, baseSize - 4)}px]`;
-    if (len > 25) return `text-[${Math.max(36, baseSize - 2)}px]`;
-    return `text-[${baseSize}px]`;
+    if (len > 120) return Math.max(12, baseSize - 26);
+    if (len > 100) return Math.max(16, baseSize - 20);
+    if (len > 80) return Math.max(20, baseSize - 16);
+    if (len > 60) return Math.max(24, baseSize - 12);
+    if (len > 45) return Math.max(28, baseSize - 8);
+    if (len > 35) return Math.max(32, baseSize - 4);
+    if (len > 25) return Math.max(36, baseSize - 2);
+    return baseSize;
   };
 
   const getCityName = (lang: Language) => {
@@ -132,7 +132,10 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                 <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap shrink-0">
                   {t.party}:
                 </span>
-                <span className={cn("text-gray-900 font-extrabold leading-[1.1]", getDynamicFontSize(partyName, 40))}>
+                <span 
+                  className="text-gray-900 font-extrabold leading-[1.1]"
+                  style={{ fontSize: `${getDynamicFontSize(partyName, 40)}px` }}
+                >
                   {partyName}
                 </span>
               </div>
@@ -158,7 +161,10 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                     <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap shrink-0">
                       {t.item}:
                     </span>
-                    <span className={cn("text-gray-900 font-extrabold leading-[1.1]", getDynamicFontSize(itemName, 40))}>
+                    <span 
+                      className="text-gray-900 font-extrabold leading-[1.1]"
+                      style={{ fontSize: `${getDynamicFontSize(itemName, 40)}px` }}
+                    >
                       {itemName}
                     </span>
                   </div>

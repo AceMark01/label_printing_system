@@ -13,7 +13,9 @@ import {
   Package,
   Loader2,
   User,
-  CheckCircle2
+  CheckCircle2,
+  ArrowDown,
+  Pencil
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,59 +36,48 @@ import { useDebounce } from '@/hooks/use-debounce';
 // Memoized row component for buttery smooth list performance
 const HistoryRow = React.memo(({ item, onDetail }: { item: any, onDetail: (item: any) => void }) => {
   return (
-    <tr className="group hover:bg-white/80 transition-all duration-300 animate-in fade-in ease-in-out">
-      <td className="px-10 py-8">
-        <div className="flex items-center gap-5">
-           <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200/50 group-hover:scale-110 group-hover:bg-blue-50 transition-all">
-              <Package className="w-5 h-5 text-slate-400 group-hover:text-blue-600" />
-           </div>
-           <div className="flex-1 min-w-0">
-              <p className="text-lg font-black text-slate-900 leading-none truncate mb-1.5">{item.account_name}</p>
-              <div className="flex items-center gap-3">
-                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded uppercase">{item.product_name}</span>
-                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase">{item.city}</span>
-              </div>
-           </div>
+    <tr className="border-b border-slate-100 last:border-0 bg-white hover:bg-slate-50 transition-colors">
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className="text-sm font-semibold text-slate-600">
+          {new Date(item.created_at || item.s_order_date || Date.now()).toLocaleDateString('en-CA')}
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className="text-sm font-bold text-slate-900">
+          #{item.s_order_no_string || item.order_no || item.id?.toString().substring(0,6) || '000000'}
+        </span>
+      </td>
+      <td className="px-6 py-4 max-w-[200px] truncate">
+        <span className="text-sm font-semibold text-slate-600">
+          {item.product_name}
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className="text-sm font-medium text-[#0ea5e9]">
+          {item.account_name}
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className="px-4 py-1.5 rounded-md text-xs font-semibold bg-[#86efac] text-[#14532d] shadow-sm">
+          Completed
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <span className="text-sm font-semibold text-slate-600">
+          {item.actual_qty} QTY
+        </span>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-right">
+        <div className="flex items-center justify-end gap-3 text-slate-400">
+          <button className="hover:text-blue-500 transition-colors" onClick={() => onDetail(item)} title="Details">
+            <Pencil className="w-4 h-4" />
+          </button>
+          {item.pdf && item.pdf !== 'done' && (
+            <button className="hover:text-indigo-500 transition-colors" onClick={() => window.open(item.pdf, '_blank')} title="Download PDF">
+              <Download className="w-4 h-4" />
+            </button>
+          )}
         </div>
-      </td>
-      <td className="px-10 py-8">
-         <div className="flex flex-col gap-1.5">
-            <span className="text-slate-900 font-bold text-base flex items-center gap-2">
-               <Calendar className="w-4 h-4 text-blue-500" />
-               {new Date(item.created_at || item.s_order_date || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-            </span>
-            <span className="text-slate-400 font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
-               <Clock className="w-4 h-4" />
-               {new Date(item.created_at || Date.now()).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
-            </span>
-         </div>
-      </td>
-      <td className="px-10 py-8 text-center">
-         <div className="inline-flex flex-col items-center">
-            <span className="text-2xl font-black text-slate-900 leading-none">{item.actual_qty}</span>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Qty</span>
-         </div>
-      </td>
-      <td className="px-10 py-8 text-right">
-         <div className="flex items-center justify-end gap-3 transition-all transform duration-300">
-            {item.pdf && item.pdf !== 'done' && (
-              <Button 
-                variant="outline" 
-                size="icon"
-                className="h-11 w-11 rounded-xl bg-white border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 shadow-sm"
-                onClick={() => window.open(item.pdf, '_blank')}
-              >
-                 <Download className="w-4 h-4" />
-              </Button>
-            )}
-            <Button 
-              onClick={() => onDetail(item)}
-              className="h-11 px-5 rounded-xl bg-white border border-slate-200 text-slate-900 hover:bg-slate-900 hover:text-white hover:border-slate-900 font-bold transition-all shadow-sm flex items-center gap-2"
-            >
-               <FileText className="w-4 h-4" />
-               Details
-            </Button>
-         </div>
       </td>
     </tr>
   );
@@ -179,22 +170,40 @@ export default function HistoryPage() {
                <p className="text-slate-500 font-bold animate-pulse">Retreiving history archives...</p>
             </div>
           ) : filteredHistory.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left hidden md:table">
-                <thead>
-                  <tr className="border-b border-slate-50 bg-slate-50/50">
-                    <th className="px-10 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Order Info</th>
-                    <th className="px-10 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Timestamp</th>
-                    <th className="px-10 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Qty</th>
-                    <th className="px-10 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
+            <div className="w-full">
+              <div className="overflow-x-auto rounded-[20px] bg-white shadow-[0_4px_24px_rgb(0,0,0,0.03)] border border-slate-100 p-2 hidden md:block m-4">
+                <table className="w-full text-left border-spacing-0">
+                  <thead className="bg-[#f8f9fc] rounded-xl overflow-hidden">
+                  <tr>
+                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide rounded-l-xl">
+                      Date <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
+                    </th>
+                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide">
+                      Order <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
+                    </th>
+                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide">
+                      Item(s) Name <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
+                    </th>
+                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide">
+                      Customer Name <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
+                    </th>
+                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide">
+                      Status <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
+                    </th>
+                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide">
+                      Total <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
+                    </th>
+                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide rounded-r-xl"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100">
+                  <tr className="h-2"></tr>
                   {filteredHistory.map((item) => (
                     <HistoryRow key={item.id} item={item} onDetail={handleShowDetail} />
                   ))}
                 </tbody>
               </table>
+            </div>
 
               {/* Mobile Card View */}
               <div className="md:hidden divide-y divide-slate-50">

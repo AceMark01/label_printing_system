@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 export async function GET() {
   try {
     const { data: users, error } = await supabase
-      .from('users')
+      .from('label_users')
       .select('id, name, gmail, number, role, created_at')
       .order('created_at', { ascending: false });
 
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const { name, gmail, number, password, role } = body;
 
     const { data, error } = await supabase
-      .from('users')
+      .from('label_users')
       .insert([
         { name, gmail, number, password, role, updated_at: new Date().toISOString() }
       ])
@@ -42,7 +42,7 @@ export async function DELETE(req: Request) {
     if (!id) throw new Error('ID is required');
 
     const { error } = await supabase
-      .from('users')
+      .from('label_users')
       .delete()
       .eq('id', id);
 

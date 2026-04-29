@@ -9,13 +9,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: 'Gmail and Password are required' }, { status: 400 });
     }
 
-    // Check credentials against the users table
+    // Check credentials against the label_users table (supports both gmail and phone number)
     const { data: user, error } = await supabase
-      .from('users')
-      .select('id, name, gmail, role')
-      .eq('gmail', gmail)
+      .from('label_users')
+      .select('id, name, gmail, role, number')
+      .or(`gmail.eq."${gmail}",number.eq."${gmail}"`)
       .eq('password', password)
-      .single();
+      .maybeSingle();
 
     if (error || !user) {
       return NextResponse.json({ success: false, error: 'Invalid gmail or password' }, { status: 401 });

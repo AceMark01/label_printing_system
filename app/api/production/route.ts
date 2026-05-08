@@ -60,6 +60,9 @@ export async function GET(request: NextRequest) {
                 productName: englishProduct,
                 godown: getValue(item, 'Godown') || '',
                 pendingQty: getValue(item, 'Production Pending qty') || getValue(item, 'Pending Qty') || 0,
+                totalQty: getValue(item, 'Pending Qty') || getValue(item, 'Total Qty') || 0,
+                producedQty: getValue(item, 'Genrated') || getValue(item, 'Produced Qty') || 0,
+                remainingQty: getValue(item, 'Remaining Qty') || getValue(item, 'Balance Qty') || getValue(item, 'Remaining') || 0,
                 done: doneVal === 'done' || doneVal === 'yes' || doneVal === 'true' || doneVal === '1',
 
                 // Bundle types
@@ -131,43 +134,56 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { ids, printed_by, print_time } = body; // Array of IDs and metadata
+        const { updates, printed_by, print_time } = body; 
 
-        if (!ids || !Array.isArray(ids)) {
-            return NextResponse.json({ error: 'Invalid IDs provided' }, { status: 400 });
+        if (!updates || !Array.isArray(updates)) {
+            return NextResponse.json({ error: 'Invalid updates provided' }, { status: 400 });
         }
 
-        // Send update to Google Apps Script
-        const response = await fetch(APPS_SCRIPT_URL, {
+        // 1. Log to "Production Generted" (Append rows)
+        const logResponse = await fetch(APPS_SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                action: 'batchUpdate',
-                sheet: 'Production Data',
-                updates: ids.map(id => ({
-                  id,
-                  Done: 'Done',
-                  printed_by: printed_by || 'System',
-                  print_time: print_time || new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+                action: 'batchUpdateAndAppend',
+                sheet: 'Production Generted',
+                appends: updates.map(u => ({
+                    Timestamp: print_time,
+                    'S NO': u.sNo,
+                    ProductCode: u.productCode,
+                    Qty: u.printedQty,
+                    'Printed By': printed_by
                 }))
             })
         });
 
-        const resultRaw = await response.text();
-        let result: any;
+        // 2. Update status in "Production Data" (Update rows)
+        const updateResponse = await fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'batchUpdateAndAppend',
+                sheet: 'Production Data',
+                updates: updates.map(u => {
+                    const isDone = parseFloat(u.printedQty) >= parseFloat(u.pendingQty);
+                    return {
+                        id: u.id,
+                        Done: isDone ? 'Done' : '',
+                        'Printed By': printed_by,
+                        'Last Print Time': print_time
+                    };
+                })
+            })
+        });
 
-        try {
-            result = JSON.parse(resultRaw);
-        } catch (e) {
-            console.error('Google Apps Script non-JSON response:', resultRaw);
-            throw new Error('Google Sheets API returned an invalid response. Please check your Apps Script configuration.');
+        const logResult = await logResponse.json();
+        const updateResult = await updateResponse.json();
+
+        if (logResult.error || updateResult.error) {
+            throw new Error(logResult.error || updateResult.error);
         }
 
-        if (result.error) {
-            throw new Error(result.error);
-        }
-
-        return NextResponse.json({ success: true, result });
+        return NextResponse.json({ success: true, logResult, updateResult });
     } catch (error: any) {
         console.error('Production Update API Error:', error);
         return NextResponse.json({

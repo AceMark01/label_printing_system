@@ -38,7 +38,7 @@ export default function ProductionPreview() {
         const bld = parseFloat(item.bld) || 0;
         const crt = parseFloat(item.crt) || 0;
         const scrt = parseFloat(item.smallCrt) || 0;
-        const pending = parseFloat(item.pendingQty) || 0;
+        const remaining = parseFloat(item.remainingQty) || 0;
 
         // Find which bundle type has the largest base value to set as default
         let initialBundle = 'bld';
@@ -53,8 +53,8 @@ export default function ProductionPreview() {
           initialDivisor = scrt;
         }
 
-        // Calculation: Pending Qty / Divisor = Total Bundles (Whole Number)
-        const totalBundles = initialDivisor > 0 ? Math.floor(pending / initialDivisor) : 0;
+        // Calculation: Remaining Qty / Divisor = Total Bundles (Whole Number)
+        const totalBundles = initialDivisor > 0 ? Math.floor(remaining / initialDivisor) : 0;
 
         return {
           ...item,
@@ -82,8 +82,8 @@ export default function ProductionPreview() {
         if (bundleType === 'CRT') divisor = parseFloat(item.crt) || 0;
         if (bundleType === 'SmallCRT') divisor = parseFloat(item.smallCrt) || 0;
 
-        const pending = parseFloat(item.pendingQty) || 0;
-        const totalBundles = divisor > 0 ? Math.floor(pending / divisor) : 0;
+        const remaining = parseFloat(item.remainingQty) || 0;
+        const totalBundles = divisor > 0 ? Math.floor(remaining / divisor) : 0;
 
         return { ...item, selectedBundle: bundleType, divisor, totalBundles };
       }
@@ -121,7 +121,8 @@ export default function ProductionPreview() {
     setItems(items.map(item => {
       if (item.id === id) {
         const currentVis = item.fieldVisibility || { productName: true, bundles: true };
-        const nextValue = !currentVis[field];
+        const currentValue = currentVis[field] !== false; // Default to true if undefined
+        const nextValue = !currentValue;
 
         const newVis = {
           ...currentVis,
@@ -154,7 +155,15 @@ export default function ProductionPreview() {
     try {
       setIsSaving(true);
       const visibleItems = items.filter(item => item.isVisible !== false);
-      const ids = visibleItems.map(item => Number(item.id) + 1); // Row number in sheet (index + 2 usually, but API id starts at 1)
+      const updates = visibleItems.map(item => ({
+        id: Number(item.id) + 1, // Row number in sheet
+        sNo: item.sNo,
+        productCode: item.productCode,
+        totalBundles: item.totalBundles,
+        divisor: item.divisor,
+        printedQty: (parseFloat(item.totalBundles) || 0) * (parseFloat(item.divisor) || 0),
+        pendingQty: parseFloat(item.pendingQty) || 0
+      }));
 
       const userData = localStorage.getItem('user');
       const user = userData ? JSON.parse(userData) : { name: 'Unknown System' };
@@ -163,7 +172,7 @@ export default function ProductionPreview() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ids,
+          updates,
           printed_by: user.name,
           print_time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
         })
@@ -256,7 +265,13 @@ export default function ProductionPreview() {
           </Button>
           <Button
             onClick={handlePrint}
-            className="rounded-xl font-black bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-100 h-10 md:h-12 px-4 md:px-8 uppercase tracking-widest text-[10px] md:text-sm"
+            disabled={isEditing}
+            className={cn(
+              "rounded-xl font-black shadow-xl h-10 md:h-12 px-4 md:px-8 uppercase tracking-widest text-[10px] md:text-sm transition-all",
+              isEditing 
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed shadow-none border border-slate-200" 
+                : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100"
+            )}
           >
             <Printer className="w-4 h-4 mr-2" />
             Print
@@ -297,13 +312,31 @@ export default function ProductionPreview() {
                 <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100/50">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Total Bundles</p>
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-black text-slate-900 tabular-nums">{item.totalBundles}</span>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        value={item.totalBundles}
+                        onChange={(e) => handleEditChange(item.id, 'totalBundles', e.target.value)}
+                        className="w-20 text-4xl font-black text-slate-900 tabular-nums bg-white border-b-2 border-slate-300 outline-none focus:border-indigo-600 px-1"
+                      />
+                    ) : (
+                      <span className="text-4xl font-black text-slate-900 tabular-nums">{item.totalBundles}</span>
+                    )}
                     <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{item.selectedBundle}</span>
                   </div>
                 </div>
                 <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100/50">
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Qty / {item.selectedBundle}</p>
-                  <span className="text-4xl font-black text-slate-900 tabular-nums">{item.divisor}</span>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={item.divisor}
+                      onChange={(e) => handleEditChange(item.id, 'divisor', e.target.value)}
+                      className="w-20 text-4xl font-black text-slate-900 tabular-nums bg-white border-b-2 border-slate-300 outline-none focus:border-indigo-600 px-1"
+                    />
+                  ) : (
+                    <span className="text-4xl font-black text-slate-900 tabular-nums">{item.divisor}</span>
+                  )}
                 </div>
               </div>
 
@@ -549,15 +582,62 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
 
           <div className="flex items-end gap-6 md:gap-8">
             <div className="relative">
-              <span className="text-[72px] font-black text-gray-900 leading-none tracking-tighter tabular-nums">
-                {item.totalBundles}
-              </span>
-              <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-blue-200" />
+              {isEditing ? (
+                <input
+                  type="number"
+                  value={item.totalBundles}
+                  onChange={(e) => handleEditChange(item.id, 'totalBundles', e.target.value)}
+                  className="w-32 text-[72px] font-black text-gray-900 leading-none tracking-tighter tabular-nums bg-transparent outline-none border-b-4 border-gray-300 focus:border-blue-600 relative z-10 print:hidden"
+                />
+              ) : (
+                <>
+                  <span className="text-[72px] font-black text-gray-900 leading-none tracking-tighter tabular-nums relative z-10">
+                    {item.totalBundles}
+                  </span>
+                  <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-blue-200 z-0" />
+                </>
+              )}
             </div>
 
             <div className="flex flex-col gap-1 pb-1">
-              <span className="text-gray-400 font-bold text-[14px] uppercase tracking-widest leading-none">Type: {item.selectedBundle}</span>
-              <span className="text-gray-400 font-bold text-[14px] uppercase tracking-widest leading-none mt-1.5">Qty: {item.divisor} per {item.selectedBundle}</span>
+              <div className="flex items-center gap-2">
+                {isEditing && (
+                  <input
+                    type="checkbox"
+                    checked={vis.bundleTypeInfo !== false}
+                    onChange={() => toggleFieldVisibility(item.id, 'bundleTypeInfo')}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 print:hidden cursor-pointer shrink-0"
+                  />
+                )}
+                <span className={cn("text-gray-400 font-bold text-[14px] uppercase tracking-widest leading-none", vis.bundleTypeInfo === false && "opacity-20 print:invisible")}>
+                  Type: {item.selectedBundle}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-2 mt-1.5">
+                {isEditing && (
+                  <input
+                    type="checkbox"
+                    checked={vis.bundleQtyInfo !== false}
+                    onChange={() => toggleFieldVisibility(item.id, 'bundleQtyInfo')}
+                    className="w-4 h-4 rounded border-gray-300 text-blue-600 print:hidden cursor-pointer shrink-0"
+                  />
+                )}
+                <span className={cn("text-gray-400 font-bold text-[14px] uppercase tracking-widest leading-none flex items-center gap-1", vis.bundleQtyInfo === false && "opacity-20 print:invisible")}>
+                  Qty: 
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={item.divisor}
+                      onChange={(e) => handleEditChange(item.id, 'divisor', e.target.value)}
+                      className="w-16 bg-transparent border-b border-gray-400 outline-none focus:border-blue-600 text-gray-900 font-black px-1 print:hidden"
+                    />
+                  ) : (
+                    item.divisor
+                  )} 
+                  {isEditing ? null : ` per ${item.selectedBundle}`}
+                </span>
+              </div>
               {isEditing && (
                 <select
                   value={item.selectedBundle}

@@ -90,19 +90,7 @@ export function Sidebar() {
             Sign Out
           </button>
           
-          <div className="mt-4 p-5 rounded-[2rem] bg-slate-50 border border-slate-100 relative overflow-hidden group/card shadow-inner">
-            <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/5 rounded-full -mr-10 -mt-10 group-hover/card:scale-150 transition-transform duration-700" />
-            <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase mb-1">System</p>
-            <p className="text-xs font-black text-slate-600 leading-tight">
-              A5 Labeling v2.0
-            </p>
-            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-200/50">
-               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-               <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">
-                 Cloud Sync Active
-               </p>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>

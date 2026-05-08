@@ -59,7 +59,7 @@ export default function ProductionHistory() {
   return (
     <div className="flex flex-col gap-0 animate-in fade-in slide-in-from-bottom-2 duration-700 pb-32">
       {/* Top Bar */}
-      <div className="sticky top-0 z-40 bg-slate-50/90 backdrop-blur-md pt-6 pb-4 px-4 sm:px-10 lg:px-12 -mx-4 sm:-mx-10 lg:-mx-12 border-b border-slate-200/60 flex flex-col lg:flex-row items-center gap-4 shadow-sm transition-all">
+      <div className="sticky top-0 z-40 bg-slate-50/90 backdrop-blur-md pt-6 pb-4 px-4 sm:px-10 lg:px-12 border-b border-slate-200/60 flex flex-col lg:flex-row items-center gap-4 shadow-sm transition-all">
         <div className="w-fit bg-emerald-50 border border-emerald-100 p-3 rounded-2xl shadow-sm flex items-center gap-4 group transition-colors">
           <div className="flex flex-col">
             <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Audit Trail</span>
@@ -98,7 +98,7 @@ export default function ProductionHistory() {
       </div>
 
       {/* Main History Table */}
-      <div className="bg-white border-b border-slate-200 shadow-sm overflow-x-auto -mx-4 sm:-mx-10 lg:-mx-12 transition-all duration-500">
+      <div className="bg-white border-b border-slate-200 shadow-sm overflow-x-auto transition-all duration-500">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-900 text-white">

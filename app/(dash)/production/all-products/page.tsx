@@ -135,9 +135,8 @@ export default function ProductionAllProducts() {
       </div>
 
       {/* Main Table View (Desktop) */}
-      <div className="hidden lg:block bg-white border-b border-slate-200 shadow-sm overflow-hidden -mx-4 sm:-mx-10 lg:-mx-12 transition-all duration-500">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[1200px]">
+      <div className="hidden lg:block bg-white border-b border-slate-200 shadow-sm overflow-x-auto -mx-4 sm:-mx-10 lg:-mx-12 transition-all duration-500">
+          <table className="w-full text-left border-collapse min-w-[1300px]">
             <thead>
               <tr className="bg-slate-900 text-white">
                 <th className="px-6 py-4 text-center w-16">
@@ -282,7 +281,6 @@ export default function ProductionAllProducts() {
               )}
             </tbody>
           </table>
-        </div>
       </div>
       
       {/* Main Card View (Mobile) */}

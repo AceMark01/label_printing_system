@@ -134,9 +134,8 @@ export default function ProductionAllProducts() {
         </div>
       </div>
 
-      {/* Main Table View (Desktop) */}
       <div className="hidden lg:block bg-white border-b border-slate-200 shadow-sm overflow-x-auto -mx-4 sm:-mx-10 lg:-mx-12 transition-all duration-500">
-          <table className="w-full text-left border-collapse min-w-[1300px]">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-900 text-white">
                 <th className="px-6 py-4 text-center w-16">
@@ -151,12 +150,12 @@ export default function ProductionAllProducts() {
                 </th>
                 <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center w-20">SN</th>
                 <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-left w-32">Code</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-left">Product Details</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-left min-w-[400px]">Product Details</th>
                 <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-left w-32">Godown</th>
                 <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center w-28">Total Qty</th>
                 <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center w-28">Genrated</th>
                 <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center w-28">Remaining</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center">Bundle Breakup</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 text-center min-w-[300px]">Bundle Breakup</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

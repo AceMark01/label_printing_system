@@ -99,17 +99,17 @@ export default function ProductionHistory() {
 
       {/* Main History Table */}
       <div className="bg-white border-b border-slate-200 shadow-sm overflow-x-auto -mx-4 sm:-mx-10 lg:-mx-12 transition-all duration-500">
-          <table className="w-full text-left border-collapse min-w-[1300px]">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-900 text-white">
                 <th className="px-6 py-3 text-center w-16">
                   <History className="w-4 h-4 mx-auto text-slate-400" />
                 </th>
                 <th className="px-4 py-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-center w-28 border-l border-white/5">Order S NO</th>
-                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-left border-l border-white/5">Product / Code</th>
-                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-left border-l border-white/5">Location</th>
-                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-center border-l border-white/5">Qty</th>
-                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-center border-l border-white/5">Completion Status</th>
+                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-left border-l border-white/5 min-w-[500px]">Product / Code</th>
+                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-left border-l border-white/5 w-40">Location</th>
+                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-center border-l border-white/5 w-28">Qty</th>
+                <th className="px-4 py-3 text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-center border-l border-white/5 w-32">Completion Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">

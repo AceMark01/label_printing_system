@@ -20,8 +20,34 @@ import {
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
+interface ProductionItem {
+  id: number;
+  sNo: string;
+  productCode: string;
+  productName: string;
+  productNameHi: string;
+  bld: string;
+  crt: string;
+  smallCrt: string;
+  remainingQty: string;
+  pendingQty: string;
+  godown: string;
+  isVisible?: boolean;
+  selectedBundle: string;
+  divisor: number;
+  totalBundles: number;
+  fieldVisibility?: {
+    productName: boolean;
+    bundles: boolean;
+    bundleTypeInfo?: boolean;
+    bundleQtyInfo?: boolean;
+    [key: string]: boolean | undefined;
+  };
+  [key: string]: any;
+}
+
 export default function ProductionPreview() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<ProductionItem[]>([]);
   const [templateType, setTemplateType] = useState('standard');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -34,7 +60,7 @@ export default function ProductionPreview() {
     if (stored) {
       const data = JSON.parse(stored);
       // Auto-select bundle logic: find the max value among bld, crt, smallCrt
-      const processed = data.map((item: any) => {
+      const processed = data.map((item: any): ProductionItem => {
         const bld = parseFloat(item.bld) || 0;
         const crt = parseFloat(item.crt) || 0;
         const scrt = parseFloat(item.smallCrt) || 0;
@@ -161,8 +187,8 @@ export default function ProductionPreview() {
         productCode: item.productCode,
         totalBundles: item.totalBundles,
         divisor: item.divisor,
-        printedQty: (parseFloat(item.totalBundles) || 0) * (parseFloat(item.divisor) || 0),
-        pendingQty: parseFloat(item.pendingQty) || 0
+        printedQty: (Number(item.totalBundles) || 0) * (Number(item.divisor) || 0),
+        pendingQty: parseFloat(String(item.pendingQty)) || 0
       }));
 
       const userData = localStorage.getItem('user');
@@ -287,7 +313,7 @@ export default function ProductionPreview() {
               key={item.id}
               className={cn(
                 "bg-white p-6 rounded-[2.5rem] border-2 transition-all duration-300 shadow-sm",
-                item.isVisible === false ? "opacity-30 grayscale border-slate-50" : "border-slate-100 shadow-indigo-50/20"
+                item.isVisible === false ? "border-slate-50" : "border-slate-100 shadow-indigo-50/20"
               )}
             >
               <div className="flex items-start justify-between mb-6">
@@ -322,7 +348,7 @@ export default function ProductionPreview() {
                     ) : (
                       <span className="text-4xl font-black text-slate-900 tabular-nums">{item.totalBundles}</span>
                     )}
-                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{item.selectedBundle}</span>
+                    <span className="text-[14px] font-black text-indigo-600 uppercase tracking-widest">{item.selectedBundle}</span>
                   </div>
                 </div>
                 <div className="bg-slate-50 p-4 rounded-3xl border border-slate-100/50">
@@ -370,7 +396,7 @@ export default function ProductionPreview() {
               key={item.id}
               className={cn(
                 "bg-white shadow-xl relative print:shadow-none print:border-0 overflow-hidden mx-auto transition-all origin-top sticker-preview",
-                item.isVisible === false ? "opacity-20 grayscale border-dashed border-slate-200 print:hidden mb-0 h-0" : "mb-8 print:mb-0"
+                item.isVisible === false ? "border-dashed border-slate-200 print:hidden mb-0 h-0" : "mb-8 print:mb-0"
               )}
               style={{
                 width: '210mm',
@@ -469,7 +495,14 @@ export default function ProductionPreview() {
   );
 }
 
-function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundleChange, getFontSize, toggleFieldVisibility }: any) {
+function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundleChange, getFontSize, toggleFieldVisibility }: { 
+  item: ProductionItem, 
+  isEditing: boolean, 
+  handleEditChange: any, 
+  handleBundleChange: any, 
+  getFontSize: any, 
+  toggleFieldVisibility: any 
+}) {
   const vis = item.fieldVisibility || { productName: true, bundles: true };
   const [dynamicHiName, setDynamicHiName] = useState<string>('');
 
@@ -502,7 +535,7 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
     <div className="flex-1 flex flex-col justify-between p-6 md:p-8 overflow-hidden bg-white relative">
       <div className="flex flex-col gap-6 flex-1">
         {/* Product Section */}
-        <div className={cn("flex flex-col gap-4 transition-opacity", !vis.productName && "opacity-20 print:invisible")}>
+        <div className={cn("flex flex-col gap-4 transition-opacity", !vis.productName && "print:invisible")}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
@@ -558,7 +591,7 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
         <div className="border-b border-dotted border-gray-300 w-full" />
 
         {/* Quantities Section */}
-        <div className={cn("flex flex-col gap-6 transition-opacity", !vis.bundles && "opacity-20 print:invisible")}>
+        <div className={cn("flex flex-col gap-4 transition-opacity", !vis.bundles && "print:invisible")}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
@@ -609,12 +642,12 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
                     className="w-4 h-4 rounded border-gray-300 text-blue-600 print:hidden cursor-pointer shrink-0"
                   />
                 )}
-                <span className={cn("text-gray-400 font-bold text-[14px] uppercase tracking-widest leading-none", vis.bundleTypeInfo === false && "opacity-20 print:invisible")}>
+                <span className={cn("text-gray-900 font-black text-[18px] md:text-[22px] uppercase tracking-widest leading-none", vis.bundleTypeInfo === false && "print:invisible")}>
                   Type: {item.selectedBundle}
                 </span>
               </div>
               
-              <div className="flex items-center gap-2 mt-1.5">
+              <div className="flex items-center gap-2 mt-2">
                 {isEditing && (
                   <input
                     type="checkbox"
@@ -623,19 +656,19 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
                     className="w-4 h-4 rounded border-gray-300 text-blue-600 print:hidden cursor-pointer shrink-0"
                   />
                 )}
-                <span className={cn("text-gray-400 font-bold text-[14px] uppercase tracking-widest leading-none flex items-center gap-1", vis.bundleQtyInfo === false && "opacity-20 print:invisible")}>
+                <span className={cn("text-gray-900 font-black text-[18px] md:text-[22px] uppercase tracking-tight leading-none flex items-center gap-1", vis.bundleQtyInfo === false && "print:invisible")}>
                   Qty: 
                   {isEditing ? (
                     <input
                       type="number"
                       value={item.divisor}
                       onChange={(e) => handleEditChange(item.id, 'divisor', e.target.value)}
-                      className="w-16 bg-transparent border-b border-gray-400 outline-none focus:border-blue-600 text-gray-900 font-black px-1 print:hidden"
+                      className="w-20 bg-transparent border-b-2 border-blue-200 outline-none focus:border-blue-600 text-blue-900 font-black px-1 print:hidden"
                     />
                   ) : (
                     item.divisor
                   )} 
-                  {isEditing ? null : ` per ${item.selectedBundle}`}
+                  {isEditing ? null : ` PCS per ${item.selectedBundle}`}
                 </span>
               </div>
               {isEditing && (

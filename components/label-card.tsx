@@ -127,25 +127,25 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
               "flex flex-col gap-2.5",
               idx === 0 && activeLanguages.length > 1 && "pb-5 border-b border-dotted border-gray-300 mb-2.5"
             )}>
-              {/* Party Name Row (Fixed Height to keep layout static) */}
-              <div className="flex items-center gap-2 h-[56px] overflow-hidden">
-                <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap shrink-0">
+              {/* Party Name Row (Flexible Height) */}
+              <div className="flex items-start gap-2 min-h-[48px]">
+                <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap shrink-0 mt-1">
                   {t.party}:
                 </span>
                 <span 
-                  className="text-gray-900 font-extrabold leading-[1.1]"
-                  style={{ fontSize: `${getDynamicFontSize(partyName, 40)}px` }}
+                  className="text-gray-900 font-extrabold leading-tight"
+                  style={{ fontSize: `${getDynamicFontSize(partyName, 36)}px` }}
                 >
                   {partyName}
                 </span>
               </div>
               
-              {/* Product Row (Fixed Height to keep layout static) */}
-              <div className="flex items-center gap-3 h-[56px] overflow-hidden mt-1">
-                <div className="flex items-center gap-2 flex-1">
+              {/* Product Row (Flexible Height) */}
+              <div className="flex items-start gap-3 min-h-[48px] mt-1">
+                <div className="flex items-start gap-2 flex-1">
                   <button
                     onClick={() => onVisibilityChange?.(label.id, 'product', !fieldVisibility?.[lang]?.product, lang)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all active:scale-90"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all active:scale-90 mt-1"
                     style={{ backgroundColor: fieldVisibility?.[lang]?.product !== false ? '#2563eb' : '#e5e7eb' }}
                   >
                     {fieldVisibility?.[lang]?.product !== false && (
@@ -155,15 +155,15 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                     )}
                   </button>
                   <div className={cn(
-                    "flex items-baseline gap-2 transition-opacity duration-200 overflow-hidden",
+                    "flex items-start gap-2 transition-opacity duration-200 w-full",
                     fieldVisibility?.[lang]?.product === false && "opacity-20 print:invisible"
                   )}>
-                    <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap shrink-0">
+                    <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap shrink-0 mt-1">
                       {t.item}:
                     </span>
                     <span 
-                      className="text-gray-900 font-extrabold leading-[1.1]"
-                      style={{ fontSize: `${getDynamicFontSize(itemName, 40)}px` }}
+                      className="text-gray-900 font-extrabold leading-tight break-words"
+                      style={{ fontSize: `${getDynamicFontSize(itemName, 36)}px` }}
                     >
                       {itemName}
                     </span>

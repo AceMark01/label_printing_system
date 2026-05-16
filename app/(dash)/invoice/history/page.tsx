@@ -5,16 +5,11 @@ import {
   History as HistoryIcon, 
   Search, 
   Download, 
-  FileText, 
   Calendar, 
   Clock,
-  ExternalLink,
-  ChevronRight,
   Package,
   Loader2,
-  User,
-  CheckCircle2,
-  ArrowDown,
+  FileText,
   Pencil
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,55 +24,36 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog';
-import { cn } from '@/lib/utils';
-import React from 'react';
 import { useDebounce } from '@/hooks/use-debounce';
+import React from 'react';
 
-// Memoized row component for buttery smooth list performance
 const HistoryRow = React.memo(({ item, onDetail }: { item: any, onDetail: (item: any) => void }) => {
   return (
     <tr className="border-b border-slate-100 last:border-0 bg-white hover:bg-slate-50 transition-colors">
-      <td className="px-6 py-4 whitespace-nowrap">
-        <span className="text-sm font-semibold text-slate-600">
-          {new Date(item.created_at || item.s_order_date || Date.now()).toLocaleDateString('en-CA')}
-        </span>
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-600">
+        {new Date(item.created_at || item.s_order_date || Date.now()).toLocaleDateString('en-CA')}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-slate-900">
+        #{item.s_order_no_string || item.order_no || '000000'}
+      </td>
+      <td className="px-6 py-4 max-w-[200px] truncate text-sm font-semibold text-slate-600">
+        {item.product_name}
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#0ea5e9]">
+        {item.account_name}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        <span className="text-sm font-bold text-slate-900">
-          #{item.s_order_no_string || item.order_no || item.id?.toString().substring(0,6) || '000000'}
-        </span>
-      </td>
-      <td className="px-6 py-4 max-w-[200px] truncate">
-        <span className="text-sm font-semibold text-slate-600">
-          {item.product_name}
-        </span>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <span className="text-sm font-medium text-[#0ea5e9]">
-          {item.account_name}
-        </span>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <span className="px-4 py-1.5 rounded-md text-xs font-semibold bg-[#86efac] text-[#14532d] shadow-sm">
+        <span className="px-4 py-1.5 rounded-md text-xs font-semibold bg-[#86efac] text-[#14532d]">
           Completed
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <span className="text-sm font-semibold text-slate-600">
-          {item.actual_qty} QTY
-        </span>
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-slate-600">
+        {item.actual_qty} QTY
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-right">
-        <div className="flex items-center justify-end gap-3 text-slate-400">
-          <button className="hover:text-blue-500 transition-colors" onClick={() => onDetail(item)} title="Details">
-            <Pencil className="w-4 h-4" />
-          </button>
-          {item.pdf && item.pdf !== 'done' && (
-            <button className="hover:text-indigo-500 transition-colors" onClick={() => window.open(item.pdf, '_blank')} title="Download PDF">
-              <Download className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+        <button className="text-slate-400 hover:text-blue-500 transition-colors" onClick={() => onDetail(item)}>
+          <Pencil className="w-4 h-4" />
+        </button>
       </td>
     </tr>
   );
@@ -85,7 +61,7 @@ const HistoryRow = React.memo(({ item, onDetail }: { item: any, onDetail: (item:
 
 HistoryRow.displayName = 'HistoryRow';
 
-export default function HistoryPage() {
+export default function InvoiceHistoryPage() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,7 +76,7 @@ export default function HistoryPage() {
         const { data, error } = await supabase
           .from('labels')
           .select('*')
-          .is('invoice', null)
+          .not('invoice', 'is', null)
           .order('created_at', { ascending: false })
           .limit(200);
         
@@ -122,7 +98,6 @@ export default function HistoryPage() {
     return history.filter(item => 
       (item.account_name || '').toLowerCase().includes(q) ||
       (item.product_name || '').toLowerCase().includes(q) ||
-      (item.city || '').toLowerCase().includes(q) ||
       (item.order_no || '').toString().toLowerCase().includes(q)
     );
   }, [history, debouncedSearch]);
@@ -136,8 +111,8 @@ export default function HistoryPage() {
     <div className="space-y-6 pb-12">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Print History</h1>
-          <p className="text-sm text-slate-500 mt-1">Archive of all recently printed and downloaded labels.</p>
+          <h1 className="text-2xl font-semibold text-slate-900">Invoice History</h1>
+          <p className="text-sm text-slate-500 mt-1">Archive of all recently printed invoice labels.</p>
         </div>
         <div className="w-full md:w-80">
           <div className="relative">
@@ -152,53 +127,29 @@ export default function HistoryPage() {
         </div>
       </div>
 
-      <Card className="border border-slate-200 shadow-sm rounded-lg overflow-hidden bg-white">
-        <CardHeader className="p-6 border-b border-slate-200 bg-white">
-           <div className="flex items-center gap-4">
-             <div className="w-10 h-10 rounded-md bg-indigo-50 flex items-center justify-center border border-indigo-100">
-                <HistoryIcon className="w-5 h-5 text-indigo-600" />
-             </div>
-             <div>
-               <CardTitle className="text-lg font-semibold text-slate-900">Archived Logs</CardTitle>
-               <p className="text-slate-500 text-xs mt-0.5">Showing last 200 entries</p>
-             </div>
-           </div>
-        </CardHeader>
+      <Card className="border-slate-200 shadow-sm rounded-md overflow-hidden bg-white">
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-40 space-y-6">
-               <Loader2 className="w-12 h-12 text-blue-600 animate-spin" />
-               <p className="text-slate-500 font-bold animate-pulse">Retreiving history archives...</p>
+            <div className="flex flex-col items-center justify-center py-32 space-y-4">
+              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+              <p className="text-slate-500 font-semibold text-sm">Loading history...</p>
             </div>
           ) : filteredHistory.length > 0 ? (
             <div className="w-full">
-              <div className="overflow-x-auto rounded-[20px] bg-white shadow-[0_4px_24px_rgb(0,0,0,0.03)] border border-slate-100 p-2 hidden md:block m-4">
+              <div className="overflow-x-auto rounded-md bg-white border border-slate-200 hidden md:block m-4">
                 <table className="w-full text-left border-spacing-0">
-                  <thead className="bg-[#f8f9fc] rounded-xl overflow-hidden">
+                  <thead className="bg-slate-50 border-b border-slate-200">
                   <tr>
-                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide rounded-l-xl">
-                      Date <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
-                    </th>
-                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide">
-                      Order <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
-                    </th>
-                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide">
-                      Item(s) Name <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
-                    </th>
-                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide">
-                      Customer Name <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
-                    </th>
-                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide">
-                      Status <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
-                    </th>
-                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide">
-                      Total <ArrowDown className="w-3.5 h-3.5 inline-block text-slate-600 font-bold ml-1" />
-                    </th>
-                    <th className="px-6 py-5 text-left font-bold text-slate-800 text-xs tracking-wide rounded-r-xl"></th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-500 text-xs tracking-wider">Date</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-500 text-xs tracking-wider">Invoice No</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-500 text-xs tracking-wider">Product</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-500 text-xs tracking-wider">Customer</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-500 text-xs tracking-wider">Status</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-500 text-xs tracking-wider">Qty</th>
+                    <th className="px-6 py-4 text-left font-semibold text-slate-500 text-xs tracking-wider"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  <tr className="h-2"></tr>
                   {filteredHistory.map((item) => (
                     <HistoryRow key={item.id} item={item} onDetail={handleShowDetail} />
                   ))}
@@ -280,12 +231,12 @@ export default function HistoryPage() {
           
           <div className="p-6 bg-white grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
             <InfoBlock label="Order Number" value={selectedItem?.s_order_no_string || selectedItem?.order_no} icon={<FileText className="w-4 h-4" />} />
-            <InfoBlock label="City / Region" value={selectedItem?.city} icon={<ExternalLink className="w-4 h-4" />} />
+            <InfoBlock label="City / Region" value={selectedItem?.city} icon={<Package className="w-4 h-4" />} />
             <InfoBlock label="Product Item" value={selectedItem?.product_name} icon={<Package className="w-4 h-4" />} />
-            <InfoBlock label="Actual Quantity" value={selectedItem?.actual_qty} icon={<ChevronRight className="w-4 h-4" />} />
+            <InfoBlock label="Actual Quantity" value={selectedItem?.actual_qty} icon={<Package className="w-4 h-4" />} />
             <InfoBlock label="Transporter" value={selectedItem?.transporter_name} icon={<Loader2 className="w-4 h-4" />} />
-            <InfoBlock label="Printed By" value={selectedItem?.printed_by} icon={<User className="w-4 h-4 text-emerald-600" />} />
-            <InfoBlock label="Status" value={selectedItem?.processed ? 'Processed' : 'Draft'} icon={<CheckCircle2 className="w-4 h-4 text-emerald-600" />} />
+            <InfoBlock label="Printed By" value={selectedItem?.printed_by} icon={<Package className="w-4 h-4 text-emerald-600" />} />
+            <InfoBlock label="Status" value={selectedItem?.processed ? 'Processed' : 'Draft'} icon={<Package className="w-4 h-4 text-emerald-600" />} />
             <InfoBlock label="Printed On" value={selectedItem?.print_time || (selectedItem?.created_at ? new Date(selectedItem.created_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A')} icon={<Calendar className="w-4 h-4" />} />
             
             {selectedItem?.remark && (
@@ -298,27 +249,8 @@ export default function HistoryPage() {
             )}
           </div>
           
-          <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col md:flex-row justify-end gap-3">
-             <Button variant="outline" onClick={() => setDetailOpen(false)} className="rounded-md font-medium h-10 order-2 md:order-1">Dismiss</Button>
-             <Button 
-                onClick={() => {
-                  const regenLabel = {
-                    ...selectedItem,
-                    id: selectedItem.original_data?.id || `regen-${selectedItem.id}`,
-                    party: selectedItem.account_name,
-                    item: selectedItem.product_name,
-                    quantity: selectedItem.actual_qty,
-                    bdlQty: selectedItem.dispatch_bdl_qty,
-                    transporter: selectedItem.transporter_name,
-                    isRegen: true
-                  };
-                  sessionStorage.setItem('regenerate-label', JSON.stringify(regenLabel));
-                  window.location.href = '/orders';
-                }}
-                className="rounded-md font-medium bg-blue-600 hover:bg-blue-700 text-white px-6 h-10 order-1 md:order-2"
-             >
-                Re-Generate Label
-             </Button>
+          <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+             <Button variant="outline" onClick={() => setDetailOpen(false)} className="rounded-md font-medium h-10">Dismiss</Button>
           </div>
         </DialogContent>
       </Dialog>

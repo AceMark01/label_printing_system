@@ -71,3 +71,26 @@ export async function fetchFilterData(includeProcessed = false): Promise<TicTakF
     }
     return await response.json();
 }
+
+export async function fetchInvoiceData(
+    page = 1, 
+    limit = 50, 
+    query?: string
+): Promise<PaginatedLabels> {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString()
+    });
+
+    if (query) {
+        params.append('q', query);
+    }
+
+    const response = await fetch(`/api/invoice?${params.toString()}`);
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch invoice data');
+    }
+
+    return await response.json();
+}

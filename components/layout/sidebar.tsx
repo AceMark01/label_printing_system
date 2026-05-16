@@ -12,7 +12,8 @@ import {
   ChevronDown,
   AlertTriangle,
   LogOut,
-  Factory
+  Factory,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -32,6 +33,14 @@ const navigation = [
       { name: 'History', href: '/production/history' },
     ]
   },
+  { 
+    name: 'Invoice', 
+    icon: FileText,
+    children: [
+      { name: 'Invoice', href: '/invoice/invoice' },
+      { name: 'History', href: '/invoice/history' },
+    ]
+  },
 ];
 
 export function Sidebar() {
@@ -46,25 +55,25 @@ export function Sidebar() {
   return (
     <div className="hidden lg:flex lg:flex-col lg:w-[280px] lg:fixed lg:inset-y-0 lg:z-50 bg-white border-r border-slate-200">
       <div className="flex flex-col flex-grow pt-8 pb-4 overflow-y-auto">
-        <div className="flex items-center flex-shrink-0 px-8 mb-10">
-          <div className="w-12 h-12 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-lg mr-4 p-1.5 overflow-hidden">
+        <div className="flex items-center flex-shrink-0 px-8 mb-8">
+          <div className="w-10 h-10 rounded-md bg-indigo-600 flex items-center justify-center mr-3 p-1.5 overflow-hidden">
             <img 
                src="/logo1.png" 
                alt="AceMark Logo" 
-               className="w-full h-full object-contain"
+               className="w-full h-full object-contain brightness-0 invert"
                onError={(e) => {
                  // Fallback if image missing
                  e.currentTarget.style.display = 'none';
                  const parent = e.currentTarget.parentElement;
                  if (parent) {
-                   parent.innerHTML = '<span class="text-indigo-600 font-black text-xl">A</span>';
+                   parent.innerHTML = '<span class="text-white font-bold text-xl">A</span>';
                  }
                }}
             />
           </div>
           <div>
-            <h1 className="text-[17px] font-black text-slate-900 leading-tight">Acemark Labeling</h1>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Print Management</p>
+            <h1 className="text-[16px] font-bold text-slate-900 leading-tight">Acemark Labeling</h1>
+            <p className="text-[10px] font-medium text-slate-500 uppercase tracking-widest mt-0.5">Print Management</p>
           </div>
         </div>
         
@@ -77,16 +86,16 @@ export function Sidebar() {
         <div className="px-4 mt-auto pt-6 border-t border-slate-100">
           <Link
             href="/settings"
-            className="group flex items-center px-4 py-3 text-sm font-bold text-slate-500 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-all duration-300 hover:pl-5"
+            className="group flex items-center px-4 py-2.5 text-sm font-medium text-slate-600 rounded-md hover:bg-slate-50 hover:text-slate-900 transition-colors"
           >
-            <Settings className="mr-3 h-5 w-5 text-slate-400 group-hover:text-slate-600 group-hover:rotate-45 transition-all duration-500" />
+            <Settings className="mr-3 h-5 w-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
             Settings
           </Link>
           <button
             onClick={handleLogout}
-            className="group flex items-center w-full px-4 py-3 text-sm font-bold text-red-500 rounded-xl hover:bg-red-50 transition-all duration-300 hover:pl-5 mb-2"
+            className="group flex items-center w-full px-4 py-2.5 text-sm font-medium text-slate-600 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors mb-2"
           >
-            <LogOut className="mr-3 h-5 w-5 text-red-400 group-hover:text-red-600 group-hover:-translate-x-1 transition-all duration-300" />
+            <LogOut className="mr-3 h-5 w-5 text-slate-400 group-hover:text-red-600 transition-colors" />
             Sign Out
           </button>
           
@@ -108,29 +117,29 @@ function SidebarItem({ item, pathname }: { item: any; pathname: string }) {
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "group w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300",
+            "group w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-md transition-colors",
             isActive 
-              ? "bg-indigo-50/80 text-indigo-700 shadow-sm shadow-indigo-100/50" 
-              : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:pl-5"
+              ? "bg-indigo-50 text-indigo-700" 
+              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
           )}
         >
           <div className="flex items-center">
             <item.icon className={cn(
-              "mr-3 h-4.5 w-4.5 transition-all duration-300 group-hover:scale-110",
+              "mr-3 h-4.5 w-4.5 transition-colors",
               isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
             )} />
-            <span className={cn("transition-all duration-300", isActive && "font-black tracking-tight")}>
+            <span className={cn(isActive && "font-semibold")}>
               {item.name}
             </span>
           </div>
           {isOpen ? (
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+            <ChevronDown className="h-4 w-4 text-slate-400" />
           ) : (
-            <ChevronRight className="h-3.5 w-3.5 text-slate-400" />
+            <ChevronRight className="h-4 w-4 text-slate-400" />
           )}
         </button>
         {isOpen && (
-          <div className="pl-12 space-y-1 mt-1 animate-in slide-in-from-top-2 duration-300">
+          <div className="pl-11 space-y-1 mt-1">
             {item.children?.map((child: any) => {
               const isChildActive = pathname === child.href;
               return (
@@ -138,10 +147,10 @@ function SidebarItem({ item, pathname }: { item: any; pathname: string }) {
                   key={child.name}
                   href={child.href}
                   className={cn(
-                    "block py-2 text-sm font-bold transition-all duration-200",
+                    "block py-1.5 text-sm transition-colors",
                     isChildActive 
-                      ? "text-indigo-600" 
-                      : "text-slate-400 hover:text-slate-600 hover:pl-1"
+                      ? "text-indigo-600 font-semibold" 
+                      : "text-slate-500 hover:text-slate-900 font-medium"
                   )}
                 >
                   <div className="flex items-center">
@@ -161,29 +170,21 @@ function SidebarItem({ item, pathname }: { item: any; pathname: string }) {
     <Link
       href={item.href!}
       className={cn(
-        "group relative flex items-center justify-between px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300",
+        "group relative flex items-center justify-between px-4 py-2 text-sm font-medium rounded-md transition-colors",
         isActive 
-          ? "bg-indigo-50/80 text-indigo-700 shadow-sm shadow-indigo-100/50" 
-          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 hover:pl-5"
+          ? "bg-indigo-50 text-indigo-700" 
+          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
       )}
     >
-      {isActive && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-600 rounded-r-full animate-in fade-in slide-in-from-left-2" />
-      )}
       <div className="flex items-center">
         <item.icon className={cn(
-          "mr-3 h-4.5 w-4.5 transition-all duration-300 group-hover:scale-110",
+          "mr-3 h-4.5 w-4.5 transition-colors",
           isActive ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
         )} />
-        <span className={cn("transition-all duration-300", isActive && "font-black tracking-tight")}>
+        <span className={cn(isActive && "font-semibold")}>
           {item.name}
         </span>
       </div>
-      {isActive ? (
-        <ChevronRight className="h-3.5 w-3.5 text-indigo-400 animate-in fade-in slide-in-from-right-2" />
-      ) : (
-        <ChevronRight className="h-3.5 w-3.5 text-slate-200 opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-2 group-hover:translate-x-0" />
-      )}
     </Link>
   );
 }

@@ -276,6 +276,7 @@ export default function OrdersPage() {
                 employeeName: l.originalData?.EmployeeName || '',
                 city: l.city,
                 transporter: l.transporter || '',
+                invoice: null,
                 originalData: l
               }))
             }
@@ -357,52 +358,32 @@ export default function OrdersPage() {
         {/* Sticky Control Bar (Frozen Top) */}
         <div className="sticky top-0 z-40 bg-slate-50/80 backdrop-blur-md pt-6 pb-4 -mt-8 mb-4 -mx-8 px-8 border-b border-slate-200/50 space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-xl font-black text-slate-900 tracking-tight">Orders Master</h1>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Inventory Management</p>
-              </div>
-              
-              {/* Filter Toggle Icon */}
-              <Button
-                onClick={() => setShowFilters(!showFilters)}
-                variant="ghost"
-                size="icon"
-                className={cn(
-                  "w-10 h-10 rounded-xl transition-all duration-300",
-                  showFilters ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700" : "bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 shadow-sm"
-                )}
-                title="Toggle Filters"
-              >
-                {showFilters ? <X className="w-5 h-5 animate-in spin-in-90" /> : <Filter className="w-5 h-5 animate-in zoom-in-50" />}
-              </Button>
+            <div>
+              <h1 className="text-2xl font-semibold text-slate-900">All Products</h1>
+              <p className="text-sm text-slate-500 mt-1">Manage and print your product labels</p>
             </div>
 
-            <div className="hidden lg:flex items-center gap-4">
-              <div className="bg-white px-5 py-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
-                <div className="relative">
-                  <span className="flex h-2.5 w-2.5 rounded-full bg-indigo-600 relative" />
-                </div>
-                <span className="text-sm font-bold text-slate-700 whitespace-nowrap">{selectedLabels.size} Labels Selected</span>
-              </div>
+            <div className="flex items-center gap-3">
+              <Button
+                onClick={() => setShowFilters(!showFilters)}
+                variant="outline"
+                className={`h-10 px-4 rounded-md border-slate-200 transition-colors font-medium text-sm ${showFilters ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
+              >
+                <SlidersHorizontal className="w-4 h-4 mr-2" />
+                Filters
+                {(activeFilters.cities.length > 0 || activeFilters.parties.length > 0 || activeFilters.items.length > 0) && (
+                  <span className="ml-2 w-2 h-2 rounded-full bg-indigo-600" />
+                )}
+              </Button>
+              
               {selectedLabels.size > 0 && (
-                <>
-                  <Button
-                    onClick={() => setSelectedLabels(new Set())}
-                    variant="outline"
-                    className="h-11 px-5 rounded-lg border-rose-200 text-rose-600 hover:bg-rose-50 hover:border-rose-300 font-bold text-sm flex items-center gap-2 transition-all animate-in zoom-in duration-300"
-                  >
-                    <X className="w-4 h-4" />
-                    Unselect All
-                  </Button>
-                  <Button
-                    onClick={() => setPreviewOpen(true)}
-                    className="h-11 px-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-md font-bold text-sm flex items-center gap-2 active:scale-95 transition-all animate-in zoom-in duration-300"
-                  >
-                    Generate Labels
-                    <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </>
+                <Button
+                  onClick={() => setPreviewOpen(true)}
+                  className="h-10 px-6 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm flex items-center gap-2 transition-colors"
+                >
+                  Generate Labels ({selectedLabels.size})
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
               )}
             </div>
           </div>
@@ -437,7 +418,7 @@ export default function OrdersPage() {
         </div>
 
           {/* Full-Width Data Table */}
-          <Card className="border border-slate-200 shadow-sm rounded-xl overflow-hidden bg-white">
+          <Card className="border border-slate-200 shadow-sm rounded-lg overflow-hidden bg-white">
             <CardContent className="p-0">
               {loading && labels.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-48 space-y-8">
@@ -501,116 +482,113 @@ export default function OrdersPage() {
 
 
         {/* PREVIEW MODAL */}
-        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-          <DialogContent className="print:hidden max-w-[98vw] w-full lg:max-w-[1400px] h-[95vh] rounded-xl p-0 overflow-hidden shadow-2xl flex flex-col bg-slate-50 border border-slate-200 animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 z-20">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
-                  <Printer className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <DialogTitle className="text-xl font-bold text-slate-900 tracking-tight">Print Preview</DialogTitle>
-                  <DialogDescription className="sr-only">Preview and configure your labels before printing.</DialogDescription>
-                  <p className="font-medium text-slate-500 text-sm mt-0.5 flex items-center gap-2">
-                    Ready to print {selectedLabels.size} labels
-                  </p>
-                </div>
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="print:hidden max-w-[98vw] w-full lg:max-w-[1400px] h-[95vh] rounded-lg p-0 overflow-hidden shadow-xl flex flex-col bg-slate-50 border border-slate-200">
+          <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-200 z-20">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-md bg-blue-50 border border-blue-100 flex items-center justify-center">
+                <Printer className="w-5 h-5 text-blue-600" />
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setPreviewOpen(false)} className="rounded-lg hover:bg-slate-100 w-10 h-10">
-                <X className="w-5 h-5 text-slate-500" />
-              </Button>
+              <div>
+                <DialogTitle className="text-lg font-semibold text-slate-900">Print Preview</DialogTitle>
+                <DialogDescription className="sr-only">Preview and configure your labels before printing.</DialogDescription>
+                <p className="font-medium text-slate-500 text-sm mt-0.5 flex items-center gap-2">
+                  Ready to print {selectedLabels.size} labels
+                </p>
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={() => setPreviewOpen(false)} className="rounded-md hover:bg-slate-100 w-10 h-10">
+              <X className="w-5 h-5 text-slate-500" />
+            </Button>
+          </div>
+
+          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+            <div className="w-full lg:w-[320px] bg-white border-b lg:border-b-0 lg:border-r border-slate-200 p-4 lg:p-5 flex flex-col gap-4 lg:gap-6 z-10 box-border lg:h-full max-h-[35vh] lg:max-h-full min-h-0">
+              <section className="space-y-3 flex-shrink-0">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Print Languages</h3>
+                <div className="flex flex-col gap-2">
+                  {allLanguages.map(lang => (
+                    <button
+                      key={lang}
+                      onClick={() => {
+                        const newLangs = new Set(labelLanguages);
+                        if (newLangs.has(lang)) {
+                          if (newLangs.size > 1) newLangs.delete(lang);
+                        } else {
+                          if (newLangs.size < 2) newLangs.add(lang);
+                        }
+                        setLabelLanguages(newLangs);
+                      }}
+                      className={cn(
+                        "h-10 px-3 rounded-md font-medium text-sm transition-colors flex items-center justify-between border",
+                        labelLanguages.has(lang)
+                          ? "bg-blue-50 border-blue-200 text-blue-700"
+                          : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
+                      )}
+                    >
+                      <span>{lang === 'en' ? 'English' : lang === 'hi' ? 'Hindi' : 'Oriya'}</span>
+                      <div className={cn(
+                        "w-4 h-4 rounded-full border flex items-center justify-center transition-colors",
+                        labelLanguages.has(lang) ? "border-blue-600 bg-blue-600" : "border-slate-300"
+                      )}>
+                        {labelLanguages.has(lang) && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              <div className="flex-1 min-h-0" />
+
+              <section className="space-y-3 pt-4 border-t border-slate-100 mt-auto flex-shrink-0">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</h3>
+                <div className="grid gap-2">
+                  <Button
+                    disabled={isExportingPdf}
+                    onClick={handleExportPdf}
+                    variant="outline"
+                    className="h-10 w-full justify-start rounded-md border-slate-200 font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    {isExportingPdf ? <Loader2 className="w-4 h-4 mr-2 animate-spin text-blue-600" /> : <Download className="w-4 h-4 mr-2" />}
+                    Save PDF
+                  </Button>
+
+                  <Button
+                    disabled={isExportingPdf}
+                    onClick={handlePrint}
+                    className="h-10 w-full justify-start rounded-md bg-blue-600 hover:bg-blue-700 font-medium text-white shadow-sm"
+                  >
+                    <Printer className="w-4 h-4 mr-2" />
+                    Print Now
+                  </Button>
+                </div>
+              </section>
             </div>
 
-            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-              <div className="w-full lg:w-[320px] bg-white border-b lg:border-b-0 lg:border-r border-slate-200 p-4 lg:p-5 flex flex-col gap-4 lg:gap-6 z-10 box-border lg:h-full max-h-[35vh] lg:max-h-full min-h-0">
-                <section className="space-y-3 flex-shrink-0">
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Print Languages</h3>
-                  <div className="flex flex-col gap-2">
-                    {allLanguages.map(lang => (
-                      <button
-                        key={lang}
-                        onClick={() => {
-                          const newLangs = new Set(labelLanguages);
-                          if (newLangs.has(lang)) {
-                            if (newLangs.size > 1) newLangs.delete(lang);
-                          } else {
-                            if (newLangs.size < 2) newLangs.add(lang);
-                          }
-                          setLabelLanguages(newLangs);
-                        }}
-                        className={cn(
-                          "h-10 px-3 rounded-md font-medium text-sm transition-all flex items-center justify-between border",
-                          labelLanguages.has(lang)
-                            ? "bg-blue-50 border-blue-200 text-blue-700"
-                            : "bg-white border-slate-200 text-slate-600 hover:border-slate-300"
-                        )}
-                      >
-                        <span>{lang === 'en' ? 'English' : lang === 'hi' ? 'Hindi' : 'Oriya'}</span>
-                        <div className={cn(
-                          "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
-                          labelLanguages.has(lang) ? "border-blue-600 bg-blue-600" : "border-slate-300"
-                        )}>
-                          {labelLanguages.has(lang) && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </section>
+            <div className="flex-1 bg-slate-100/50 overflow-y-auto preview-container custom-scrollbar relative">
+              <div className="flex flex-col items-center py-8 px-4 min-h-full">
+                <div className="mb-4 bg-white border border-slate-200 text-slate-600 px-4 py-1.5 rounded-full text-xs font-medium shadow-sm w-fit mx-auto z-20 relative">
+                  A4 Template Output
+                </div>
 
-                <div className="flex-1 min-h-0" />
-
-
-                <section className="space-y-3 pt-4 border-t border-slate-100 mt-auto flex-shrink-0">
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</h3>
-                  <div className="grid gap-2">
-                    <Button
-                      disabled={isExportingPdf}
-                      onClick={handleExportPdf}
-                      variant="outline"
-                      className="h-10 w-full justify-start rounded-md border-slate-200 font-medium text-slate-700 hover:bg-slate-50"
-                    >
-                      {isExportingPdf ? <Loader2 className="w-4 h-4 mr-2 animate-spin text-blue-600" /> : <Download className="w-4 h-4 mr-2" />}
-                      Save PDF
-                    </Button>
-
-                    <Button
-                      disabled={isExportingPdf}
-                      onClick={handlePrint}
-                      className="h-10 w-full justify-start rounded-md bg-blue-600 hover:bg-blue-700 font-medium text-white shadow-sm"
-                    >
-                      <Printer className="w-4 h-4 mr-2" />
-                      Print Now
-                    </Button>
-                  </div>
-                </section>
-              </div>
-
-              <div className="flex-1 bg-slate-100/50 overflow-y-auto preview-container custom-scrollbar relative">
-                <div className="flex flex-col items-center py-8 px-4 min-h-full">
-                  <div className="mb-4 bg-white border border-slate-200 text-slate-600 px-4 py-1.5 rounded-full text-xs font-medium shadow-sm w-fit mx-auto z-20 relative">
-                    A4 Template Output
-                  </div>
-
-                  <div className="preview-scaler-container shadow-sm bg-white rounded flex-shrink-0 border border-slate-200">
-                    <div className="preview-scaler">
-                      <div className="w-[210mm] min-h-[297mm] bg-white" ref={printRef}>
-                        <A5PrintLayout
-                          labels={selectedLabelDetails}
-                          languages={Array.from(labelLanguages)}
-                          fieldVisibility={fieldVisibility}
-                          onBundleChange={handleBundleChange}
-                          onVisibilityChange={handleVisibilityChange}
-                        />
-                      </div>
+                <div className="preview-scaler-container shadow-sm bg-white rounded flex-shrink-0 border border-slate-200">
+                  <div className="preview-scaler">
+                    <div className="w-[210mm] min-h-[297mm] bg-white" ref={printRef}>
+                      <A5PrintLayout
+                        labels={selectedLabelDetails}
+                        languages={Array.from(labelLanguages)}
+                        fieldVisibility={fieldVisibility}
+                        onBundleChange={handleBundleChange}
+                        onVisibilityChange={handleVisibilityChange}
+                      />
                     </div>
                   </div>
-
-
                 </div>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="hidden print:block print:w-full print:bg-white print:m-0 print:p-0">
         <A5PrintLayout
@@ -623,25 +601,18 @@ export default function OrdersPage() {
       </div>
 
       <Dialog open={confirmPrintOpen} onOpenChange={setConfirmPrintOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl p-6">
+        <DialogContent className="sm:max-w-md rounded-lg p-6">
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Confirm Print Status</DialogTitle>
-            <DialogDescription className="text-slate-500 font-medium pt-2">
+            <DialogTitle className="text-lg font-semibold">Confirm Print Status</DialogTitle>
+            <DialogDescription className="text-slate-500 text-sm pt-2">
               Did you successfully print all {selectedLabels.size} labels? Labels will be moved to history after confirmation.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col sm:flex-row gap-3 pt-6">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmPrintOpen(false)}
-              className="flex-1 h-12 rounded-xl font-bold text-slate-600 border-slate-200"
-            >
+            <Button variant="outline" onClick={() => setConfirmPrintOpen(false)} className="flex-1 rounded-md font-medium text-slate-600">
               No, Keep Selected
             </Button>
-            <Button
-              onClick={handleConfirmPrintSuccess}
-              className="flex-1 h-12 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white"
-            >
+            <Button onClick={handleConfirmPrintSuccess} className="flex-1 rounded-md font-medium bg-blue-600 hover:bg-blue-700 text-white">
               Yes, Printed Successfully
             </Button>
           </div>

@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
                 dispatch_qty: Number(label.qty || 0),
                 processed: true,
                 pdf: label.pdf || 'done',
+                invoice: label.invoice || null,
                 print_time: print_time ? new Date(print_time).toISOString() : new Date().toISOString(),
                 printed_by: String(printed_by || 'System')
             }));

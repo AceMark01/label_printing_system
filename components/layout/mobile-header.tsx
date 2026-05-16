@@ -15,7 +15,8 @@ import {
   LogOut,
   Factory,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +34,14 @@ const navigation = [
       { name: 'History', href: '/production/history' },
     ]
   },
+  { 
+    name: 'Invoice', 
+    icon: FileText,
+    children: [
+      { name: 'Invoice', href: '/invoice/invoice' },
+      { name: 'History', href: '/invoice/history' },
+    ]
+  },
 ];
 
 export function MobileHeader() {
@@ -48,9 +57,9 @@ export function MobileHeader() {
 
   return (
     <>
-      <header className="lg:hidden sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 py-3 flex items-center justify-between shadow-sm print:hidden">
+      <header className="lg:hidden sticky top-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between print:hidden">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-100 p-2">
+          <div className="w-8 h-8 rounded-md bg-indigo-600 flex items-center justify-center p-1.5">
             <img 
                src="/logo1.png" 
                alt="Logo" 
@@ -59,14 +68,14 @@ export function MobileHeader() {
                  e.currentTarget.style.display = 'none';
                  const parent = e.currentTarget.parentElement;
                  if (parent) {
-                   parent.innerHTML = '<span class="text-white font-black text-lg">A</span>';
+                   parent.innerHTML = '<span class="text-white font-bold text-lg">A</span>';
                  }
                }}
             />
           </div>
           <div>
-            <h1 className="text-sm font-black text-slate-900 leading-tight">Acemark</h1>
-            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Labeling</p>
+            <h1 className="text-sm font-bold text-slate-900 leading-tight">Acemark</h1>
+            <p className="text-[9px] font-medium text-slate-500 uppercase tracking-widest mt-0.5">Labeling</p>
           </div>
         </div>
 
@@ -80,14 +89,14 @@ export function MobileHeader() {
 
       {/* Fullscreen Mobile Menu Overlay */}
       {isOpen && (
-        <div className="fixed inset-0 z-[100] bg-white overflow-y-auto animate-in fade-in zoom-in duration-300 print:hidden">
+        <div className="fixed inset-0 z-[100] bg-white overflow-y-auto print:hidden">
           <div className="p-6">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-100 p-2">
-                   <span className="text-white font-black text-lg">A</span>
+                <div className="w-8 h-8 rounded-md bg-indigo-600 flex items-center justify-center p-1.5">
+                   <span className="text-white font-bold text-lg">A</span>
                 </div>
-                <h2 className="text-lg font-black text-slate-900">Main Menu</h2>
+                <h2 className="text-lg font-bold text-slate-900">Main Menu</h2>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
@@ -108,27 +117,27 @@ export function MobileHeader() {
               ))}
             </nav>
 
-            <div className="mt-8 pt-8 border-t border-slate-100">
+            <div className="mt-8 pt-6 border-t border-slate-100">
               <Link
                 href="/settings"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center px-4 py-4 text-base font-bold text-slate-600 rounded-2xl hover:bg-slate-50 transition-all active:scale-95"
+                className="flex items-center px-4 py-3 text-sm font-medium text-slate-600 rounded-md hover:bg-slate-50 transition-colors"
               >
-                <Settings className="mr-4 h-6 w-6 text-slate-400" />
+                <Settings className="mr-3 h-5 w-5 text-slate-400" />
                 Settings
               </Link>
               <button
                 onClick={handleLogout}
-                className="flex items-center w-full px-4 py-4 text-base font-bold text-red-600 rounded-2xl hover:bg-red-50 transition-all active:scale-95 mt-2"
+                className="flex items-center w-full px-4 py-3 text-sm font-medium text-red-600 rounded-md hover:bg-red-50 transition-colors mt-2"
               >
-                <LogOut className="mr-4 h-6 w-6 text-red-400" />
+                <LogOut className="mr-3 h-5 w-5 text-red-400" />
                 Sign Out
               </button>
             </div>
             
-            <div className="mt-12 p-6 rounded-[2.5rem] bg-slate-50 flex flex-col items-center">
-               <p className="text-[10px] font-black text-slate-400 tracking-[0.3em] uppercase mb-2">Developed by</p>
-               <span className="text-sm font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-500">
+            <div className="mt-8 p-4 rounded-md bg-slate-50 flex flex-col items-center">
+               <p className="text-[10px] font-medium text-slate-400 tracking-[0.2em] uppercase mb-1">Developed by</p>
+               <span className="text-xs font-semibold text-slate-500">
                  BOTIVATE
                </span>
             </div>
@@ -150,23 +159,23 @@ function MobileMenuItem({ item, pathname, onClose }: { item: any; pathname: stri
         <button
           onClick={() => setIsOpen(!isOpen)}
           className={cn(
-            "w-full flex items-center justify-between px-5 py-4 text-base font-bold rounded-2xl transition-all",
+            "w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-md transition-colors",
             isActive 
-              ? "bg-indigo-50 text-indigo-700 shadow-sm" 
+              ? "bg-indigo-50 text-indigo-700" 
               : "text-slate-600 hover:bg-slate-50"
           )}
         >
           <div className="flex items-center">
             <item.icon className={cn(
-              "mr-4 h-5.5 w-5.5",
+              "mr-3 h-5 w-5",
               isActive ? "text-indigo-600" : "text-slate-400"
             )} />
             <span>{item.name}</span>
           </div>
-          {isOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+          {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
         {isOpen && (
-          <div className="pl-6 space-y-2 py-2">
+          <div className="pl-6 space-y-1 py-1">
             {item.children?.map((child: any) => {
               const isChildActive = pathname === child.href;
               return (
@@ -175,10 +184,10 @@ function MobileMenuItem({ item, pathname, onClose }: { item: any; pathname: stri
                   href={child.href}
                   onClick={onClose}
                   className={cn(
-                    "flex items-center px-10 py-3 text-sm font-black transition-all rounded-xl",
+                    "flex items-center px-6 py-2.5 text-sm transition-colors rounded-md",
                     isChildActive 
-                      ? "text-indigo-600 bg-indigo-50/50" 
-                      : "text-slate-400 hover:text-slate-600"
+                      ? "text-indigo-600 font-semibold bg-indigo-50/50" 
+                      : "text-slate-500 font-medium hover:text-slate-900"
                   )}
                 >
                   {child.name}
@@ -196,20 +205,20 @@ function MobileMenuItem({ item, pathname, onClose }: { item: any; pathname: stri
       href={item.href!}
       onClick={onClose}
       className={cn(
-        "flex items-center justify-between px-5 py-4 text-base font-bold rounded-2xl transition-all active:scale-95",
+        "flex items-center justify-between px-4 py-3 text-sm font-medium rounded-md transition-colors",
         isActive 
-          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" 
+          ? "bg-indigo-50 text-indigo-700" 
           : "text-slate-600 hover:bg-slate-50"
       )}
     >
       <div className="flex items-center">
         <item.icon className={cn(
-          "mr-4 h-5.5 w-5.5",
-          isActive ? "text-white" : "text-slate-400"
+          "mr-3 h-5 w-5",
+          isActive ? "text-indigo-600" : "text-slate-400"
         )} />
-        <span>{item.name}</span>
+        <span className={cn(isActive && "font-semibold")}>{item.name}</span>
       </div>
-      <ChevronRight className={cn("h-5 w-5", isActive ? "text-indigo-200" : "text-slate-300")} />
+      <ChevronRight className={cn("h-4 w-4", isActive ? "text-indigo-400" : "text-slate-300")} />
     </Link>
   );
 }

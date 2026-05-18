@@ -96,16 +96,7 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
     return dynamicTranslations[lang]?.item || label.itemNames?.[lang] || label.item;
   };
 
-  const getDynamicFontSize = (text: string = '', baseSize: number = 40) => {
-    const len = text.length;
-    // Shrink more aggressively for very long strings to prevent overflow
-    if (len > 120) return Math.max(12, baseSize - 26);
-    if (len > 100) return Math.max(16, baseSize - 20);
-    if (len > 80) return Math.max(20, baseSize - 16);
-    if (len > 60) return Math.max(24, baseSize - 12);
-    if (len > 45) return Math.max(28, baseSize - 8);
-    if (len > 35) return Math.max(32, baseSize - 4);
-    if (len > 25) return Math.max(36, baseSize - 2);
+  const getDynamicFontSize = (text: string = '', baseSize: number = 34) => {
     return baseSize;
   };
 
@@ -116,72 +107,79 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
 
   return (
     <div className="bg-white w-full h-full rounded-[20px] shadow-xl overflow-hidden border border-gray-100/50 flex flex-col font-sans tracking-tight print:shadow-none print:border-none print:rounded-none">
-      <div className="px-8 pt-5 pb-5 flex flex-col justify-around flex-1 overflow-hidden">
+      <div className="px-6 pt-4 pb-4 flex flex-col justify-between flex-1 min-h-0 overflow-hidden">
         {activeLanguages.map((lang, idx) => {
           const t = labelTranslations[lang];
           const partyName = getPartyName(lang);
           const itemName = getItemName(lang);
 
           return (
-            <div key={`${lang}-${idx}`} className={cn(
-              "flex flex-col gap-2.5",
-              idx === 0 && activeLanguages.length > 1 && "pb-5 border-b border-dotted border-gray-300 mb-2.5"
-            )}>
-              {/* Party Name Row (Flexible Height) */}
-              <div className="flex items-start gap-2 min-h-[48px]">
-                <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap shrink-0 mt-1">
+            <div 
+              key={`${lang}-${idx}`} 
+              className={cn(
+                "flex flex-col flex-1 min-h-0 justify-between",
+                idx === 0 && activeLanguages.length > 1 && "pb-3 border-b border-dotted border-gray-300 mb-3"
+              )}
+            >
+              {/* Party Name Row */}
+              <div className="flex items-start gap-2 min-h-0 flex-shrink-0">
+                <span className="text-gray-400 font-semibold text-[16px] whitespace-nowrap shrink-0 mt-0.5">
                   {t.party}:
                 </span>
-                <span 
-                  className="text-gray-900 font-extrabold leading-tight"
-                  style={{ fontSize: `${getDynamicFontSize(partyName, 36)}px` }}
-                >
-                  {partyName}
-                </span>
+                <div className="min-h-0 overflow-hidden flex-1">
+                  <span 
+                    className="text-gray-900 font-extrabold leading-tight break-words block"
+                    style={{ fontSize: `${getDynamicFontSize(partyName, 34)}px` }}
+                  >
+                    {partyName}
+                  </span>
+                </div>
               </div>
               
-              {/* Product Row (Flexible Height) */}
-              <div className="flex items-start gap-3 min-h-[48px] mt-1">
-                <div className="flex items-start gap-2 flex-1">
+              {/* Product Row */}
+              <div className="flex items-start gap-3 min-h-0 flex-1 my-1">
+                <div className="flex items-start gap-2 flex-1 min-h-0">
                   <button
                     onClick={() => onVisibilityChange?.(label.id, 'product', !fieldVisibility?.[lang]?.product, lang)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all active:scale-90 mt-1"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all active:scale-90 mt-0.5"
                     style={{ backgroundColor: fieldVisibility?.[lang]?.product !== false ? '#2563eb' : '#e5e7eb' }}
                   >
                     {fieldVisibility?.[lang]?.product !== false && (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     )}
                   </button>
                   <div className={cn(
-                    "flex items-start gap-2 transition-opacity duration-200 w-full",
+                    "flex items-start gap-2 transition-opacity duration-200 w-full min-h-0 overflow-hidden",
                     fieldVisibility?.[lang]?.product === false && "opacity-20 print:invisible"
                   )}>
-                    <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap shrink-0 mt-1">
+                    <span className="text-gray-400 font-semibold text-[16px] whitespace-nowrap shrink-0 mt-0.5">
                       {t.item}:
                     </span>
-                    <span 
-                      className="text-gray-900 font-extrabold leading-tight break-words"
-                      style={{ fontSize: `${getDynamicFontSize(itemName, 36)}px` }}
-                    >
-                      {itemName}
-                    </span>
+                    <div className="min-h-0 overflow-hidden flex-1">
+                      <span 
+                        className="text-gray-900 font-extrabold leading-tight break-words block"
+                        style={{ fontSize: `${getDynamicFontSize(itemName, 34)}px` }}
+                      >
+                        {itemName}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Qty, Bundle, City Row (Static Position due to fixed heights above) */}
-              <div className="flex items-center gap-4 h-[60px] mt-2">
+              {/* Qty, Bundle, City Row */}
+              <div className="flex items-center gap-4 h-[50px] shrink-0 mt-1">
                 {/* Quantity */}
                 <div className="flex items-center gap-2 min-w-0">
                   <button
                     onClick={() => onVisibilityChange?.(label.id, 'quantity', !fieldVisibility?.[lang]?.quantity, lang)}
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all active:scale-90"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 print:hidden transition-all active:scale-90"
                     style={{ backgroundColor: fieldVisibility?.[lang]?.quantity !== false ? '#2563eb' : '#e5e7eb' }}
                   >
                     {fieldVisibility?.[lang]?.quantity !== false && (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     )}
@@ -190,16 +188,16 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                     "flex items-center gap-1.5 transition-opacity duration-200",
                     fieldVisibility?.[lang]?.quantity === false && "opacity-20 print:invisible"
                   )}>
-                    <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap">
+                    <span className="text-gray-400 font-semibold text-[16px] whitespace-nowrap">
                       {t.qty}:
                     </span>
-                    <div className="text-gray-900 font-extrabold text-[44px] tabular-nums tracking-tighter leading-none">
+                    <div className="text-gray-900 font-extrabold text-[36px] tabular-nums tracking-tighter leading-none">
                       {onQuantityChange ? (
                         <input
                           type="text"
                           value={label.quantity}
                           onChange={(e) => onQuantityChange(label.id, e.target.value)}
-                          className="w-auto min-w-[70px] text-gray-900 font-extrabold text-[44px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-auto tabular-nums tracking-tighter"
+                          className="w-auto min-w-[60px] text-gray-900 font-extrabold text-[36px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-auto tabular-nums tracking-tighter"
                           style={{ width: `${Math.max(2, label.quantity?.toString().length || 1)}ch` }}
                         />
                       ) : (
@@ -210,8 +208,8 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                 </div>
 
                 {/* Bundle */}
-                <div className="flex items-center gap-1.5 border-l border-gray-200 pl-4 h-[40px]">
-                  <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap">
+                <div className="flex items-center gap-1.5 border-l border-gray-200 pl-3 h-[32px]">
+                  <span className="text-gray-400 font-semibold text-[16px] whitespace-nowrap">
                     {t.bundles}:
                   </span>
                   <div className="relative">
@@ -220,11 +218,11 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                         type="text"
                         value={label.bdlQty || '1'}
                         onChange={(e) => onBundleChange(label.id, e.target.value)}
-                        className="w-auto min-w-[50px] text-gray-900 font-extrabold text-[44px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-16 tabular-nums tracking-tighter leading-none"
+                        className="w-auto min-w-[40px] text-gray-900 font-extrabold text-[36px] bg-transparent border-none p-0 focus:ring-0 text-center print:w-12 tabular-nums tracking-tighter leading-none"
                         style={{ width: `${Math.max(1, (label.bdlQty || '1').toString().length)}ch` }}
                       />
                     ) : (
-                      <div className="min-w-[20px] text-gray-900 font-extrabold text-[44px] text-center px-1 tabular-nums tracking-tighter leading-none">
+                      <div className="min-w-[16px] text-gray-900 font-extrabold text-[36px] text-center px-1 tabular-nums tracking-tighter leading-none">
                         {label.bdlQty || '1'}
                       </div>
                     )}
@@ -233,11 +231,11 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
                 </div>
 
                 {/* City */}
-                <div className="flex items-center gap-2 border-l border-gray-100 pl-8 h-[40px] flex-1">
-                  <span className="text-gray-400 font-semibold text-[18px] whitespace-nowrap uppercase tracking-wider">
+                <div className="flex items-center gap-2 border-l border-gray-100 pl-4 h-[32px] flex-1 min-w-0">
+                  <span className="text-gray-400 font-semibold text-[16px] whitespace-nowrap uppercase tracking-wider">
                     {t.city}:
                   </span>
-                  <span className="text-gray-900 font-extrabold text-[28px] uppercase leading-none truncate">
+                  <span className="text-gray-900 font-extrabold text-[24px] uppercase leading-none truncate flex-1">
                     {getCityName(lang)}
                   </span>
                 </div>
@@ -248,16 +246,16 @@ export function LabelCard({ label, languages, fieldVisibility, onBundleChange, o
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-50/50 border-t border-gray-100 px-8 py-2 flex items-center justify-between print:bg-transparent min-h-[48px]">
+      <div className="bg-gray-50/50 border-t border-gray-100 px-6 py-1.5 flex items-center justify-between print:bg-transparent min-h-[40px]">
         <div className="flex items-center gap-1.5 shrink-0">
-          <span className="text-gray-500 font-bold text-[12px]">DATE:</span>
-          <span className="text-gray-600 font-bold text-[13px]">
+          <span className="text-gray-500 font-bold text-[11px]">DATE:</span>
+          <span className="text-gray-600 font-bold text-[12px]">
             {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
           </span>
         </div>
         <div className="flex items-center gap-3 flex-1 justify-end ml-4">
-          <div className="h-[1px] bg-gray-200 flex-1 max-w-[100px]" />
-          <img src="/ace.png" alt="Logo" className="h-10 w-auto object-contain" />
+          <div className="h-[1px] bg-gray-200 flex-1 max-w-[80px]" />
+          <img src="/ace.png" alt="Logo" className="h-8 w-auto object-contain" />
         </div>
       </div>
     </div>

@@ -70,15 +70,15 @@ export default function LoginPage() {
       <div className="w-full relative z-10" style={{ maxWidth: '440px' }}>
         <div className="bg-white rounded-[3rem] shadow-[0_20px_60px_-15px_rgba(30,58,138,0.08)] p-10 md:p-12 border border-slate-50 flex flex-col items-center text-center">
             {/* Ace Logo */}
-            <div className="w-20 h-20 bg-[#e11d48] rounded-[1.5rem] flex items-center justify-center shadow-xl shadow-red-100 mb-8 overflow-hidden transform" style={{ backgroundColor: '#e11d48' }}>
+            <div className="w-20 h-20 bg-white rounded-[1.5rem] flex items-center justify-center shadow-xl shadow-slate-100 mb-8 overflow-hidden transform border border-slate-100 p-2">
                 <img 
                     src="/ace.png" 
                     alt="Ace Logo" 
-                    className="w-14 h-auto object-contain brightness-0 invert" 
+                    className="w-16 h-auto object-contain" 
                     onError={(e) => {
                         e.currentTarget.style.display = 'none';
                         const parent = e.currentTarget.parentElement;
-                        if (parent) parent.innerHTML = '<span style="color:white; font-weight:900; font-size:30px">A</span>';
+                        if (parent) parent.innerHTML = '<span style="color:#e11d48; font-weight:900; font-size:30px">A</span>';
                     }}
                 />
             </div>

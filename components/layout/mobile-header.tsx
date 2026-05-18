@@ -59,16 +59,16 @@ export function MobileHeader() {
     <>
       <header className="lg:hidden sticky top-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between print:hidden">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-md bg-indigo-600 flex items-center justify-center p-1.5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden bg-slate-50 border border-slate-100 p-0.5 shadow-sm">
             <img 
                src="/logo1.png" 
                alt="Logo" 
-               className="w-full h-full object-contain brightness-0 invert"
+               className="w-full h-full object-contain"
                onError={(e) => {
                  e.currentTarget.style.display = 'none';
                  const parent = e.currentTarget.parentElement;
                  if (parent) {
-                   parent.innerHTML = '<span class="text-white font-bold text-lg">A</span>';
+                   parent.innerHTML = '<span class="text-indigo-600 font-black text-lg">A</span>';
                  }
                }}
             />

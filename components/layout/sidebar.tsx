@@ -56,17 +56,17 @@ export function Sidebar() {
     <div className="hidden lg:flex lg:flex-col lg:w-[280px] lg:fixed lg:inset-y-0 lg:z-50 bg-white border-r border-slate-200">
       <div className="flex flex-col flex-grow pt-8 pb-4 overflow-y-auto">
         <div className="flex items-center flex-shrink-0 px-8 mb-8">
-          <div className="w-10 h-10 rounded-md bg-indigo-600 flex items-center justify-center mr-3 p-1.5 overflow-hidden">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center mr-3 overflow-hidden bg-slate-50 border border-slate-100 p-1 shadow-sm">
             <img 
                src="/logo1.png" 
                alt="AceMark Logo" 
-               className="w-full h-full object-contain brightness-0 invert"
+               className="w-full h-full object-contain"
                onError={(e) => {
                  // Fallback if image missing
                  e.currentTarget.style.display = 'none';
                  const parent = e.currentTarget.parentElement;
                  if (parent) {
-                   parent.innerHTML = '<span class="text-white font-bold text-xl">A</span>';
+                   parent.innerHTML = '<span class="text-indigo-600 font-black text-xl">A</span>';
                  }
                }}
             />

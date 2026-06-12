@@ -580,7 +580,7 @@ function ProductionLabelContent({ item, isEditing, handleEditChange, handleBundl
                 <h2 className={cn("font-black text-gray-900 leading-tight uppercase tracking-tight", getFontSize(item.productName, "text-[52px]"))}>
                   {item.productName}
                 </h2>
-                <h2 className={cn("font-black text-gray-700 leading-tight", getFontSize(productNameHi, "text-[36px]"))}>
+                <h2 className={cn("font-black text-black leading-tight", getFontSize(productNameHi, "text-[36px]"))}>
                   {productNameHi}
                 </h2>
               </div>

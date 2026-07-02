@@ -89,11 +89,6 @@ export async function GET(request: NextRequest) {
                 if (!item.done) return false;
             } else {
                 if (item.done) return false;
-
-                // ONLY SHOW positive pending quantities for active view
-                const rawQty = item.pendingQty?.toString() || '0';
-                const cleanQty = parseFloat(rawQty.replace(/[^-0-9.]/g, '')) || 0;
-                if (cleanQty <= 0) return false;
             }
 
             // 3. APPLY Search Filter
@@ -134,7 +129,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json();
-        const { updates, printed_by, print_time } = body; 
+        const { updates, printed_by, print_time, generateLater } = body; 
 
         if (!updates || !Array.isArray(updates)) {
             return NextResponse.json({ error: 'Invalid updates provided' }, { status: 400 });
@@ -165,7 +160,7 @@ export async function POST(request: NextRequest) {
                 action: 'batchUpdateAndAppend',
                 sheet: 'Production Data',
                 updates: updates.map(u => {
-                    const isDone = parseFloat(u.printedQty) >= parseFloat(u.pendingQty);
+                    const isDone = generateLater ? false : parseFloat(u.printedQty) >= parseFloat(u.pendingQty);
                     return {
                         id: u.id,
                         Done: isDone ? 'Done' : '',

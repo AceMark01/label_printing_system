@@ -26,8 +26,7 @@ export default function ProductionAllProducts() {
       if (result.error) {
         setError(result.error);
       } else {
-        const filteredData = result.data.filter((item: any) => Number(item.pendingQty || 0) > 0);
-        setData(filteredData);
+        setData(result.data);
         setError(null);
       }
     } catch (err) {

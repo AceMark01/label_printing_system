@@ -177,7 +177,7 @@ export default function ProductionPreview() {
     }, 1000);
   };
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (generateLater = false) => {
     try {
       setIsSaving(true);
       const visibleItems = items.filter(item => item.isVisible !== false);
@@ -200,7 +200,8 @@ export default function ProductionPreview() {
         body: JSON.stringify({
           updates,
           printed_by: user.name,
-          print_time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+          print_time: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+          generateLater
         })
       });
 
@@ -238,16 +239,24 @@ export default function ProductionPreview() {
               </div>
               <div className="flex flex-col gap-3">
                 <Button
-                  onClick={handleConfirm}
+                  onClick={() => handleConfirm(false)}
                   disabled={isSaving}
                   className="rounded-2xl h-14 bg-indigo-600 hover:bg-indigo-700 text-white font-black shadow-xl shadow-indigo-100 uppercase tracking-widest disabled:opacity-50"
                 >
                   {isSaving ? 'Updating...' : 'Yes, Mark Done'}
                 </Button>
                 <Button
+                  onClick={() => handleConfirm(true)}
+                  disabled={isSaving}
+                  className="rounded-2xl h-14 bg-slate-900 hover:bg-slate-800 text-white font-black shadow-xl shadow-slate-200 uppercase tracking-widest disabled:opacity-50"
+                >
+                  {isSaving ? 'Updating...' : 'Yes, Generate Later'}
+                </Button>
+                <Button
                   variant="ghost"
                   onClick={() => setIsPrintSuccessOpen(false)}
-                  className="rounded-xl h-12 text-slate-400 font-bold uppercase tracking-widest hover:bg-slate-50"
+                  disabled={isSaving}
+                  className="rounded-xl h-12 text-slate-400 font-bold uppercase tracking-widest hover:bg-slate-50 disabled:opacity-50"
                 >
                   No, Go Back
                 </Button>
